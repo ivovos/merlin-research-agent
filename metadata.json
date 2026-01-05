@@ -1,0 +1,5 @@
+{
+  "name": "Merlin Research Agent",
+  "description": "A three-pane research agent interface prototype featuring synthetic audience queries and structured reports.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,71 @@
+export interface Audience {
+  id: string;
+  name: string;
+  icon?: string;
+}
+
+export interface ProcessStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'in-progress' | 'complete';
+  progress?: number; // 0 to 100
+  totalResponses?: number; // For visualization
+}
+
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  processSteps?: ProcessStep[];
+  report?: Report;
+  thinkingTime?: number;
+}
+
+export interface QuestionOption {
+  label: string;
+  percentage: number;
+  [key: string]: string | number; // Allow dynamic segment keys
+}
+
+export interface QuestionResult {
+  id: string;
+  question: string;
+  respondents: number;
+  options: QuestionOption[];
+  segments?: string[]; // Optional list of segments being compared
+}
+
+export interface QualitativeTheme {
+  id: string;
+  topic: string; // The theme title
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
+  summary: string;
+  quotes: Array<{
+    text: string;
+    attribution: string; // e.g., "Male, 24"
+  }>;
+}
+
+export interface Report {
+  id: string;
+  title: string;
+  type?: 'quantitative' | 'qualitative'; // New field to distinguish
+  audience: Audience;
+  respondents: number;
+  abstract: string;
+  questions: QuestionResult[]; // Kept for backward compatibility or hybrid reports
+  themes?: QualitativeTheme[]; // New field for qualitative data
+  createdAt: Date;
+}
+
+export interface Conversation {
+  id: string;
+  query: string;
+  messages: Message[]; // Chat history
+  audience: Audience;
+  processSteps: ProcessStep[];
+  thinkingTime: number; // seconds
+  explanation: string;
+  report: Report | null;
+  status: 'idle' | 'processing' | 'complete';
+}
