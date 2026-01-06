@@ -15,7 +15,7 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
 
    if (status === 'complete' && report) {
       return (
-         <div className="w-full h-full bg-background flex flex-col relative">
+         <div className="w-full h-full bg-background flex flex-col relative border-l border-border">
             {/* Top Right Actions */}
             <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
                <Button variant="outline" size="sm" className="gap-2 bg-background border-border shadow-sm hover:bg-muted">

@@ -636,13 +636,16 @@ Output strictly valid JSON matching this structure:
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-background font-sans text-foreground" style={{ height: '100dvh', minHeight: '100vh' }}>
       <ResizablePanelGroup direction="horizontal" className="h-full" style={{ height: '100%' }}>
-        {/* Left: Sidebar (always 25%) */}
-        <ResizablePanel 
-          defaultSize={isSidebarCollapsed ? 4 : 25} 
-          minSize={isSidebarCollapsed ? 4 : 20} 
-          maxSize={isSidebarCollapsed ? 4 : 35} 
-          className="h-full" 
-          style={{ height: '100%', minHeight: '100%' }}
+        {/* Left: Sidebar */}
+        <ResizablePanel
+          defaultSize={isSidebarCollapsed ? 5 : 20}
+          minSize={isSidebarCollapsed ? 5 : 15}
+          maxSize={isSidebarCollapsed ? 5 : 30}
+          className="h-full flex-shrink-0"
+          style={{
+            height: '100%',
+            minHeight: '100%'
+          }}
           collapsible={true}
         >
           <Sidebar
@@ -655,28 +658,32 @@ Output strictly valid JSON matching this structure:
           />
         </ResizablePanel>
 
-        <ResizableHandle withHandle disabled={isSidebarCollapsed} />
+        <ResizableHandle withHandle disabled={isSidebarCollapsed} className={isSidebarCollapsed ? "pointer-events-none" : ""} />
 
         {/* Middle: Conversation Panel */}
-        <ResizablePanel 
-          defaultSize={isReportOpen && conversation.report ? 37.5 : 75} 
-          minSize={30} 
-          maxSize={isReportOpen && conversation.report ? 50 : 80}
-          className="h-full" 
+        <ResizablePanel
+          defaultSize={isReportOpen && conversation.report ? (isSidebarCollapsed ? 57.5 : 42.5) : (isSidebarCollapsed ? 95 : 80)}
+          minSize={30}
+          maxSize={isReportOpen && conversation.report ? 60 : (isSidebarCollapsed ? 95 : 85)}
+          className="h-full"
           style={{ height: '100%', minHeight: '100%' }}
         >
           <div className="h-full flex flex-col relative overflow-hidden">
             {conversation.status === 'idle' ? (
-              <div className="flex flex-col items-center justify-center h-full max-w-4xl mx-auto space-y-8 p-8 animate-fade-in">
-                <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-center">
+              <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8 animate-fade-in">
+                <h1 className="text-[32px] font-extrabold tracking-tight text-center px-4">
                   Ask them anything
                 </h1>
-                <QueryInput
-                  onSubmit={startSimulation}
-                  isExpanded={false}
-                  availableAudiences={availableAudiences}
-                  onCreateAudience={handleCreateAudience}
-                />
+                <div className="w-full px-4">
+                  <div className="w-3/4 min-w-[400px] max-w-3xl mx-auto">
+                    <QueryInput
+                      onSubmit={startSimulation}
+                      isExpanded={false}
+                      availableAudiences={availableAudiences}
+                      onCreateAudience={handleCreateAudience}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
               <WorkingPane
