@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, Pencil, ArrowUp, Search, X, FlaskConical } from 'lucide-react';
-import { Button } from './ui/Button';
+import { Plus, Users, ArrowUp, Search, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { mockAudiences } from '../data/mockData';
 import { Audience } from '../types';
+import { cn } from '@/lib/utils';
 
 interface QueryInputProps {
   onSubmit: (query: string) => void;
@@ -178,27 +179,18 @@ export const QueryInput: React.FC<QueryInputProps> = ({
     }
   }, [query, compact]);
 
-  const handlePickerKeyDown = (e: React.KeyboardEvent, type: 'audience' | 'method') => {
-    if (e.key === 'Escape') {
-      setShowAudiencePicker(false);
-      setShowMethodPicker(false);
-      textareaRef.current?.focus();
-    }
-    // Add navigation logic if needed
-  };
-
   return (
-    <div className={`w-full max-w-2xl mx-auto transition-all duration-500 ease-in-out ${className} relative`}>
+    <div className={cn("w-full max-w-full mx-auto transition-all duration-500 ease-in-out relative", className)}>
       {/* Audience Picker Popover */}
       {showAudiencePicker && (
-        <div className="absolute bottom-full left-0 mb-4 w-72 bg-[var(--background-card)] rounded-xl border border-[var(--border)] shadow-xl overflow-hidden z-50 animate-slide-up flex flex-col font-sans">
-          <div className="p-3 border-b border-[var(--border)] flex items-center gap-2 bg-[var(--background)]">
-            <Search className="w-4 h-4 text-[var(--text-muted)]" />
+        <div className="absolute bottom-full left-0 mb-4 w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 flex flex-col font-sans">
+          <div className="p-3 border-b border-border flex items-center gap-2 bg-background">
+            <Search className="w-4 h-4 text-muted-foreground" />
             <input
               ref={pickerInputRef}
               value={audienceSearch}
               onChange={(e) => setAudienceSearch(e.target.value)}
-              className="flex-1 bg-transparent border-none text-sm focus:outline-none placeholder:text-[var(--text-muted)]"
+              className="flex-1 bg-transparent border-none text-sm focus:outline-none placeholder:text-muted-foreground text-foreground"
               placeholder="Find or create audience..."
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
@@ -214,7 +206,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                 }
               }}
             />
-            <button onClick={() => setShowAudiencePicker(false)} className="hover:text-[var(--text-primary)] text-[var(--text-muted)]">
+            <button onClick={() => setShowAudiencePicker(false)} className="hover:text-foreground text-muted-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -223,14 +215,14 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               <button
                 key={audience.id}
                 onClick={() => selectAudience(audience)}
-                className="w-full flex items-center gap-3 p-2 hover:bg-[var(--accent-light)] rounded-lg text-left transition-colors group"
+                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
               >
-                <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 bg-foreground text-background rounded-full flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
                   {audience.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{audience.name}</p>
-                  <p className="text-xs text-[var(--text-muted)]">@{audience.id}</p>
+                  <p className="text-sm font-medium text-foreground">{audience.name}</p>
+                  <p className="text-xs text-muted-foreground">@{audience.id}</p>
                 </div>
               </button>
             ))}
@@ -239,20 +231,20 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             {filteredAudiences.length === 0 && audienceSearch.trim() && onCreateAudience && (
               <button
                 onClick={handleCreateNew}
-                className="w-full flex items-center gap-3 p-2 hover:bg-[var(--accent-light)] rounded-lg text-left transition-colors group border border-dashed border-[var(--border)]"
+                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group border border-dashed border-border"
               >
-                <div className="w-8 h-8 bg-[var(--accent)] text-white rounded-full flex items-center justify-center text-xs font-bold transform group-hover:rotate-90 transition-transform">
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold transform group-hover:rotate-90 transition-transform">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">Create "{audienceSearch}"</p>
-                  <p className="text-xs text-[var(--text-muted)]">Add new audience segment</p>
+                  <p className="text-sm font-medium text-foreground">Create "{audienceSearch}"</p>
+                  <p className="text-xs text-muted-foreground">Add new audience segment</p>
                 </div>
               </button>
             )}
 
             {filteredAudiences.length === 0 && !audienceSearch.trim() && (
-              <div className="p-4 text-center text-sm text-[var(--text-muted)]">
+              <div className="p-4 text-center text-sm text-muted-foreground">
                 Type to search or create
               </div>
             )}
@@ -260,23 +252,23 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         </div>
       )}
 
-      {/* Tool/Method Picker Popover - ShadCN Command Style */}
+      {/* Tool/Method Picker Popover */}
       {showMethodPicker && (
-        <div className="absolute bottom-full left-0 mb-4 w-72 bg-[var(--background-card)] rounded-xl border border-[var(--border)] shadow-xl overflow-hidden z-50 animate-slide-up flex flex-col font-sans">
-          <div className="p-2 border-b border-[var(--border)] bg-[var(--background)]">
-            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider pl-2">Research Methods</p>
+        <div className="absolute bottom-full left-0 mb-4 w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 flex flex-col font-sans">
+          <div className="p-2 border-b border-border bg-background">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-2">Research Methods</p>
           </div>
           <div className="p-1 space-y-1 max-h-64 overflow-y-auto">
             {RESEARCH_METHODS.map(method => (
               <button
                 key={method.id}
                 onClick={() => selectMethod(method.id)}
-                className="w-full flex items-center gap-3 p-2 hover:bg-[var(--accent-light)] rounded-lg text-left transition-colors group"
+                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
               >
-                <div className="text-lg w-8 h-8 flex items-center justify-center bg-gray-100 rounded-md group-hover:bg-white transition-colors">{method.icon}</div>
+                <div className="text-lg w-8 h-8 flex items-center justify-center bg-muted/30 rounded-md group-hover:bg-background transition-colors">{method.icon}</div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">/{method.id}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{method.description}</p>
+                  <p className="text-sm font-medium text-foreground">/{method.id}</p>
+                  <p className="text-xs text-muted-foreground">{method.description}</p>
                 </div>
               </button>
             ))}
@@ -286,8 +278,8 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
       {compact ? (
         // Compact Single-Height Layout
-        <div className="relative bg-[var(--background-card)] rounded-[20px] border border-[var(--border)] shadow-sm px-3 py-2 transition-shadow focus-within:ring-2 focus-within:ring-[var(--border)] flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-[var(--text-secondary)] flex-shrink-0 h-8 w-8">
+        <div className="relative bg-background rounded-full border border-input shadow-none px-3 py-2 transition-all focus-within:border-primary flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
             <Plus className="w-5 h-5" />
           </Button>
 
@@ -300,8 +292,8 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onFocus={() => setIsAnimating(false)}
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-lg placeholder:text-[var(--text-muted)] text-[var(--text-primary)] leading-normal"
-            style={{ height: '44px', lineHeight: '28px' }}
+            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
+            style={{ height: '40px', lineHeight: '24px' }}
           />
 
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -311,7 +303,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                 setShowMethodPicker(false);
                 setAudienceSearch('');
               }}
-              className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--accent-light)] transition-colors"
+              className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
               title="Audience"
             >
               <Users className="w-5 h-5" />
@@ -321,14 +313,14 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                 setShowMethodPicker(!showMethodPicker);
                 setShowAudiencePicker(false);
               }}
-              className="p-2 rounded-full text-[var(--text-secondary)] hover:bg-[var(--accent-light)] transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
+              className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
               title="Methods"
             >
               /
             </button>
 
             <button
-              className="h-10 w-10 bg-[#1C1C1C] text-white rounded-[12px] flex items-center justify-center hover:opacity-90 transition-opacity"
+              className="h-10 w-10 bg-primary text-primary-foreground rounded-[12px] flex items-center justify-center hover:opacity-90 transition-opacity"
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
             >
@@ -338,17 +330,17 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         </div>
       ) : (
         // Expanded Multi-line Layout (Updated Design)
-        <div className="relative bg-white rounded-[32px] border border-[var(--border)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-4 transition-shadow focus-within:ring-2 focus-within:ring-[var(--border)]">
+        <div className="relative bg-background rounded-xl border border-input shadow-none p-4 transition-all focus-within:border-primary">
 
           {/* Backdrop for syntax highlighting - EXACTLY matching textarea styles */}
           <div
             aria-hidden="true"
-            className="absolute top-4 left-4 right-4 text-xl leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-[var(--text-primary)] font-sans text-left"
+            className="absolute top-4 left-4 right-4 text-base leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
             style={{ minHeight: '40px' }}
           >
             {query.split(/([@\/][\w-]+)/g).map((part, i) => {
               if (part.startsWith('@') || part.startsWith('/')) {
-                return <span key={i} className="text-gray-400">{part}</span>;
+                return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
               }
               return <span key={i}>{part}</span>;
             })}
@@ -365,13 +357,13 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
             spellCheck={false}
-            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[40px] text-xl placeholder:text-[var(--text-muted)] text-transparent caret-[var(--text-primary)] text-left"
+            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[40px] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
             style={{ lineHeight: '1.4' }}
           />
 
           <div className="flex items-end justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="text-[var(--text-secondary)] hover:bg-transparent px-0 w-auto h-auto">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted px-0 w-auto h-auto p-2">
                 <Plus className="w-5 h-5" />
               </Button>
 
@@ -381,7 +373,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   setShowMethodPicker(false);
                   setAudienceSearch('');
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-transparent text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--accent-light)] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
                 <Users className="w-4 h-4" />
                 Audience
@@ -392,7 +384,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   setShowMethodPicker(!showMethodPicker);
                   setShowAudiencePicker(false);
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--border)] bg-transparent text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--accent-light)] transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
               >
                 Tools
               </button>
@@ -401,7 +393,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             <button
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
-              className="h-10 w-10 bg-[#1C1C1C] text-white rounded-[16px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+              className="h-10 w-10 bg-primary text-primary-foreground rounded-[16px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
             >
               <ArrowUp className="w-5 h-5" />
             </button>

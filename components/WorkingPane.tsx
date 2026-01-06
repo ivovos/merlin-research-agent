@@ -3,12 +3,16 @@ import { Conversation, Report } from '../types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
 import { SuggestionRow } from './SuggestionRow';
-import { FileText, Clock } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
 
 interface WorkingPaneProps {
   conversation: Conversation;
   onSelectReport: (report?: Report) => void;
   onFollowUp: (query: string) => void;
+  availableAudiences?: any[];
+  onCreateAudience?: any;
 }
 
 const MOCK_SUGGESTIONS = [
@@ -20,7 +24,7 @@ const MOCK_SUGGESTIONS = [
   "Summarize key takeaways for stakeholders"
 ];
 
-export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelectReport, onFollowUp }) => {
+export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelectReport, onFollowUp, availableAudiences, onCreateAudience }) => {
   // Auto-scroll logic
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -29,9 +33,9 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
   }, [conversation.messages, conversation.processSteps]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[var(--background)] relative">
-      <div className="flex-1 overflow-y-auto p-6 pb-32">
-        <div className="max-w-2xl mx-auto space-y-8">
+    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <div className="max-w-6xl mx-auto space-y-8 w-full">
 
           {/* Query History */}
           <div className="space-y-8">
@@ -39,11 +43,11 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
               // Render USER message
               if (msg.role === 'user') {
                 return (
-                  <div key={msg.id} className="flex justify-end animate-slide-up">
-                    <div className="bg-[var(--background-card)] border border-[var(--border)] px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-xl text-[var(--text-primary)] text-[1rem] leading-relaxed whitespace-pre-wrap break-words">
+                  <div key={msg.id} className="flex justify-end animate-in slide-in-from-bottom-2 fade-in duration-300">
+                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-xl text-foreground text-base leading-relaxed whitespace-pre-wrap break-words">
                       {msg.content.split(/([@/#][\w-]+)/g).map((part, i) => {
                         if (part.startsWith('@') || part.startsWith('/') || part.startsWith('#')) {
-                          return <span key={i} className="text-gray-400 font-medium">{part}</span>;
+                          return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
                         }
                         return <span key={i}>{part}</span>;
                       })}
@@ -53,28 +57,21 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
               }
 
               // Render ASSISTANT (Result) message
-              // Takes care of steps, thinking time, and report link
               if (msg.role === 'assistant') {
                 return (
-                  <div key={msg.id} className="space-y-6 animate-fade-in">
-                    {/* 1. Process Steps */}
+                  <div key={msg.id} className="space-y-6 animate-in fade-in duration-500">
+                    {/* 1. Process Steps (Collapsed by default if historical) */}
                     {msg.processSteps && (
                       <ProcessSteps
                         steps={msg.processSteps}
-                        isComplete={true} // Historical steps are always complete
+                        isComplete={true}
+                        thinkingTime={msg.thinkingTime}
                       />
                     )}
 
                     {/* 2. Explanation & Metadata */}
-                    <div className="space-y-4">
-                      {msg.thinkingTime && (
-                        <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider pl-1">
-                          <Clock className="w-3 h-3" />
-                          Thoughts for {msg.thinkingTime} seconds
-                        </div>
-                      )}
-
-                      <p className="text-[var(--text-secondary)] leading-relaxed text-[1rem]">
+                    <div className="space-y-4 px-2">
+                      <p className="text-foreground/90 leading-relaxed text-base">
                         {msg.content}
                       </p>
 
@@ -82,14 +79,14 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
                       {msg.report && (
                         <div
                           onClick={() => onSelectReport(msg.report)}
-                          className="group bg-[var(--background-card)] border border-[var(--border)] rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-[var(--text-secondary)] transition-all shadow-sm w-full max-w-md"
+                          className="group bg-card border border-border rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all w-full max-w-md"
                         >
-                          <div className="w-12 h-12 rounded-lg bg-[var(--accent-light)] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                            <FileText className="w-6 h-6 text-[var(--text-primary)]" />
+                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <FileText className="w-6 h-6 text-primary" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-[var(--text-primary)]">{msg.report.title}</h4>
-                            <p className="text-sm text-[var(--text-muted)]">Report • {msg.report.audience.name}</p>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-foreground truncate">{msg.report.title}</h4>
+                            <p className="text-sm text-muted-foreground truncate">Report • {msg.report.audience.name}</p>
                           </div>
                         </div>
                       )}
@@ -111,7 +108,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
           {/* Current Active Processing State (Only if status is processing/not complete yet) */}
           {conversation.status === 'processing' && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-4 animate-pulse px-2">
               <ProcessSteps
                 steps={conversation.processSteps}
                 isComplete={false}
@@ -120,18 +117,22 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
           )}
 
           {/* Scroll Anchor */}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
       {/* Sticky Bottom Input */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent">
-        <QueryInput
-          onSubmit={onFollowUp}
-          placeholder="Ask another question"
-          className="shadow-lg"
-          compact={true}
-        />
+      <div className="flex-shrink-0 border-t border-border bg-background p-6 z-10">
+        <div className="max-w-6xl mx-auto w-full">
+          <QueryInput
+            onSubmit={onFollowUp}
+            placeholder="Ask another question"
+            className=""
+            compact={true}
+            availableAudiences={availableAudiences}
+            onCreateAudience={onCreateAudience}
+          />
+        </div>
       </div>
     </div>
   );

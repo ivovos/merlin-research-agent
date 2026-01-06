@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { QuestionResult } from '../types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip, LabelList } from 'recharts';
-import { Pencil } from 'lucide-react';
 import { EditQuestionModal } from './EditQuestionModal';
-import { useState } from 'react';
+import { cn } from '@/lib/utils'; // Assuming you have this utility
 
 interface QuestionCardProps {
   data: QuestionResult;
@@ -16,14 +15,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
   // Sort data for better visualization (descending)
   const sortedData = [...(data.options || [])].sort((a, b) => b.percentage - a.percentage);
 
+  // Helper to interpret CSS variables for Recharts
+  // In a real app we might use a hook to get computed styles, but for now we'll stick to basic vars or hex if needed.
+  // Using generic gray/primary instructions for Recharts fills
+
   return (
-    <div className="bg-[var(--background-card)] rounded-2xl p-6 mb-6 shadow-sm animate-slide-up border border-[var(--border)]">
+    <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm animate-in slide-in-from-bottom-2 border border-border">
       <div className="flex justify-between items-start mb-4">
-        <h4 className="text-sm font-semibold text-[var(--text-muted)]">Question {index + 1}</h4>
-        <span className="text-sm text-[var(--text-muted)]">{data.respondents} respondents</span>
+        <h4 className="text-sm font-semibold text-muted-foreground">Question {index + 1}</h4>
+        <span className="text-sm text-muted-foreground">{data.respondents} respondents</span>
       </div>
 
-      <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6 leading-tight">
+      <h3 className="text-lg font-bold text-foreground mb-6 leading-tight">
         {data.question}
       </h3>
 
@@ -41,7 +44,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
               dataKey="label"
               type="category"
               width={180}
-              tick={{ fill: 'var(--text-secondary)', fontSize: 13 }}
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 13 }}
               interval={0}
               axisLine={false}
               tickLine={false}
@@ -51,8 +54,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   return (
-                    <div className="bg-[var(--background-card)] border border-[var(--border)] p-3 rounded shadow-lg text-xs space-y-1">
-                      <p className="font-semibold text-[var(--text-primary)] mb-1">{payload[0].payload.label}</p>
+                    <div className="bg-popover border border-border p-3 rounded shadow-lg text-xs space-y-1">
+                      <p className="font-semibold text-popover-foreground mb-1">{payload[0].payload.label}</p>
                       {payload.map((entry: any, i: number) => (
                         <p key={i} className="flex justify-between gap-4" style={{ color: entry.color }}>
                           <span>{entry.name}:</span>
@@ -72,17 +75,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                   key={seg}
                   dataKey={seg}
                   name={seg}
-                  fill={i === 0 ? "var(--text-primary)" : i === 1 ? "#9CA3AF" : "#D1D5DB"}
+                  fill={i === 0 ? "hsl(var(--primary))" : i === 1 ? "#9CA3AF" : "#D1D5DB"} // Quick hack for secondary colors
                   radius={[0, 4, 4, 0]}
                 >
-                  <LabelList dataKey={seg} position="right" formatter={(val: number) => `${val}%`} style={{ fill: 'var(--text-secondary)', fontSize: '12px' }} />
+                  <LabelList dataKey={seg} position="right" formatter={(val: any) => `${val}%`} style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '12px' }} />
                 </Bar>
               ))
             ) : (
               // Default single bar
               <Bar dataKey="percentage" radius={[4, 4, 4, 4]}>
-                <Cell fill="var(--text-primary)" fillOpacity={0.8} />
-                <LabelList dataKey="percentage" position="right" formatter={(val: number) => `${val}%`} style={{ fill: 'var(--text-secondary)', fontSize: '12px' }} />
+                <Cell fill="hsl(var(--primary))" fillOpacity={0.9} />
+                <LabelList dataKey="percentage" position="right" formatter={(val: any) => `${val}%`} style={{ fill: 'hsl(var(--muted-foreground))', fontSize: '12px' }} />
               </Bar>
             )}
 
@@ -94,10 +97,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
 
       {/* Explicit Legend below chart for comparisons */}
       {data.segments && (
-        <div className="flex items-center justify-center gap-6 mt-2 text-xs text-[var(--text-secondary)]">
+        <div className="flex items-center justify-center gap-6 mt-2 text-xs text-muted-foreground">
           {data.segments.map((seg, i) => (
             <div key={seg} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: i === 0 ? "var(--text-primary)" : i === 1 ? "#9CA3AF" : "#D1D5DB" }} />
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: i === 0 ? "hsl(var(--primary))" : i === 1 ? "#9CA3AF" : "#D1D5DB" }} />
               {seg}
             </div>
           ))}

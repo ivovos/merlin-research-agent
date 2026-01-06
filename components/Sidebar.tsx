@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Conversation } from '../types';
-import { Zap, PanelLeftClose, PanelLeftOpen, MessageSquare } from 'lucide-react';
+import { PanelLeftClose, Plus, Folder, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   conversation: Conversation;
   history?: Conversation[];
   onSelectHistory?: (conv: Conversation) => void;
+  onNewChat?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ conversation, history = [], onSelectHistory }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  conversation, 
+  history = [], 
+  onSelectHistory, 
+  onNewChat,
+  isCollapsed = false,
+  onToggleCollapse
+}) => {
   // Combine current conversation and history into one list
-  // The current conversation should act like just another item in the list if it has an ID
   const allItems = [conversation, ...history].filter((item, index, self) =>
     index === self.findIndex((t) => (
       t.id === item.id
@@ -20,64 +29,79 @@ export const Sidebar: React.FC<SidebarProps> = ({ conversation, history = [], on
   );
 
   return (
-    <aside
-      className={`${isCollapsed ? 'w-[70px]' : 'w-[240px]'} h-full border-r border-[var(--border)] bg-[var(--background)] flex flex-col transition-all duration-300 ease-in-out flex-shrink-0 relative group z-20`}
-    >
-      <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} mb-4`}>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <img src="/logo.png" alt="Merlin" className="w-8 h-8" />
+    <aside className="flex h-full w-full flex-col border-r bg-background">
+      <div className="flex h-16 items-center border-b px-4">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold text-sm">
+            JP
+          </div>
         </div>
-        {!isCollapsed && (
-          <button onClick={() => setIsCollapsed(true)} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Collapse sidebar">
-            <PanelLeftClose className="w-5 h-5" />
-          </button>
+        {onToggleCollapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-8 w-8"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
         )}
       </div>
 
-      {/* Floating expand button that appears when collapsed */}
-      {isCollapsed && (
-        <div className="absolute top-6 left-0 w-full flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="absolute top-0 right-[-12px] bg-white border border-gray-200 rounded-full p-1 shadow-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] z-50"
-            title="Expand sidebar"
+      <div className="flex-1 space-y-4 p-4 overflow-y-auto">
+        {/* Action buttons */}
+        <div className="space-y-1">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2"
+            onClick={onNewChat}
           >
-            <PanelLeftOpen className="w-4 h-4" />
-          </button>
+            <Plus className="h-4 w-4" />
+            <span>New conversation</span>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2"
+          >
+            <Users className="h-4 w-4" />
+            <span>Audiences</span>
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2"
+          >
+            <Folder className="h-4 w-4" />
+            <span>Projects</span>
+          </Button>
         </div>
-      )}
 
-      <div className="flex-1 overflow-y-auto px-4 space-y-2">
-        {!isCollapsed && <h3 className="text-xs font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wider pl-2">History</h3>}
+        {/* Recent conversations */}
+        <div className="space-y-1">
+          <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Recent
+          </div>
+          <div className="space-y-1">
+            {allItems.map((item) => {
+              if (item.status === 'idle' && item.query === '') return null;
+              const isActive = item.id === conversation.id;
 
-        {allItems.map((item) => {
-          const isActive = item.id === conversation.id;
-          // If item is 'idle' (default empty state), maybe don't show it in history or show as "New Chat"
-          if (item.status === 'idle' && item.query === '') return null;
-
-          return (
-            <div
-              key={item.id}
-              onClick={() => onSelectHistory?.(item)}
-              className={`group flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer transition-all border ${isActive
-                ? 'bg-[var(--accent-light)] border-[var(--accent)]/50'
-                : 'hover:bg-[var(--accent-light)] border-transparent hover:border-[var(--border)]'
-                }`}
-            >
-              {isCollapsed ? (
-                <div className="mx-auto" title={item.query}>
-                  <MessageSquare className={`w-5 h-5 ${isActive ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'}`} />
-                </div>
-              ) : (
-                <>
-                  <p className={`pl-1 text-sm truncate font-medium ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}>
-                    {item.query}
-                  </p>
-                </>
-              )}
-            </div>
-          );
-        })}
+              return (
+                <button
+                  key={item.id}
+                  className={cn(
+                    "w-full text-left px-3 py-2 rounded-md text-sm transition-colors",
+                    isActive 
+                      ? "bg-accent text-accent-foreground" 
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  onClick={() => onSelectHistory?.(item)}
+                >
+                  <span className="truncate block">{item.query || "New Conversation"}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </aside>
   );

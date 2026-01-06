@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CONFIG } from './config';
 import { Conversation, ProcessStep, Report, Audience } from './types';
 import { initialProcessSteps, initialQualitativeSteps, mockReport, mockAudience, mockAudiences, mockHistory } from './data/mockData';
@@ -10,6 +10,8 @@ import { Zap } from 'lucide-react';
 // Removed unused Google GenAI imports
 
 import Anthropic from '@anthropic-ai/sdk';
+import { cn } from './lib/utils';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 // Initialize Anthropic Client
 const anthropic = new Anthropic({
@@ -49,10 +51,7 @@ const App: React.FC = () => {
   });
 
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportWidthPercentage, setReportWidthPercentage] = useState(50);
-  const [isResizing, setIsResizing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const reportPaneRef = useRef<HTMLDivElement>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Audience State with Persistence
   const [availableAudiences, setAvailableAudiences] = useState<Audience[]>(() => {
@@ -83,40 +82,6 @@ const App: React.FC = () => {
 
     return newAudience;
   };
-
-  // Resize Logic
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing || !containerRef.current) return;
-
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newWidth = containerRect.right - e.clientX;
-      const newPercentage = (newWidth / containerRect.width) * 100;
-
-      // Clamp between 30% and 70%
-      if (newPercentage >= 30 && newPercentage <= 70) {
-        setReportWidthPercentage(newPercentage);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = 'auto';
-    };
-
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
 
   const generateResearchData = async (userQuery: string, currentReport: Report | null = null) => {
     // IMMEDIATE BYPASS: If focus group, skip API to ensure robustness and speed
@@ -613,8 +578,7 @@ Output strictly valid JSON matching this structure:
         report: report
       }));
     }
-    // Default open to 50% if closed
-    if (reportWidthPercentage < 10) setReportWidthPercentage(50);
+    // Default open to 50% if closed (handled by defaultSize in resize panel)
   };
 
   const handleCloseReport = () => {
@@ -651,72 +615,97 @@ Output strictly valid JSON matching this structure:
     }
   };
 
+  const handleNewChat = () => {
+    setConversation({
+      id: `conv_${Date.now()}`,
+      query: '',
+      messages: [],
+      audience: mockAudience,
+      processSteps: initialProcessSteps,
+      thinkingTime: 0,
+      explanation: '',
+      report: null,
+      status: 'idle',
+    });
+    setIsReportOpen(false);
+  };
+
   // --- Render based on state ---
-
-  // State 1: Empty
-  if (conversation.status === 'idle') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[var(--background)] animate-fade-in">
-        <div className="absolute top-8 left-8">
-          <img src="/logo.png" alt="Merlin" className="w-8 h-8 text-[var(--accent)]" />
-        </div>
-
-        <div className="w-full max-w-2xl text-center space-y-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-[var(--text-primary)]">
-            Ask them anything
-          </h1>
-          <QueryInput
-            onSubmit={startSimulation}
-            isExpanded={false}
-            availableAudiences={availableAudiences}
-            onCreateAudience={handleCreateAudience}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  // State 2 & 3: Processing & Complete
+  // Layout: Sidebar (left, 25%) | Conversation (right, 75% or 37.5%) | Canvas/Report (right, 37.5% when open)
+  
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-[var(--background)]">
-      <Sidebar conversation={conversation} history={history} onSelectHistory={handleSelectHistory} />
-
-      <div className="flex-1 flex overflow-hidden relative" ref={containerRef}>
-        <div className="flex-1 border-r border-[var(--border)] min-w-0 transition-all duration-500">
-          <WorkingPane
+    <div className="h-[100dvh] w-full overflow-hidden bg-background font-sans text-foreground" style={{ height: '100dvh', minHeight: '100vh' }}>
+      <ResizablePanelGroup direction="horizontal" className="h-full" style={{ height: '100%' }}>
+        {/* Left: Sidebar (always 25%) */}
+        <ResizablePanel 
+          defaultSize={isSidebarCollapsed ? 4 : 25} 
+          minSize={isSidebarCollapsed ? 4 : 20} 
+          maxSize={isSidebarCollapsed ? 4 : 35} 
+          className="h-full" 
+          style={{ height: '100%', minHeight: '100%' }}
+          collapsible={true}
+        >
+          <Sidebar
             conversation={conversation}
-            onSelectReport={handleSelectReport}
-            onFollowUp={handleFollowUp}
-            availableAudiences={availableAudiences}
-            onCreateAudience={handleCreateAudience}
+            history={history}
+            onSelectHistory={handleSelectHistory}
+            onNewChat={handleNewChat}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
-        </div>
+        </ResizablePanel>
 
+        <ResizableHandle withHandle disabled={isSidebarCollapsed} />
+
+        {/* Middle: Conversation Panel */}
+        <ResizablePanel 
+          defaultSize={isReportOpen && conversation.report ? 37.5 : 75} 
+          minSize={30} 
+          maxSize={isReportOpen && conversation.report ? 50 : 80}
+          className="h-full" 
+          style={{ height: '100%', minHeight: '100%' }}
+        >
+          <div className="h-full flex flex-col relative overflow-hidden">
+            {conversation.status === 'idle' ? (
+              <div className="flex flex-col items-center justify-center h-full max-w-4xl mx-auto space-y-8 p-8 animate-fade-in">
+                <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-center">
+                  Ask them anything
+                </h1>
+                <QueryInput
+                  onSubmit={startSimulation}
+                  isExpanded={false}
+                  availableAudiences={availableAudiences}
+                  onCreateAudience={handleCreateAudience}
+                />
+              </div>
+            ) : (
+              <WorkingPane
+                conversation={conversation}
+                onSelectReport={handleSelectReport}
+                onFollowUp={handleFollowUp}
+                availableAudiences={availableAudiences}
+                onCreateAudience={handleCreateAudience}
+              />
+            )}
+          </div>
+        </ResizablePanel>
+
+        {/* Right: Canvas/Report Panel (only when report is open, 37.5%) */}
         {isReportOpen && conversation.report && (
           <>
-            {/* Resizer Handle */}
-            <div
-              className="w-1.5 cursor-col-resize hover:bg-[var(--accent)]/10 active:bg-[var(--accent)]/20 transition-colors z-20 absolute h-full flex justify-center group"
-              style={{ right: `${reportWidthPercentage}%`, transform: 'translateX(50%)' }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setIsResizing(true);
-              }}
-            >
-              {/* Visible line on hover */}
-              <div className="w-px h-full bg-transparent group-hover:bg-[var(--accent)]/20 transition-colors" />
-            </div>
-
-            <div
-              className="bg-[var(--background)] animate-slide-in-right shadow-xl z-10 flex-shrink-0 border-l border-[var(--border)]"
-              style={{ width: `${reportWidthPercentage}%` }}
-              ref={reportPaneRef}
+            <ResizableHandle withHandle />
+            <ResizablePanel 
+              defaultSize={37.5} 
+              minSize={25} 
+              maxSize={50}
+              className="h-full" 
+              style={{ height: '100%', minHeight: '100%' }}
             >
               <ReportPane conversation={conversation} onClose={handleCloseReport} onEditQuestion={handleEditQuestion} />
-            </div>
+            </ResizablePanel>
           </>
         )}
-      </div>
+      </ResizablePanelGroup>
     </div>
   );
 };

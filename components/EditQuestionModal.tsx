@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface EditQuestionModalProps {
     isOpen: boolean;
