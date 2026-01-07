@@ -30,10 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={cn(
-        "flex h-full flex-col bg-background border-r border-border transition-all duration-300",
-        isCollapsed ? "w-16" : "w-full"
-      )}
+      className="flex h-full w-full max-w-[320px] flex-col bg-background border-r border-border"
     >
       <div className={cn(
         "flex h-16 items-center border-b",

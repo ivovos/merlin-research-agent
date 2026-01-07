@@ -166,10 +166,12 @@ DECISION LOGIC:
 
 **CRITICAL: AUDIENCE SEGMENTATION LOGIC**
 Analyze the user's request to determine the number of audience segments to visualize.
-1. **Single Audience**: If the user asks about a general group (e.g., "What do teens like?", "Survey parents"), use a SINGLE segment. 
+1. **Single Audience**: If the user asks about a general group (e.g., "What do teens like?", "Survey parents"), use a SINGLE segment.
    - Output 'segments': [] (empty array).
+   - Each option should have: { "label": "string", "percentage": number }
 2. **Comparison**: If the user asks to compare groups (e.g., "Teens vs Adults", "Compare UK and US"), use MULTIPLE segments.
    - Output 'segments': ["Teens", "Adults"].
+   - Each option should have: { "label": "string", "Teens": number, "Adults": number }
    - You can have 2, 3, or more segments if requested.
 3. **Follow-up Context**: If updating a report, check if the user is ADDING a comparison (e.g., "Now compare with Gen Z").
    - If so, update 'segments' to include the new group and ensure all data includes values for ALL segments.
@@ -214,9 +216,19 @@ Output strictly valid JSON matching this structure:
   "report": {
     "title": "string",
     "abstract": "string",
-    "segments": ["string"],
-    "questions": [ ... ], // For quantitative
-    "themes": [           // For qualitative
+    "segments": [],
+    "questions": [
+      {
+        "question": "What is your primary concern?",
+        "options": [
+          { "label": "Cost", "percentage": 42.3 },
+          { "label": "Quality", "percentage": 31.8 },
+          { "label": "Availability", "percentage": 15.2 },
+          { "label": "Other", "percentage": 10.7 }
+        ]
+      }
+    ],
+    "themes": [
        {
          "id": "theme_1",
          "topic": "string",
@@ -226,7 +238,9 @@ Output strictly valid JSON matching this structure:
        }
     ]
   }
-}`;
+}
+
+CRITICAL: For quantitative reports, EVERY question MUST have an "options" array with 3-6 options. Each option MUST have "label" (string) and "percentage" (number). Percentages should be realistic (not round numbers) and should approximately sum to 100.`;
 
       const apiCall = anthropic.messages.create({
         model: 'claude-3-haiku-20240307',
@@ -635,18 +649,17 @@ Output strictly valid JSON matching this structure:
   
   return (
     <div className="h-[100dvh] w-full overflow-hidden bg-background font-sans text-foreground" style={{ height: '100dvh', minHeight: '100vh' }}>
-      <ResizablePanelGroup direction="horizontal" className="h-full" style={{ height: '100%' }}>
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="h-full"
+      >
         {/* Left: Sidebar */}
         <ResizablePanel
+          key={`sidebar-${isSidebarCollapsed}`}
           defaultSize={isSidebarCollapsed ? 5 : 20}
-          minSize={isSidebarCollapsed ? 5 : 15}
-          maxSize={isSidebarCollapsed ? 5 : 30}
-          className="h-full flex-shrink-0"
-          style={{
-            height: '100%',
-            minHeight: '100%'
-          }}
-          collapsible={true}
+          minSize={5}
+          maxSize={35}
+          className="h-full"
         >
           <Sidebar
             conversation={conversation}
@@ -658,15 +671,18 @@ Output strictly valid JSON matching this structure:
           />
         </ResizablePanel>
 
-        <ResizableHandle withHandle disabled={isSidebarCollapsed} className={isSidebarCollapsed ? "pointer-events-none" : ""} />
+        <ResizableHandle withHandle />
 
         {/* Middle: Conversation Panel */}
         <ResizablePanel
-          defaultSize={isReportOpen && conversation.report ? (isSidebarCollapsed ? 57.5 : 42.5) : (isSidebarCollapsed ? 95 : 80)}
-          minSize={30}
-          maxSize={isReportOpen && conversation.report ? 60 : (isSidebarCollapsed ? 95 : 85)}
+          defaultSize={
+            isReportOpen && conversation.report
+              ? (isSidebarCollapsed ? 57.5 : 42.5)
+              : (isSidebarCollapsed ? 95 : 80)
+          }
+          minSize={25}
+          maxSize={70}
           className="h-full"
-          style={{ height: '100%', minHeight: '100%' }}
         >
           <div className="h-full flex flex-col relative overflow-hidden">
             {conversation.status === 'idle' ? (
@@ -697,16 +713,15 @@ Output strictly valid JSON matching this structure:
           </div>
         </ResizablePanel>
 
-        {/* Right: Canvas/Report Panel (only when report is open, 37.5%) */}
+        {/* Right: Canvas/Report Panel */}
         {isReportOpen && conversation.report && (
           <>
             <ResizableHandle withHandle />
-            <ResizablePanel 
-              defaultSize={37.5} 
-              minSize={25} 
+            <ResizablePanel
+              defaultSize={37.5}
+              minSize={25}
               maxSize={50}
-              className="h-full" 
-              style={{ height: '100%', minHeight: '100%' }}
+              className="h-full"
             >
               <ReportPane conversation={conversation} onClose={handleCloseReport} onEditQuestion={handleEditQuestion} />
             </ResizablePanel>
