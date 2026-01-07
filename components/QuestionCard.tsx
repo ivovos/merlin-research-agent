@@ -73,7 +73,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                 dataKey="label"
                 type="category"
                 width={180}
-                tick={{ fill: mutedForegroundColor, fontSize: 13 }}
+                tick={{ fill: mutedForegroundColor, fontSize: 14 }}
                 interval={0}
                 axisLine={false}
                 tickLine={false}
@@ -83,7 +83,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-popover border border-border p-3 rounded shadow-lg text-xs space-y-1">
+                      <div className="bg-popover border border-border p-3 rounded shadow-lg text-sm space-y-1">
                         <p className="font-semibold text-popover-foreground mb-1">{payload[0].payload.label}</p>
                         {payload.map((entry: any, i: number) => (
                           <p key={i} className="flex justify-between gap-4" style={{ color: entry.color }}>
@@ -107,27 +107,27 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                     fill={i === 0 ? primaryColor : segmentColors[i % segmentColors.length]}
                     radius={[0, 4, 4, 0]}
                   >
-                    <LabelList 
-                      dataKey={seg} 
-                      position="right" 
-                      formatter={(val: any) => `${val}%`} 
-                      style={{ fill: mutedForegroundColor, fontSize: '12px' }} 
+                    <LabelList
+                      dataKey={seg}
+                      position="right"
+                      formatter={(val: any) => `${val}%`}
+                      style={{ fill: mutedForegroundColor, fontSize: '14px' }}
                     />
                   </Bar>
                 ))
               ) : (
                 // Default single bar
-                <Bar 
-                  dataKey="percentage" 
+                <Bar
+                  dataKey="percentage"
                   fill={primaryColor}
                   fillOpacity={0.9}
                   radius={[4, 4, 4, 4]}
                 >
-                  <LabelList 
-                    dataKey="percentage" 
-                    position="right" 
-                    formatter={(val: any) => `${val}%`} 
-                    style={{ fill: mutedForegroundColor, fontSize: '12px' }} 
+                  <LabelList
+                    dataKey="percentage"
+                    position="right"
+                    formatter={(val: any) => `${val}%`}
+                    style={{ fill: mutedForegroundColor, fontSize: '14px' }}
                   />
                 </Bar>
               )}
@@ -138,14 +138,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
 
       {/* Explicit Legend below chart for comparisons */}
       {data.segments && data.segments.length > 0 && (
-        <div className="flex items-center justify-center gap-6 mt-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-6 mt-2 text-sm text-muted-foreground">
           {data.segments.map((seg, i) => (
             <div key={seg} className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-sm" 
-                style={{ 
-                  backgroundColor: i === 0 ? primaryColor : segmentColors[i % segmentColors.length] 
-                }} 
+              <div
+                className="w-3 h-3 rounded-sm"
+                style={{
+                  backgroundColor: i === 0 ? primaryColor : segmentColors[i % segmentColors.length]
+                }}
               />
               {seg}
             </div>

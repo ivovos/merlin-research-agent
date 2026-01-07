@@ -34,6 +34,13 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
+      {/* Navigation Bar */}
+      <div className="h-16 flex items-center justify-center px-4">
+        <h2 className="text-sm font-medium text-foreground">
+          {conversation.query || 'New conversation'}
+        </h2>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
         <div className="max-w-6xl mx-auto space-y-8 w-full">
 
@@ -44,7 +51,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
               if (msg.role === 'user') {
                 return (
                   <div key={msg.id} className="flex justify-end animate-in slide-in-from-bottom-2 fade-in duration-300">
-                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-xl text-foreground text-base leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-xl text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {msg.content.split(/([@/#][\w-]+)/g).map((part, i) => {
                         if (part.startsWith('@') || part.startsWith('/') || part.startsWith('#')) {
                           return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
@@ -71,7 +78,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
                     {/* 2. Explanation & Metadata */}
                     <div className="space-y-4 px-2">
-                      <p className="text-foreground/90 leading-relaxed text-base">
+                      <p className="text-foreground/90 leading-relaxed text-sm">
                         {msg.content}
                       </p>
 
@@ -122,7 +129,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
       </div>
 
       {/* Sticky Bottom Input */}
-      <div className="flex-shrink-0 border-t border-border bg-background p-6 z-10">
+      <div className="flex-shrink-0 bg-background p-6 z-10">
         <div className="max-w-6xl mx-auto w-full">
           <QueryInput
             onSubmit={onFollowUp}

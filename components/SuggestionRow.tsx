@@ -38,7 +38,7 @@ export const SuggestionRow: React.FC<SuggestionRowProps> = ({ suggestions, onSel
                         <button
                             key={idx}
                             onClick={() => onSelect(suggestion)}
-                            className="flex-shrink-0 snap-start bg-[var(--background-card)] hover:bg-[var(--accent-light)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] px-4 py-2 rounded-full text-sm transition-all duration-200 whitespace-nowrap group-hover:shadow-sm"
+                            className="flex-shrink-0 snap-start bg-card hover:bg-accent/50 border border-border hover:border-gray-300 text-muted-foreground hover:text-foreground px-4 py-2 rounded-full text-sm transition-all duration-200 whitespace-nowrap group-hover:shadow-sm"
                         >
                             <span className="flex items-center gap-2">
                                 {suggestion.split(/([@/#][\w-]+)/g).map((part, i) => {

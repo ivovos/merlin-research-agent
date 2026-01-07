@@ -16,37 +16,31 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
    if (status === 'complete' && report) {
       return (
          <div className="w-full h-full bg-background flex flex-col relative border-l border-border">
-            {/* Top Right Actions */}
-            <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
-               <Button variant="outline" size="sm" className="gap-2 bg-background border-border shadow-sm hover:bg-muted">
-                  <Share2 className="w-4 h-4" />
-                  Share
-               </Button>
-               <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-muted rounded-full ml-1">
-                  <X className="w-5 h-5" />
-               </Button>
+            {/* Navigation Bar */}
+            <div className="h-16 flex items-center justify-end border-b border-border px-4 gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 bg-background border-border shadow-sm hover:bg-muted">
+                     <Share2 className="w-4 h-4" />
+                     Share
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-muted rounded-full h-8 w-8">
+                     <X className="w-4 h-4" />
+                  </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-hide">
                <div className="p-8 pb-32 max-w-3xl mx-auto">
                   {/* Report Header */}
-                  <div className="mt-8 mb-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
-                     <div className="flex items-center gap-3 mb-4 text-muted-foreground">
-                        <span className="text-xs font-semibold uppercase tracking-wide">Research Insights</span>
-                        <span className="w-1 h-1 rounded-full bg-border"></span>
-                        <span className="text-xs">{new Date().toLocaleDateString()}</span>
-                     </div>
-
-                     <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6 leading-tight tracking-tight">
+                  <div className="mt-4 mb-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                     <h1 className="text-2xl font-bold text-foreground mb-6 leading-tight tracking-tight">
                         {report.title}
                      </h1>
 
                      <div className="flex items-center gap-2 mb-8">
                         <div className="flex items-center gap-2 bg-secondary/50 border border-border px-3 py-1.5 rounded-full">
-                           <div className="w-5 h-5 bg-foreground text-background flex items-center justify-center rounded-full text-xs font-serif font-bold">
+                           <div className="w-5 h-5 bg-foreground text-background flex items-center justify-center rounded-md text-xs font-serif font-bold">
                               {report.audience.icon}
                            </div>
-                           <span className="text-sm font-medium">{report.audience.name}</span>
+                           <span className="text-sm font-medium line-clamp-2">{report.audience.name}</span>
                         </div>
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground">{report.respondents} respondents</span>
@@ -55,7 +49,7 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
                      {/* Summary (formerly Abstract) */}
                      <div className="bg-transparent">
                         <h3 className="text-sm font-semibold text-foreground mb-2">Summary</h3>
-                        <p className="text-lg text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                            {report.abstract}
                         </p>
                      </div>
@@ -84,7 +78,7 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
                                  </div>
                               </div>
 
-                              <p className="text-muted-foreground mb-6 leading-relaxed">
+                              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                                  {theme.summary}
                               </p>
 

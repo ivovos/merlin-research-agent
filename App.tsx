@@ -6,12 +6,16 @@ import { Sidebar } from './components/Sidebar';
 import { WorkingPane } from './components/WorkingPane';
 import { ReportPane } from './components/ReportPane';
 import { QueryInput } from './components/QueryInput';
+import { AudiencesList } from './components/AudiencesList';
+import { AudienceDetail } from './components/AudienceDetail';
 import { Zap } from 'lucide-react';
 // Removed unused Google GenAI imports
 
 import Anthropic from '@anthropic-ai/sdk';
 import { cn } from './lib/utils';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import type { Account, Audience as AudienceData } from './data/mockData';
+import { wonderhoodAccount } from './data/mockData';
 
 // Initialize Anthropic Client
 const anthropic = new Anthropic({
@@ -53,7 +57,13 @@ const App: React.FC = () => {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Audience State with Persistence
+  // Audience Management State
+  const [currentAccount, setCurrentAccount] = useState<Account>(wonderhoodAccount);
+  const [activeView, setActiveView] = useState<'conversation' | 'audiences' | 'audienceDetail'>('conversation');
+  const [selectedAudience, setSelectedAudience] = useState<AudienceData | null>(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+
+  // Audience State with Persistence (for conversation feature)
   const [availableAudiences, setAvailableAudiences] = useState<Audience[]>(() => {
     const saved = localStorage.getItem('merlin_audiences');
     if (saved) {
@@ -624,6 +634,7 @@ CRITICAL: For quantitative reports, EVERY question MUST have an "options" array 
 
   const handleSelectHistory = (hist: Conversation) => {
     setConversation(hist);
+    setActiveView('conversation'); // Switch to conversation view
     if (hist.status === 'complete' && hist.report) {
       setIsReportOpen(true);
     }
@@ -642,6 +653,57 @@ CRITICAL: For quantitative reports, EVERY question MUST have an "options" array 
       status: 'idle',
     });
     setIsReportOpen(false);
+    setActiveView('conversation');
+  };
+
+  // Audience Management Handlers
+  const handleAudiencesClick = () => {
+    setActiveView('audiences');
+    setSelectedAudience(null);
+    setSelectedProject(null); // null means show all audiences (grouped)
+    setIsReportOpen(false);
+  };
+
+  const handleSelectAudience = (audience: AudienceData) => {
+    setSelectedAudience(audience);
+    setActiveView('audienceDetail');
+    setIsReportOpen(false);
+  };
+
+  const handleBackToAudiences = () => {
+    setSelectedAudience(null);
+    setActiveView('audiences');
+  };
+
+  const handleAskAudienceQuestion = (question: string, audience: AudienceData) => {
+    // Start a new conversation with this audience
+    setConversation({
+      id: `conv_${Date.now()}`,
+      query: question,
+      messages: [],
+      audience: { id: audience.id, name: audience.name, icon: audience.icon },
+      processSteps: initialProcessSteps,
+      thinkingTime: 0,
+      explanation: '',
+      report: null,
+      status: 'idle',
+    });
+    setActiveView('conversation');
+    setIsReportOpen(false);
+    // Start the simulation with the question
+    startSimulation(question, { id: audience.id, name: audience.name, icon: audience.icon });
+  };
+
+  const handleAccountChange = (account: Account) => {
+    setCurrentAccount(account);
+    setSelectedProject(null); // Reset to show all audiences
+    setSelectedAudience(null);
+  };
+
+  const handleProjectSelect = (projectId: string) => {
+    setSelectedProject(projectId);
+    setSelectedAudience(null);
+    setActiveView('audiences'); // Show audiences filtered by project
   };
 
   // --- Render based on state ---
@@ -668,26 +730,50 @@ CRITICAL: For quantitative reports, EVERY question MUST have an "options" array 
             onNewChat={handleNewChat}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            currentAccount={currentAccount}
+            onAccountChange={handleAccountChange}
+            selectedProject={selectedProject}
+            onProjectSelect={handleProjectSelect}
+            onAudiencesClick={handleAudiencesClick}
+            activeView={activeView}
           />
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Middle: Conversation Panel */}
+        {/* Middle: Main Content Panel */}
         <ResizablePanel
           defaultSize={
-            isReportOpen && conversation.report
+            // Audience views take full width (no report panel)
+            activeView === 'audiences' || activeView === 'audienceDetail'
+              ? (isSidebarCollapsed ? 95 : 80)
+              // Conversation view with report open
+              : isReportOpen && conversation.report
               ? (isSidebarCollapsed ? 57.5 : 42.5)
+              // Conversation view without report
               : (isSidebarCollapsed ? 95 : 80)
           }
           minSize={25}
-          maxSize={70}
+          maxSize={activeView === 'audiences' || activeView === 'audienceDetail' ? 95 : 70}
           className="h-full"
         >
           <div className="h-full flex flex-col relative overflow-hidden">
-            {conversation.status === 'idle' ? (
+            {activeView === 'audiences' ? (
+              <AudiencesList
+                account={currentAccount}
+                selectedProject={selectedProject}
+                onSelectAudience={handleSelectAudience}
+              />
+            ) : activeView === 'audienceDetail' && selectedAudience ? (
+              <AudienceDetail
+                audience={selectedAudience}
+                account={currentAccount}
+                onBack={handleBackToAudiences}
+                onAskQuestion={handleAskAudienceQuestion}
+              />
+            ) : conversation.status === 'idle' ? (
               <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8 animate-fade-in">
-                <h1 className="text-[32px] font-extrabold tracking-tight text-center px-4">
+                <h1 className="text-5xl font-extrabold tracking-tight text-center px-4">
                   Ask them anything
                 </h1>
                 <div className="w-full px-4">
@@ -713,8 +799,8 @@ CRITICAL: For quantitative reports, EVERY question MUST have an "options" array 
           </div>
         </ResizablePanel>
 
-        {/* Right: Canvas/Report Panel */}
-        {isReportOpen && conversation.report && (
+        {/* Right: Canvas/Report Panel (only in conversation view) */}
+        {activeView === 'conversation' && isReportOpen && conversation.report && (
           <>
             <ResizableHandle withHandle />
             <ResizablePanel

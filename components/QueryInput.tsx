@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, ArrowUp, Search, X } from 'lucide-react';
+import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockAudiences } from '../data/mockData';
 import { Audience } from '../types';
@@ -24,11 +24,11 @@ const PLACEHOLDER_EXAMPLES = [
 ];
 
 const RESEARCH_METHODS = [
-  { id: 'survey', label: 'Survey', description: 'Broad quantitative data', icon: '📝' },
-  { id: 'focus-group', label: 'Focus Group', description: 'Deep qualitative insights', icon: '👥' },
-  { id: 'messaging-testing', label: 'Messaging Testing', description: 'Test copy and value props', icon: '💬' },
-  { id: 'plot', label: 'Plot', description: 'Visual mapping of data', icon: '📈' },
-  { id: 'heatmap', label: 'Heatmap', description: 'Intensity distribution', icon: '🔥' },
+  { id: 'survey', label: 'Survey', description: 'Broad quantitative data', icon: ClipboardList },
+  { id: 'focus-group', label: 'Focus Group', description: 'Deep qualitative insights', icon: Users },
+  { id: 'messaging-testing', label: 'Messaging Testing', description: 'Test copy and value props', icon: MessageSquare },
+  { id: 'plot', label: 'Plot', description: 'Visual mapping of data', icon: TrendingUp },
+  { id: 'heatmap', label: 'Heatmap', description: 'Intensity distribution', icon: Flame },
 ];
 
 export const QueryInput: React.FC<QueryInputProps> = ({
@@ -44,6 +44,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const [showAudiencePicker, setShowAudiencePicker] = useState(false);
   const [showMethodPicker, setShowMethodPicker] = useState(false);
   const [audienceSearch, setAudienceSearch] = useState('');
+  const [methodSearch, setMethodSearch] = useState('');
 
   // Animation state
   const [placeholderText, setPlaceholderText] = useState('');
@@ -51,13 +52,59 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pickerInputRef = useRef<HTMLInputElement>(null);
+  const audiencePickerRef = useRef<HTMLDivElement>(null);
+  const methodPickerRef = useRef<HTMLDivElement>(null);
+  const audienceContainerRef = useRef<HTMLDivElement>(null);
+  const methodContainerRef = useRef<HTMLDivElement>(null);
+
+  const [showPickerAbove, setShowPickerAbove] = useState(false);
+
+  // Calculate if picker should show above or below
+  const calculatePickerDirection = (containerRef: React.RefObject<HTMLDivElement>) => {
+    if (!containerRef.current) return false;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const pickerHeight = 400; // Approximate max height
+    const spaceBelow = window.innerHeight - containerRect.bottom;
+
+    return spaceBelow < pickerHeight;
+  };
 
   // Focus picker input when opened
   useEffect(() => {
     if (showAudiencePicker) {
+      setShowPickerAbove(calculatePickerDirection(audienceContainerRef));
       setTimeout(() => pickerInputRef.current?.focus(), 50);
     }
   }, [showAudiencePicker]);
+
+  useEffect(() => {
+    if (showMethodPicker) {
+      setShowPickerAbove(calculatePickerDirection(methodContainerRef));
+    }
+  }, [showMethodPicker]);
+
+  // Click outside to close popovers
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (audiencePickerRef.current && !audiencePickerRef.current.contains(event.target as Node)) {
+        setShowAudiencePicker(false);
+        setAudienceSearch('');
+      }
+      if (methodPickerRef.current && !methodPickerRef.current.contains(event.target as Node)) {
+        setShowMethodPicker(false);
+        setMethodSearch('');
+      }
+    };
+
+    if (showAudiencePicker || showMethodPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAudiencePicker, showMethodPicker]);
 
   // Placeholder typing animation
   useEffect(() => {
@@ -169,6 +216,12 @@ export const QueryInput: React.FC<QueryInputProps> = ({
     a.id.toLowerCase().includes(audienceSearch.toLowerCase())
   );
 
+  const filteredMethods = RESEARCH_METHODS.filter(m =>
+    m.label.toLowerCase().includes(methodSearch.toLowerCase()) ||
+    m.id.toLowerCase().includes(methodSearch.toLowerCase()) ||
+    m.description.toLowerCase().includes(methodSearch.toLowerCase())
+  );
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -180,10 +233,24 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   }, [query, compact]);
 
   return (
-    <div className={cn("w-full max-w-full mx-auto transition-all duration-500 ease-in-out relative", className)}>
+    <div className={cn("w-full max-w-full mx-auto transition-all duration-500 ease-in-out", className)}>
       {/* Audience Picker Popover */}
       {showAudiencePicker && (
-        <div className="absolute bottom-full left-0 mb-4 w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 flex flex-col font-sans">
+        <div
+          ref={audiencePickerRef}
+          className={cn(
+            "fixed w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
+            showPickerAbove ? "animate-in slide-in-from-top-2" : "animate-in slide-in-from-bottom-2"
+          )}
+          style={
+            audienceContainerRef.current ? {
+              [showPickerAbove ? 'bottom' : 'top']: showPickerAbove
+                ? `${window.innerHeight - audienceContainerRef.current.getBoundingClientRect().top + 8}px`
+                : `${audienceContainerRef.current.getBoundingClientRect().bottom + 8}px`,
+              left: `${audienceContainerRef.current.getBoundingClientRect().left}px`
+            } : {}
+          }
+        >
           <div className="p-3 border-b border-border flex items-center gap-2 bg-background">
             <Search className="w-4 h-4 text-muted-foreground" />
             <input
@@ -217,7 +284,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                 onClick={() => selectAudience(audience)}
                 className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
               >
-                <div className="w-8 h-8 bg-foreground text-background rounded-full flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
                   {audience.icon}
                 </div>
                 <div>
@@ -254,24 +321,72 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
       {/* Tool/Method Picker Popover */}
       {showMethodPicker && (
-        <div className="absolute bottom-full left-0 mb-4 w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 flex flex-col font-sans">
+        <div
+          ref={methodPickerRef}
+          className={cn(
+            "fixed w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
+            showPickerAbove ? "animate-in slide-in-from-top-2" : "animate-in slide-in-from-bottom-2"
+          )}
+          style={
+            methodContainerRef.current ? {
+              [showPickerAbove ? 'bottom' : 'top']: showPickerAbove
+                ? `${window.innerHeight - methodContainerRef.current.getBoundingClientRect().top + 8}px`
+                : `${methodContainerRef.current.getBoundingClientRect().bottom + 8}px`,
+              left: `${methodContainerRef.current.getBoundingClientRect().left}px`
+            } : {}
+          }
+        >
           <div className="p-2 border-b border-border bg-background">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-2">Research Methods</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-2 mb-2">Methods</p>
+            <div className="flex items-center gap-2 bg-background px-2 py-1.5 rounded-md border border-input">
+              <Search className="w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                value={methodSearch}
+                onChange={(e) => setMethodSearch(e.target.value)}
+                className="flex-1 bg-transparent border-none text-sm focus:outline-none placeholder:text-muted-foreground text-foreground"
+                placeholder="Search methods..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowMethodPicker(false);
+                    setMethodSearch('');
+                    textareaRef.current?.focus();
+                  }
+                  if (e.key === 'Enter' && filteredMethods.length > 0) {
+                    selectMethod(filteredMethods[0].id);
+                    setMethodSearch('');
+                  }
+                }}
+              />
+              <button onClick={() => {
+                setShowMethodPicker(false);
+                setMethodSearch('');
+              }} className="hover:text-foreground text-muted-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
           <div className="p-1 space-y-1 max-h-64 overflow-y-auto">
-            {RESEARCH_METHODS.map(method => (
-              <button
-                key={method.id}
-                onClick={() => selectMethod(method.id)}
-                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
-              >
-                <div className="text-lg w-8 h-8 flex items-center justify-center bg-muted/30 rounded-md group-hover:bg-background transition-colors">{method.icon}</div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">/{method.id}</p>
-                  <p className="text-xs text-muted-foreground">{method.description}</p>
-                </div>
-              </button>
-            ))}
+            {filteredMethods.map(method => {
+              const IconComponent = method.icon;
+              return (
+                <button
+                  key={method.id}
+                  onClick={() => {
+                    selectMethod(method.id);
+                    setMethodSearch('');
+                  }}
+                  className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
+                >
+                  <div className="w-8 h-8 flex items-center justify-center bg-muted/30 rounded-md group-hover:bg-background transition-colors">
+                    <IconComponent className="w-4 h-4 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">/{method.id}</p>
+                    <p className="text-xs text-muted-foreground">{method.description}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -297,27 +412,31 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           />
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => {
-                setShowAudiencePicker(!showAudiencePicker);
-                setShowMethodPicker(false);
-                setAudienceSearch('');
-              }}
-              className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-              title="Audience"
-            >
-              <Users className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => {
-                setShowMethodPicker(!showMethodPicker);
-                setShowAudiencePicker(false);
-              }}
-              className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
-              title="Methods"
-            >
-              /
-            </button>
+            <div ref={audienceContainerRef}>
+              <button
+                onClick={() => {
+                  setShowAudiencePicker(!showAudiencePicker);
+                  setShowMethodPicker(false);
+                  setAudienceSearch('');
+                }}
+                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                title="Audience"
+              >
+                <Users className="w-5 h-5" />
+              </button>
+            </div>
+            <div ref={methodContainerRef}>
+              <button
+                onClick={() => {
+                  setShowMethodPicker(!showMethodPicker);
+                  setShowAudiencePicker(false);
+                }}
+                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
+                title="Methods"
+              >
+                /
+              </button>
+            </div>
 
             <button
               className="h-10 w-10 bg-primary text-primary-foreground rounded-[12px] flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -367,27 +486,31 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                 <Plus className="w-5 h-5" />
               </Button>
 
-              <button
-                onClick={() => {
-                  setShowAudiencePicker(!showAudiencePicker);
-                  setShowMethodPicker(false);
-                  setAudienceSearch('');
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-              >
-                <Users className="w-4 h-4" />
-                Audience
-              </button>
+              <div ref={audienceContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowAudiencePicker(!showAudiencePicker);
+                    setShowMethodPicker(false);
+                    setAudienceSearch('');
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  Audience
+                </button>
+              </div>
 
-              <button
-                onClick={() => {
-                  setShowMethodPicker(!showMethodPicker);
-                  setShowAudiencePicker(false);
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-              >
-                Tools
-              </button>
+              <div ref={methodContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowMethodPicker(!showMethodPicker);
+                    setShowAudiencePicker(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  Tools
+                </button>
+              </div>
             </div>
 
             <button
