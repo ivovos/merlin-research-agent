@@ -6,6 +6,8 @@ module.exports = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    './App.tsx',
+    './index.tsx',
   ],
   theme: {
     container: {
@@ -18,6 +20,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["Geist", "sans-serif"],
+        cabinet: ["Cabinet Grotesque", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -1,6 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Cabinet Grotesque Font */
+@font-face {
+  font-family: 'Cabinet Grotesque';
+  src: url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Regular.woff2') format('woff2'),
+       url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesque';
+  src: url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Bold.woff2') format('woff2'),
+       url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesque';
+  src: url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Extrabold.woff2') format('woff2'),
+       url('https://fonts.cdnfonts.com/s/19795/CabinetGrotesque-Extrabold.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
  
 @layer base {
   :root {
@@ -118,4 +146,25 @@
 /* Target the actual rendered panel divs */
 div[class*="Panel"] {
   height: 100% !important;
+}
+
+/* Force headline styles - high specificity to override any parent styles */
+h1[data-font="cabinet-grotesque"],
+h1.headline-cabinet,
+h1.font-cabinet[class*="font-extrabold"],
+h1[class*="font-cabinet"][class*="font-extrabold"],
+h1[class*="text-2xl"][class*="font-cabinet"],
+h1[class*="text-5xl"][class*="font-cabinet"],
+h1.text-5xl.headline-cabinet,
+div[class*="flex-col"] h1,
+div[class*="flex-col"][class*="items-center"] h1,
+div.font-sans h1.headline-cabinet,
+div.font-sans h1[class*="font-cabinet"],
+div[class*="font-sans"] h1.headline-cabinet,
+div[class*="font-sans"] h1[class*="font-cabinet"],
+div[class*="font-sans"] h1[data-font="cabinet-grotesque"] {
+  font-family: "Cabinet Grotesque", "Cabinet Grotesque", sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
 }

@@ -773,11 +773,20 @@ CRITICAL: For quantitative reports, EVERY question MUST have an "options" array 
               />
             ) : conversation.status === 'idle' ? (
               <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8 animate-fade-in">
-                <h1 className="text-5xl font-extrabold tracking-tight text-center px-4">
+                <h1 
+                  className="headline-cabinet text-5xl !font-extrabold tracking-tight text-center px-4 !font-cabinet"
+                  data-font="cabinet-grotesque"
+                  style={{ 
+                    fontSize: '24px', 
+                    fontFamily: '"Cabinet Grotesque", "Cabinet Grotesque", sans-serif',
+                    fontWeight: 800,
+                    lineHeight: '1.2'
+                  }}
+                >
                   Ask them anything
                 </h1>
-                <div className="w-full px-4">
-                  <div className="w-3/4 min-w-[400px] max-w-3xl mx-auto">
+                <div className="w-full px-8 md:px-16 lg:px-24">
+                  <div className="w-full max-w-4xl mx-auto">
                     <QueryInput
                       onSubmit={startSimulation}
                       isExpanded={false}

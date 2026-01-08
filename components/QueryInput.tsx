@@ -227,7 +227,9 @@ export const QueryInput: React.FC<QueryInputProps> = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       if (!compact) {
-        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        const scrollHeight = textareaRef.current.scrollHeight;
+        const minHeight = 2.8 * 16; // 2.8rem in pixels (2.8 * 16px base)
+        textareaRef.current.style.height = Math.max(scrollHeight, minHeight) + 'px';
       }
     }
   }, [query, compact]);
@@ -455,7 +457,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           <div
             aria-hidden="true"
             className="absolute top-4 left-4 right-4 text-base leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
-            style={{ minHeight: '40px' }}
+            style={{ minHeight: '2.8rem' }}
           >
             {query.split(/([@\/][\w-]+)/g).map((part, i) => {
               if (part.startsWith('@') || part.startsWith('/')) {
@@ -476,7 +478,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
             spellCheck={false}
-            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[40px] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
+            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-96 min-h-[2.8rem] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
             style={{ lineHeight: '1.4' }}
           />
 
