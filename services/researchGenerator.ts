@@ -142,46 +142,6 @@ const focusGroupResultSchema = {
   required: ['title', 'abstract', 'audience', 'participant_count', 'themes']
 }
 
-// Schema for generating comparison survey results (multi-segment)
-// Each question has results broken down by segment
-const comparisonSurveyResultSchema = {
-  type: 'object' as const,
-  properties: {
-    title: { type: 'string', description: 'Catchy title highlighting the comparison (e.g., "Gen Z vs Millennials: Coffee Habits Compared")' },
-    abstract: { type: 'string', description: 'Executive summary highlighting key differences between segments (2-3 sentences)' },
-    segments: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'List of segment names being compared'
-    },
-    sample_size_per_segment: { type: 'number', description: 'Number of respondents per segment' },
-    questions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          question: { type: 'string' },
-          options: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                label: { type: 'string', description: 'The answer option' }
-                // Segment percentages will be added dynamically based on segments array
-              },
-              required: ['label'],
-              additionalProperties: { type: 'number' } // Allow dynamic segment keys with numeric values
-            },
-            description: 'Each option should have a label and a percentage for each segment (e.g., {"label": "Espresso", "Gen Z": 45.2, "Millennials": 38.7})'
-          }
-        },
-        required: ['question', 'options']
-      }
-    }
-  },
-  required: ['title', 'abstract', 'segments', 'sample_size_per_segment', 'questions']
-}
-
 // Process steps for different research types
 const SURVEY_PROCESS_STEPS = [
   'Designing survey questionnaire',
@@ -520,6 +480,47 @@ Guidelines:
 async function executeComparisonSurveyTool(audience: string, researchQuestion: string, segments: string[]): Promise<Canvas> {
   console.log(`[Merlin Agent] Executing comparison survey for segments: ${segments.join(' vs ')}`)
 
+  // Build dynamic schema with explicit segment properties
+  const segmentProperties: Record<string, { type: string; description: string }> = {}
+  for (const segment of segments) {
+    segmentProperties[segment] = {
+      type: 'number',
+      description: `Percentage for ${segment} segment (0-100)`
+    }
+  }
+
+  const dynamicComparisonSchema = {
+    type: 'object' as const,
+    properties: {
+      title: { type: 'string', description: `Catchy title highlighting the comparison (e.g., "${segments.join(' vs ')}: Topic Compared")` },
+      abstract: { type: 'string', description: 'Executive summary highlighting key differences between segments (2-3 sentences)' },
+      sample_size_per_segment: { type: 'number', description: 'Number of respondents per segment (default 500)' },
+      questions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            question: { type: 'string', description: 'The survey question' },
+            options: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  label: { type: 'string', description: 'The answer option text' },
+                  ...segmentProperties
+                },
+                required: ['label', ...segments]
+              },
+              description: 'Array of answer options, each with percentages for all segments'
+            }
+          },
+          required: ['question', 'options']
+        }
+      }
+    },
+    required: ['title', 'abstract', 'sample_size_per_segment', 'questions']
+  }
+
   const comparisonPrompt = `Generate realistic comparative survey results for the following:
 Audience: ${audience}
 Research Question: ${researchQuestion}
@@ -527,15 +528,13 @@ Segments to Compare: ${segments.join(', ')}
 
 Guidelines:
 - Generate 3 specific, measurable questions that compare the segments
-- For each question, provide percentages for EACH segment separately
-- Each option should have a percentage for each segment (e.g., {"label": "Option A", "${segments[0]}": 45.2, "${segments[1]}": 38.7})
+- For each question option, provide a percentage for EACH segment: ${segments.join(', ')}
+- Example option format: {"label": "Option A", ${segments.map(s => `"${s}": 45.2`).join(', ')}}
 - Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
 - Show meaningful differences between segments where appropriate
 - Percentages for each segment should sum to approximately 100% within each question
-- Make the title highlight the comparison (e.g., "${segments[0]} vs ${segments[1]}: Topic Compared")
-- Write a 2-sentence abstract summarizing key differences between segments
-
-IMPORTANT: Each option must include numeric percentage values for all segments: ${segments.map(s => `"${s}": <number>`).join(', ')}`
+- Make the title highlight the comparison
+- Write a 2-sentence abstract summarizing key differences between segments`
 
   try {
     const response = await anthropic.messages.create({
@@ -544,8 +543,8 @@ IMPORTANT: Each option must include numeric percentage values for all segments: 
       messages: [{ role: 'user', content: comparisonPrompt }],
       tools: [{
         name: 'generate_comparison_survey_results',
-        description: 'Generate structured comparison survey results with segment breakdowns',
-        input_schema: comparisonSurveyResultSchema
+        description: `Generate structured comparison survey results with segment breakdowns for: ${segments.join(', ')}`,
+        input_schema: dynamicComparisonSchema
       }],
       tool_choice: { type: 'tool', name: 'generate_comparison_survey_results' }
     })
@@ -555,7 +554,6 @@ IMPORTANT: Each option must include numeric percentage values for all segments: 
       const result = toolUse.input as {
         title: string
         abstract: string
-        segments: string[]
         sample_size_per_segment: number
         questions: Array<{
           question: string
@@ -582,13 +580,14 @@ IMPORTANT: Each option must include numeric percentage values for all segments: 
         questionsArray = result.questions
       }
 
+      // Use the segments we passed in (not from result)
       // Normalize options with segment data
       const questions = questionsArray.map((q: any, idx: number) => ({
         id: `q${idx + 1}`,
         question: q.question || '',
         respondents: (result.sample_size_per_segment || 500) * segments.length,
-        segments: result.segments || segments,
-        options: normalizeComparisonOptions(q.options, result.segments || segments)
+        segments: segments, // Use the segments we passed in
+        options: normalizeComparisonOptions(q.options, segments)
       }))
 
       console.log('[Merlin Agent] Processed comparison questions:', questions.length, questions)
