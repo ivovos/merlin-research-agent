@@ -3,12 +3,14 @@ import type { Conversation, Canvas, SelectedSegment, SelectedSegments } from '@/
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
 import { InlineCanvas } from './InlineCanvas';
+import { ClarificationMessage } from './ClarificationMessage';
 
 interface WorkingPaneProps {
   conversation: Conversation;
   onSelectCanvas: (canvas?: Canvas) => void;
   onExpandCanvas?: (canvas: Canvas) => void;
   onFollowUp: (query: string) => void;
+  onClarificationClick?: (suggestion: string) => void;
   availableAudiences?: any[];
   onCreateAudience?: any;
   selectedSegments?: SelectedSegments;
@@ -24,6 +26,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   conversation,
   onExpandCanvas,
   onFollowUp,
+  onClarificationClick,
   availableAudiences,
   onCreateAudience,
   selectedSegments,
@@ -53,7 +56,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
               if (msg.role === 'user') {
                 return (
                   <div key={msg.id} className="flex justify-end animate-in slide-in-from-bottom-2 fade-in duration-300">
-                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[50%] text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="bg-muted px-6 py-4 rounded-2xl rounded-tr-sm max-w-[50%] text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {msg.content.split(/([@/#][\w-]+)/g).map((part, i) => {
                         if (part.startsWith('@') || part.startsWith('/') || part.startsWith('#')) {
                           return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
@@ -78,30 +81,45 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                       />
                     )}
 
-                    {/* 2. Explanation & Metadata */}
-                    <div className="space-y-4">
-                      <p className="text-foreground/90 leading-relaxed text-sm">
-                        {msg.content}
-                      </p>
+                    {/* 2. Clarification Request - agent needs more info */}
+                    {msg.clarification && (
+                      <ClarificationMessage
+                        clarification={msg.clarification}
+                        onSuggestionClick={(suggestion) => {
+                          if (onClarificationClick) {
+                            onClarificationClick(suggestion)
+                          } else {
+                            onFollowUp(suggestion)
+                          }
+                        }}
+                      />
+                    )}
 
-                      {/* 3. Inline Canvas - centered, full width within padding */}
-                      {msg.canvas && (
-                        <div className="flex justify-center">
-                          <InlineCanvas
-                            canvas={msg.canvas}
-                            onExpand={() => onExpandCanvas?.(msg.canvas!)}
-                            selectedSegments={selectedSegments}
-                            isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
-                            onBarSelect={onBarSelect}
-                            onClearSegments={onClearSegments}
-                            onRemoveSegment={onRemoveSegment}
-                            onAskSegment={onAskSegment}
-                            className="w-full max-w-3xl"
-                          />
-                        </div>
-                      )}
+                    {/* 3. Explanation & Metadata (only if no clarification) */}
+                    {!msg.clarification && (
+                      <div className="space-y-4">
+                        <p className="text-foreground/90 leading-relaxed text-sm">
+                          {msg.content}
+                        </p>
 
-                    </div>
+                        {/* 4. Inline Canvas - centered, full width within padding */}
+                        {msg.canvas && (
+                          <div className="flex justify-center">
+                            <InlineCanvas
+                              canvas={msg.canvas}
+                              onExpand={() => onExpandCanvas?.(msg.canvas!)}
+                              selectedSegments={selectedSegments}
+                              isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
+                              onBarSelect={onBarSelect}
+                              onClearSegments={onClearSegments}
+                              onRemoveSegment={onRemoveSegment}
+                              onAskSegment={onAskSegment}
+                              className="w-full max-w-3xl"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               }

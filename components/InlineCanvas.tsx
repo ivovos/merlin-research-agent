@@ -277,7 +277,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
       <div className="overflow-y-auto scrollbar-hide">
         <div className="p-4 space-y-4">
           {/* Survey Questions */}
-          {canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0 ? (
+          {canvas.type === 'qualitative' && Array.isArray(canvas.themes) && canvas.themes.length > 0 ? (
             <div className="space-y-4">
               {canvas.themes.slice(0, 2).map((theme, i) => (
                 <ThemeCard key={theme.id} theme={theme} index={i} />
@@ -290,7 +290,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
                 </div>
               )}
             </div>
-          ) : canvas.questions && canvas.questions.length > 0 ? (
+          ) : Array.isArray(canvas.questions) && canvas.questions.length > 0 ? (
             <div className="space-y-4">
               {canvas.questions.map((q, i) => (
                 <MiniQuestionCard
@@ -395,14 +395,41 @@ const MiniQuestionCard: React.FC<{
   selectedSegments,
   onBarSelect,
 }) => {
-  // Sort data for better visualization (descending)
-  const sortedOptions = (data.options || [])
-    .filter(opt => opt && typeof opt.label === 'string')
-    .sort((a, b) => {
+  // Helper to parse percentage values (handles "37.2%" strings)
+  const parsePercentage = (value: unknown): number => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const cleaned = value.replace('%', '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
+  // Normalize and sort options - handle both array and object formats
+  const sortedOptions = React.useMemo(() => {
+    const opts = data.options;
+    let normalized: Array<{ label: string; percentage: number }> = [];
+
+    if (Array.isArray(opts)) {
+      normalized = opts.filter(opt => opt && typeof opt.label === 'string').map(opt => ({
+        label: String(opt.label),
+        percentage: parsePercentage(opt.percentage)
+      }));
+    } else if (opts && typeof opts === 'object') {
+      // Handle object format like { "Gen Z": 45, "Millennials": 55 }
+      normalized = Object.entries(opts).map(([label, value]) => ({
+        label,
+        percentage: parsePercentage(value)
+      }));
+    }
+
+    return normalized.sort((a, b) => {
       const aVal = a.percentage || 0;
       const bVal = b.percentage || 0;
       return bVal - aVal;
     });
+  }, [data.options]);
 
   // Check if a specific bar is selected
   const isBarSelected = (label: string) => {

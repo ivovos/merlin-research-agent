@@ -441,7 +441,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             </div>
 
             <button
-              className="h-10 w-10 bg-primary text-primary-foreground rounded-[12px] flex items-center justify-center hover:opacity-90 transition-opacity"
+              className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
             >
@@ -483,8 +483,8 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           />
 
           <div className="flex items-end justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted px-0 w-auto h-auto p-2">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted h-10 w-10 rounded-full">
                 <Plus className="w-5 h-5" />
               </Button>
 
@@ -495,10 +495,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                  title="Audience"
                 >
-                  <Users className="w-4 h-4" />
-                  Audience
+                  <Users className="w-5 h-5" />
                 </button>
               </div>
 
@@ -508,9 +508,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-transparent text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg"
+                  title="Methods"
                 >
-                  Tools
+                  /
                 </button>
               </div>
             </div>
@@ -518,7 +519,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             <button
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
-              className="h-10 w-10 bg-primary text-primary-foreground rounded-[16px] flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm"
+              className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <ArrowUp className="w-5 h-5" />
             </button>
