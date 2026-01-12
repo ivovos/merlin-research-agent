@@ -62,17 +62,43 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasI
     }, canvasId);
   };
   
-  // Sort data for better visualization (descending)
+  // Helper to parse percentage values (handles "37.2%" strings)
+  const parsePercentage = (value: unknown): number => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const cleaned = value.replace('%', '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  };
+
+  // Normalize and sort options - handle both array and object formats
   const sortedData = useMemo(() => {
-    if (!data.options || data.options.length === 0) return [];
-    // Ensure options have valid structure
-    return [...data.options]
-      .filter(opt => opt && typeof opt.label === 'string')
-      .sort((a, b) => {
-        const aVal = a.percentage || 0;
-        const bVal = b.percentage || 0;
-        return bVal - aVal;
-      });
+    const opts = data.options;
+    let normalized: Array<{ label: string; percentage: number; [key: string]: unknown }> = [];
+
+    if (Array.isArray(opts)) {
+      normalized = opts.filter(opt => opt && typeof opt.label === 'string').map(opt => ({
+        ...opt,
+        label: String(opt.label),
+        percentage: parsePercentage(opt.percentage)
+      }));
+    } else if (opts && typeof opts === 'object') {
+      // Handle object format like { "Gen Z": 45, "Millennials": 55 }
+      normalized = Object.entries(opts).map(([label, value]) => ({
+        label,
+        percentage: parsePercentage(value)
+      }));
+    }
+
+    if (normalized.length === 0) return [];
+
+    return normalized.sort((a, b) => {
+      const aVal = a.percentage || 0;
+      const bVal = b.percentage || 0;
+      return bVal - aVal;
+    });
   }, [data.options]);
 
   // Fallback colors for multi-segment charts
@@ -199,8 +225,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasI
                         key={`cell-${i}`}
                         fill={primaryColor}
                         fillOpacity={opacity}
-                        stroke={selected ? primaryColor : undefined}
-                        strokeWidth={selected ? 2 : 0}
                       />
                     );
                   })}

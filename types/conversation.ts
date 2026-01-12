@@ -1,5 +1,6 @@
 import type { Audience } from './audience';
 import type { Canvas } from './canvas';
+import type { ClarificationRequest } from './agentResponse';
 
 export interface ProcessStep {
   id: string;
@@ -16,6 +17,7 @@ export interface Message {
   processSteps?: ProcessStep[];
   canvas?: Canvas;
   thinkingTime?: number;
+  clarification?: ClarificationRequest; // Agent needs more info
 }
 
 export interface Conversation {

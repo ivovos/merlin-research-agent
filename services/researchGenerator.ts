@@ -1,6 +1,49 @@
 import { anthropic } from './api'
-import type { Canvas } from '@/types'
+import type { Canvas, ClarificationRequest, AgentResult } from '@/types'
+import { researchTools, type ResearchToolName } from './tools'
+import { AGENT_SYSTEM_PROMPT, getAgentPromptWithContext } from './agentPrompt'
 
+/**
+ * Parse a percentage value that might be a number or a string like "37.2%"
+ */
+function parsePercentage(value: unknown): number {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    // Remove % sign and parse
+    const cleaned = value.replace('%', '').trim()
+    const parsed = parseFloat(cleaned)
+    return isNaN(parsed) ? 0 : parsed
+  }
+  return 0
+}
+
+/**
+ * Normalize options - convert object to array if needed
+ * Handles cases where API returns { "Gen Z": 45, "Millennials": 55 } instead of [{ label: "Gen Z", percentage: 45 }, ...]
+ * Also handles percentage values as strings like "37.2%"
+ */
+function normalizeOptions(options: unknown): Array<{ label: string; percentage: number }> {
+  // Already an array - validate and return
+  if (Array.isArray(options)) {
+    return options.filter(opt => opt && typeof opt === 'object' && 'label' in opt).map(opt => ({
+      label: String(opt.label || ''),
+      percentage: parsePercentage(opt.percentage)
+    }))
+  }
+
+  // Object format like { "Gen Z": 45, "Millennials": 55 }
+  if (options && typeof options === 'object') {
+    return Object.entries(options).map(([label, value]) => ({
+      label,
+      percentage: parsePercentage(value)
+    }))
+  }
+
+  // Fallback
+  return []
+}
+
+// Legacy interface for backwards compatibility
 export interface ResearchResult {
   type: 'quantitative' | 'qualitative' | 'update'
   audienceName: string
@@ -30,192 +73,747 @@ export interface ResearchResult {
   }
 }
 
-const SYSTEM_PROMPT = `You are Merlin, an advanced synthetic research agent.
-The user has asked a specific research question.
-Your task is to simulate the execution of this specific research project and generate a realistic, easy-to-read report.
-
-**CRITICAL: REPORT TYPE DETERMINATION**
-Detect qualitative keywords: "focus group", "qualitative", "qual", "in-depth interview", "ethnography", "exploratory", "why do they", "understand why", etc.
-
-1. **Qualitative (Focus Group/IDIs)**: If query mentions qualitative research methods.
-   - Set "type": "qualitative" and "report.type": "qualitative".
-   - Generate "themes" array with 3-4 rich themes (NOT questions).
-   - Set "questions": [] (empty array for qualitative).
-
-2. **Quantitative (Survey)**: Default for all other queries.
-   - Set "type": "quantitative" and "report.type": "quantitative".
-   - Generate "questions" array with 3 specific questions.
-   - Set "themes": [] (empty array for quantitative).
-
-**QUALITATIVE RESEARCH GUIDELINES:**
-When generating qualitative results:
-- **Themes**: Generate 3-4 distinct themes that emerged from discussion
-- **Topic**: Evocative 2-4 word theme name (e.g., "The Trust Deficit", "Price vs. Purpose")
-- **Sentiment**: Match the emotional tone - positive, negative, neutral, or mixed
-- **Summary**: One compelling sentence capturing the insight
-- **Quotes**: 2-3 realistic, conversational quotes per theme
-  - Use natural speech patterns, hesitations, emphasis
-  - Attribution format: "Name, Age" (e.g., "Sarah, 34" or "Mike, 28")
-  - Make quotes feel authentic - include filler words, interruptions, emotions
-- **Process Steps** for qual: "Designing discussion guide", "Recruiting 12 participants", "Moderating sessions", "Transcribing 8 hours", "Coding themes", "Synthesizing insights"
-
-**QUANTITATIVE RESEARCH GUIDELINES:**
-When generating quantitative results:
-- **Questions**: 3 specific, measurable questions with clear options
-- **Options**: 4-6 response options per question with realistic percentages
-- **Process Steps** for quant: "Designing survey", "Recruiting 500+ respondents", "Collecting responses", "Cleaning data", "Running analysis", "Generating report"
-
-**DATA REALISM GUIDELINES (STRICT):**
-- **AVOID ROUND NUMBERS**: Use specific values like 42.8%, 17.3%, 87.1%
-- **REAL WORLD TRENDS**: Leverage your knowledge to approximate actual market statistics
-- **AVOID PERFECT SPLITS**: Never generate 50/50. Show clear winners or realistic distributions.
-
-**AUDIENCE SEGMENTATION (Quantitative only):**
-- Single audience: 'segments': []
-- Comparison: 'segments': ["Group A", "Group B"] with per-segment percentages
-
-Output strictly valid JSON:
-{
-  "type": "quantitative" | "qualitative",
-  "audienceName": "string",
-  "audienceId": "string-slug",
-  "processSteps": ["step1", "step2", "step3", "step4", "step5", "step6"],
-  "explanation": "string - one sentence methodology + key finding",
-  "report": {
-    "type": "quantitative" | "qualitative",
-    "title": "string - catchy, direct",
-    "abstract": "string - 1-2 sentence summary of key insight",
-    "segments": [],
-    "questions": [],
-    "themes": []
-  }
-}`
-
-function getSystemPromptWithContext(currentCanvas: Canvas | null, userQuery: string): string {
-  if (!currentCanvas) return SYSTEM_PROMPT
-
-  return `${SYSTEM_PROMPT}
-
-CURRENT CANVAS CONTEXT:
-${JSON.stringify(currentCanvas, null, 2)}
-The user is asking a follow-up question: "${userQuery}".
-DECISION LOGIC:
-- DEFAULT to creating a NEW canvas for follow-up questions to maintain history. Set "type": "new".
-- ONLY if the user explicitly asks to UPDATE, MODIFY, or CHANGE the existing canvas, then set "type": "update".`
+// Schema for generating survey results
+const surveyResultSchema = {
+  type: 'object' as const,
+  properties: {
+    title: { type: 'string', description: 'Catchy, direct title for the survey results' },
+    abstract: { type: 'string', description: 'Executive summary of findings (2-3 sentences)' },
+    audience: { type: 'string', description: 'Target audience name' },
+    sample_size: { type: 'number', description: 'Number of respondents' },
+    questions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          question: { type: 'string' },
+          options: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                label: { type: 'string' },
+                percentage: { type: 'number' }
+              },
+              required: ['label', 'percentage']
+            }
+          }
+        },
+        required: ['question', 'options']
+      }
+    }
+  },
+  required: ['title', 'abstract', 'audience', 'sample_size', 'questions']
 }
 
-function generateQualitativeFallback(query: string): ResearchResult {
-  // Clean up query for title
-  const cleanQuery = query
-    .replace(/#focus-group/gi, '')
-    .replace(/\/qual/gi, '')
-    .replace(/qualitative/gi, '')
-    .replace(/focus group/gi, '')
-    .trim()
+// Schema for generating focus group results
+const focusGroupResultSchema = {
+  type: 'object' as const,
+  properties: {
+    title: { type: 'string', description: 'Catchy title for the focus group insights' },
+    abstract: { type: 'string', description: 'Executive summary of key themes (2-3 sentences)' },
+    audience: { type: 'string', description: 'Target audience name' },
+    participant_count: { type: 'number', description: 'Number of participants' },
+    themes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          topic: { type: 'string', description: 'Evocative 2-4 word theme name' },
+          sentiment: { type: 'string', enum: ['positive', 'negative', 'neutral', 'mixed'] },
+          summary: { type: 'string', description: 'One compelling sentence capturing the insight' },
+          quotes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                text: { type: 'string', description: 'Realistic, conversational quote' },
+                attribution: { type: 'string', description: 'Name, Age format' }
+              },
+              required: ['text', 'attribution']
+            }
+          }
+        },
+        required: ['id', 'topic', 'sentiment', 'summary', 'quotes']
+      }
+    }
+  },
+  required: ['title', 'abstract', 'audience', 'participant_count', 'themes']
+}
+
+// Process steps for different research types
+const SURVEY_PROCESS_STEPS = [
+  'Designing survey questionnaire',
+  'Recruiting 500+ respondents',
+  'Collecting responses',
+  'Cleaning and validating data',
+  'Running statistical analysis',
+  'Generating insights report'
+]
+
+const FOCUS_GROUP_PROCESS_STEPS = [
+  'Designing discussion guide',
+  'Recruiting 12 participants',
+  'Moderating focus group sessions',
+  'Transcribing 6+ hours of discussion',
+  'Coding and categorizing themes',
+  'Synthesizing key insights'
+]
+
+const COMPARISON_PROCESS_STEPS = [
+  'Defining comparison segments',
+  'Recruiting matched samples',
+  'Collecting parallel responses',
+  'Normalizing cross-segment data',
+  'Running comparative analysis',
+  'Highlighting key differences'
+]
+
+const HEATMAP_PROCESS_STEPS = [
+  'Setting up attention tracking',
+  'Recruiting 200+ participants',
+  'Recording eye-tracking sessions',
+  'Processing gaze data',
+  'Generating heat intensity maps',
+  'Identifying engagement hotspots'
+]
+
+const SENTIMENT_PROCESS_STEPS = [
+  'Defining sentiment topics',
+  'Collecting brand mentions',
+  'Running NLP sentiment analysis',
+  'Categorizing emotional drivers',
+  'Scoring sentiment by topic',
+  'Mapping perception landscape'
+]
+
+const MESSAGE_TESTING_PROCESS_STEPS = [
+  'Preparing message variants',
+  'Recruiting target audience',
+  'A/B testing message exposure',
+  'Measuring comprehension & recall',
+  'Scoring emotional resonance',
+  'Ranking message effectiveness'
+]
+
+// Helper to get process steps by tool name
+function getProcessStepsForTool(toolName: string): string[] {
+  switch (toolName) {
+    case 'run_survey':
+      return SURVEY_PROCESS_STEPS
+    case 'run_focus_group':
+      return FOCUS_GROUP_PROCESS_STEPS
+    case 'run_comparison':
+      return COMPARISON_PROCESS_STEPS
+    case 'run_heatmap':
+      return HEATMAP_PROCESS_STEPS
+    case 'run_sentiment_analysis':
+      return SENTIMENT_PROCESS_STEPS
+    case 'run_message_testing':
+      return MESSAGE_TESTING_PROCESS_STEPS
+    default:
+      return SURVEY_PROCESS_STEPS
+  }
+}
+
+/**
+ * Agent-based research generation
+ * Uses Claude to intelligently select the appropriate research methodology
+ */
+export async function generateResearchWithAgent(
+  userQuery: string,
+  currentCanvas: Canvas | null = null
+): Promise<AgentResult> {
+  console.log(`[Merlin Agent] Processing query: "${userQuery}"`)
+
+  try {
+    // Step 1: Get agent's tool selection
+    const systemPrompt = currentCanvas
+      ? getAgentPromptWithContext(currentCanvas.title, currentCanvas.type)
+      : AGENT_SYSTEM_PROMPT
+
+    console.log('[Merlin Agent] Calling Claude for tool selection...')
+
+    const toolSelectionResponse = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userQuery }],
+      tools: researchTools,
+    })
+
+    console.log('[Merlin Agent] Tool selection response received, stop_reason:', toolSelectionResponse.stop_reason)
+
+    // Extract tool calls from response
+    const toolCalls = toolSelectionResponse.content.filter(block => block.type === 'tool_use')
+
+    if (toolCalls.length === 0) {
+      console.log('[Merlin Agent] No tool selected, treating as generic survey')
+      // Fallback: treat as generic survey
+      return executeToolAsSurvey(userQuery, 'General Population')
+    }
+
+    // Step 2: Process each tool call
+    const results: Canvas[] = []
+    const usedTools: string[] = []
+    let clarification: ClarificationRequest | undefined
+
+    for (const toolCall of toolCalls) {
+      if (toolCall.type !== 'tool_use') continue
+
+      const toolName = toolCall.name as ResearchToolName
+      const toolInput = toolCall.input as Record<string, unknown>
+
+      console.log(`[Merlin Agent] Selected tool: ${toolName}`, toolInput)
+
+      // Handle clarification request
+      if (toolName === 'ask_clarification') {
+        clarification = {
+          type: 'clarification',
+          missing_info: (toolInput.missing_info as string) || 'More information needed',
+          reason: toolInput.reason as string | undefined,
+          suggestions: (toolInput.suggestions as string[]) || []
+        }
+        break // Don't continue if clarification is needed
+      }
+
+      // Execute research tool
+      const canvas = await executeResearchTool(toolName, toolInput, userQuery)
+      if (canvas) {
+        results.push(canvas)
+        usedTools.push(toolName)
+      }
+    }
+
+    // Return appropriate result type
+    if (clarification) {
+      return {
+        type: 'clarification',
+        clarification
+      }
+    }
+
+    if (results.length === 0) {
+      // Fallback if no results
+      return executeToolAsSurvey(userQuery, 'General Population')
+    }
+
+    if (results.length === 1) {
+      return {
+        type: 'single_canvas',
+        canvases: results,
+        processSteps: getProcessStepsForTool(usedTools[0]),
+        explanation: `Research completed for ${results[0].audience.name}`
+      }
+    }
+
+    // Multi-tool: combine first 3 steps from each tool used
+    const combinedSteps: string[] = []
+    usedTools.forEach(tool => {
+      const toolSteps = getProcessStepsForTool(tool)
+      combinedSteps.push(...toolSteps.slice(0, 3))
+    })
+
+    return {
+      type: 'multi_canvas',
+      canvases: results,
+      processSteps: combinedSteps,
+      explanation: `Multiple research methodologies executed to provide comprehensive insights`
+    }
+
+  } catch (error) {
+    console.error('[Merlin Agent] Error:', error)
+    // Return fallback survey
+    return executeToolAsSurvey(userQuery, 'General Population')
+  }
+}
+
+/**
+ * Execute a specific research tool and return canvas
+ */
+async function executeResearchTool(
+  toolName: ResearchToolName,
+  toolInput: Record<string, unknown>,
+  originalQuery: string
+): Promise<Canvas | null> {
+  const audience = (toolInput.audience as string) || 'General Population'
+  const researchQuestion = (toolInput.research_question as string) || originalQuery
+
+  switch (toolName) {
+    case 'run_survey':
+      return executeSurveyTool(audience, researchQuestion)
+
+    case 'run_focus_group':
+      return executeFocusGroupTool(audience, researchQuestion)
+
+    case 'run_comparison':
+      const segments = (toolInput.segments as string[]) || ['Group A', 'Group B']
+      return executeComparisonTool(segments, researchQuestion)
+
+    case 'run_heatmap':
+    case 'run_sentiment_analysis':
+      // For now, fall back to survey for these types
+      // TODO: Implement proper heatmap and sentiment canvas types
+      console.log(`[Merlin Agent] ${toolName} not fully implemented, falling back to survey`)
+      return executeSurveyTool(audience, researchQuestion)
+
+    default:
+      console.log(`[Merlin Agent] Unknown tool: ${toolName}`)
+      return null
+  }
+}
+
+/**
+ * Execute survey tool and generate quantitative canvas
+ */
+async function executeSurveyTool(audience: string, researchQuestion: string): Promise<Canvas> {
+  console.log(`[Merlin Agent] Executing survey for: ${audience}`)
+
+  const surveyPrompt = `Generate realistic survey results for the following:
+Audience: ${audience}
+Research Question: ${researchQuestion}
+
+Guidelines:
+- Generate 3 specific, measurable questions with clear options
+- Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
+- Reflect real-world trends and knowledge
+- Ensure percentages in each question sum to approximately 100%
+- Make the title catchy and direct
+- Write a 2-sentence abstract summarizing key findings`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: surveyPrompt }],
+      tools: [{
+        name: 'generate_survey_results',
+        description: 'Generate structured survey results',
+        input_schema: surveyResultSchema
+      }],
+      tool_choice: { type: 'tool', name: 'generate_survey_results' }
+    })
+
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (toolUse && toolUse.type === 'tool_use') {
+      const result = toolUse.input as {
+        title: string
+        abstract: string
+        audience: string
+        sample_size: number
+        questions: Array<{
+          question: string
+          options: Array<{ label: string; percentage: number }>
+        }>
+      }
+
+      console.log('[Merlin Agent] Survey API response:', JSON.stringify(result, null, 2))
+
+      // Handle questions being returned as a string (JSON) instead of array
+      let questionsArray: any[] = []
+      if (typeof result.questions === 'string') {
+        try {
+          // Sanitize malformed JSON: fix unquoted percentage values like "percentage": 37.2%
+          // This regex finds number% patterns and wraps them in quotes
+          const sanitizedJson = result.questions.replace(
+            /:\s*(\d+\.?\d*)%/g,
+            ': "$1%"'
+          )
+          questionsArray = JSON.parse(sanitizedJson)
+          console.log('[Merlin Agent] Parsed questions from JSON string (sanitized)')
+        } catch (e) {
+          console.error('[Merlin Agent] Failed to parse questions string:', e)
+          console.error('[Merlin Agent] Raw questions string:', result.questions)
+        }
+      } else if (Array.isArray(result.questions)) {
+        questionsArray = result.questions
+      }
+
+      const questions = questionsArray.map((q: any, idx: number) => ({
+        id: `q${idx + 1}`,
+        question: q.question || '',
+        respondents: result.sample_size || 500,
+        options: normalizeOptions(q.options)
+      }))
+
+      console.log('[Merlin Agent] Processed questions:', questions.length, questions)
+
+      return {
+        id: `canvas-${Date.now()}`,
+        title: result.title || 'Survey Results',
+        type: 'quantitative',
+        audience: {
+          id: audience.toLowerCase().replace(/\s+/g, '-'),
+          name: result.audience || audience
+        },
+        respondents: result.sample_size || 500,
+        abstract: result.abstract || '',
+        questions,
+        themes: [],
+        createdAt: new Date()
+      }
+    } else {
+      console.log('[Merlin Agent] No tool_use block found in response:', response.content)
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Survey generation failed:', error)
+  }
+
+  // Fallback
+  return generateFallbackSurveyCanvas(audience, researchQuestion)
+}
+
+/**
+ * Execute focus group tool and generate qualitative canvas
+ */
+async function executeFocusGroupTool(audience: string, researchQuestion: string): Promise<Canvas> {
+  console.log(`[Merlin Agent] Executing focus group for: ${audience}`)
+
+  const focusGroupPrompt = `Generate realistic focus group insights for the following:
+Audience: ${audience}
+Research Question: ${researchQuestion}
+
+Guidelines:
+- Generate 3-4 distinct themes that emerged from discussion
+- Each theme needs an evocative 2-4 word topic name
+- Match sentiment to the emotional tone (positive, negative, neutral, mixed)
+- Write one compelling sentence summary per theme
+- Include 2-3 realistic, conversational quotes per theme
+- Use natural speech patterns, include filler words and emotions
+- Attribution format: "Name, Age" (e.g., "Sarah, 34")
+- Make quotes feel authentic and varied`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: focusGroupPrompt }],
+      tools: [{
+        name: 'generate_focus_group_results',
+        description: 'Generate structured focus group insights',
+        input_schema: focusGroupResultSchema
+      }],
+      tool_choice: { type: 'tool', name: 'generate_focus_group_results' }
+    })
+
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (toolUse && toolUse.type === 'tool_use') {
+      const result = toolUse.input as {
+        title: string
+        abstract: string
+        audience: string
+        participant_count: number
+        themes: Array<{
+          id: string
+          topic: string
+          sentiment: 'positive' | 'negative' | 'neutral' | 'mixed'
+          summary: string
+          quotes: Array<{ text: string; attribution: string }>
+        }>
+      }
+
+      return {
+        id: `canvas-${Date.now()}`,
+        title: result.title,
+        type: 'qualitative',
+        audience: {
+          id: audience.toLowerCase().replace(/\s+/g, '-'),
+          name: result.audience || audience
+        },
+        respondents: result.participant_count || 12,
+        abstract: result.abstract,
+        questions: [],
+        themes: Array.isArray(result.themes) ? result.themes : [],
+        createdAt: new Date()
+      }
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Focus group generation failed:', error)
+  }
+
+  // Fallback
+  return generateFallbackFocusGroupCanvas(audience, researchQuestion)
+}
+
+/**
+ * Execute comparison tool - generates survey with segment comparison
+ */
+async function executeComparisonTool(segments: string[], researchQuestion: string): Promise<Canvas> {
+  console.log(`[Merlin Agent] Executing comparison for: ${segments.join(' vs ')}`)
+
+  // For comparison, we generate a survey with segment breakdowns
+  const comparisonPrompt = `Generate realistic survey comparison results for:
+Segments to compare: ${segments.join(' vs ')}
+Research Question: ${researchQuestion}
+
+Guidelines:
+- Generate 3 questions comparing the segments
+- Each question should show different percentages per segment
+- Show meaningful differences between groups (not identical)
+- Use realistic percentages
+- Title should emphasize the comparison aspect`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: comparisonPrompt }],
+      tools: [{
+        name: 'generate_survey_results',
+        description: 'Generate structured survey results with segment comparison',
+        input_schema: surveyResultSchema
+      }],
+      tool_choice: { type: 'tool', name: 'generate_survey_results' }
+    })
+
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (toolUse && toolUse.type === 'tool_use') {
+      const result = toolUse.input as {
+        title: string
+        abstract: string
+        sample_size: number
+        questions: Array<{
+          question: string
+          options: Array<{ label: string; percentage: number }>
+        }>
+      }
+
+      // Add segment data to options
+      const questionsWithSegments = (Array.isArray(result.questions) ? result.questions : []).map((q, idx) => {
+        const normalizedOpts = normalizeOptions(q.options)
+        return {
+          id: `q${idx + 1}`,
+          question: q.question || '',
+          respondents: result.sample_size || 500,
+          segments,
+          options: normalizedOpts.map(opt => {
+            // Generate varied percentages per segment
+            const basePercentage = opt.percentage
+            const segmentData: Record<string, number> = {}
+            segments.forEach((seg, i) => {
+              // Vary by ±15% between segments
+              const variance = (i === 0 ? 0 : (Math.random() - 0.5) * 30)
+              segmentData[seg] = Math.max(0, Math.min(100, Math.round((basePercentage + variance) * 10) / 10))
+            })
+            return {
+              label: opt.label,
+              percentage: opt.percentage,
+              ...segmentData
+            }
+          })
+        }
+      })
+
+      return {
+        id: `canvas-${Date.now()}`,
+        title: result.title,
+        type: 'quantitative',
+        audience: {
+          id: 'comparison',
+          name: segments.join(' vs ')
+        },
+        respondents: result.sample_size || 500,
+        abstract: result.abstract,
+        questions: questionsWithSegments,
+        themes: [],
+        createdAt: new Date()
+      }
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Comparison generation failed:', error)
+  }
+
+  // Fallback to standard survey
+  return generateFallbackSurveyCanvas(segments.join(' vs '), researchQuestion)
+}
+
+/**
+ * Helper: Execute as survey (used for fallbacks)
+ */
+async function executeToolAsSurvey(query: string, audience: string): Promise<AgentResult> {
+  const canvas = await executeSurveyTool(audience, query)
+  return {
+    type: 'single_canvas',
+    canvases: [canvas],
+    processSteps: getProcessStepsForTool('run_survey'),
+    explanation: `Survey research completed for ${audience}`
+  }
+}
+
+/**
+ * Fallback survey canvas when API fails
+ */
+function generateFallbackSurveyCanvas(audience: string, query: string): Canvas {
+  return {
+    id: `canvas-${Date.now()}`,
+    title: `Survey: ${query.slice(0, 50)}`,
+    type: 'quantitative',
+    audience: {
+      id: audience.toLowerCase().replace(/\s+/g, '-'),
+      name: audience
+    },
+    respondents: 500,
+    abstract: 'Survey results generated with preliminary data. Results are synthetic and for illustrative purposes.',
+    questions: [
+      {
+        id: 'q1',
+        question: 'Primary factors influencing decision?',
+        respondents: 500,
+        options: [
+          { label: 'Cost / Value', percentage: 38.4 },
+          { label: 'Quality', percentage: 29.1 },
+          { label: 'Brand Trust', percentage: 19.7 },
+          { label: 'Convenience', percentage: 12.8 }
+        ]
+      },
+      {
+        id: 'q2',
+        question: 'Overall sentiment?',
+        respondents: 500,
+        options: [
+          { label: 'Very Positive', percentage: 24.6 },
+          { label: 'Somewhat Positive', percentage: 31.2 },
+          { label: 'Neutral', percentage: 22.8 },
+          { label: 'Somewhat Negative', percentage: 14.3 },
+          { label: 'Very Negative', percentage: 7.1 }
+        ]
+      },
+      {
+        id: 'q3',
+        question: 'Likelihood to recommend?',
+        respondents: 500,
+        options: [
+          { label: 'Very Likely', percentage: 41.3 },
+          { label: 'Likely', percentage: 28.9 },
+          { label: 'Unlikely', percentage: 29.8 }
+        ]
+      }
+    ],
+    themes: [],
+    createdAt: new Date()
+  }
+}
+
+/**
+ * Fallback focus group canvas when API fails
+ */
+function generateFallbackFocusGroupCanvas(audience: string, query: string): Canvas {
+  return {
+    id: `canvas-${Date.now()}`,
+    title: `Focus Group: ${query.slice(0, 50)}`,
+    type: 'qualitative',
+    audience: {
+      id: audience.toLowerCase().replace(/\s+/g, '-'),
+      name: audience
+    },
+    respondents: 12,
+    abstract: 'Focus group insights synthesized from participant discussions. Key themes emerged around trust, value, and authenticity.',
+    questions: [],
+    themes: [
+      {
+        id: 'theme-1',
+        topic: 'The Trust Factor',
+        sentiment: 'mixed',
+        summary: 'Participants expressed a complex relationship with trust, valuing authenticity but remaining skeptical of marketing claims.',
+        quotes: [
+          { text: "I need to see real proof before I believe anything these days. Actions speak louder than ads.", attribution: 'Sarah, 34' },
+          { text: "When a brand admits they're not perfect, that actually makes me trust them more. Weird, right?", attribution: 'James, 28' }
+        ]
+      },
+      {
+        id: 'theme-2',
+        topic: 'Value vs. Price',
+        sentiment: 'neutral',
+        summary: 'Cost remains important but participants were willing to pay more for perceived quality and alignment with values.',
+        quotes: [
+          { text: "Cheap isn't always the answer. I've learned that lesson too many times.", attribution: 'Maria, 41' },
+          { text: "If I understand WHY something costs more, I'm usually okay with it.", attribution: 'Kevin, 25' }
+        ]
+      },
+      {
+        id: 'theme-3',
+        topic: 'Community Matters',
+        sentiment: 'positive',
+        summary: 'Word-of-mouth and community validation emerged as more influential than traditional advertising.',
+        quotes: [
+          { text: "My sister's recommendation is worth more than any billboard. She has no reason to lie.", attribution: 'Lisa, 36' },
+          { text: "I check Reddit before I buy anything. Real people, real opinions.", attribution: 'Alex, 23' }
+        ]
+      }
+    ],
+    createdAt: new Date()
+  }
+}
+
+// ============================================================================
+// LEGACY API - Backwards compatibility with existing code
+// ============================================================================
+
+export function isQualitativeQuery(query: string): boolean {
+  const lowerQuery = query.toLowerCase()
+  const qualKeywords = [
+    '#focus-group', 'focus group', 'focus-group', 'qualitative', 'qual research',
+    'in-depth interview', 'in depth interview', 'depth interview', 'idis',
+    'ethnography', 'ethnographic', '/qual', '/focus-group', 'exploratory research',
+    'open-ended', 'why do they', 'understand why', 'explore their feelings',
+    'attitudes and perceptions', 'deep dive into motivations',
+  ]
+  return qualKeywords.some(keyword => lowerQuery.includes(keyword))
+}
+
+/**
+ * Legacy function - converts AgentResult to ResearchResult for backwards compatibility
+ */
+export async function generateResearchData(
+  userQuery: string,
+  currentCanvas: Canvas | null = null
+): Promise<ResearchResult> {
+  const agentResult = await generateResearchWithAgent(userQuery, currentCanvas)
+
+  // Handle clarification - for legacy, return a minimal result
+  if (agentResult.type === 'clarification' && agentResult.clarification) {
+    return {
+      type: 'quantitative',
+      audienceName: 'Clarification Needed',
+      audienceId: 'clarification',
+      explanation: agentResult.clarification.missing_info,
+      processSteps: ['Analyzing query', 'Identifying missing information'],
+      report: {
+        type: 'quantitative',
+        title: 'Clarification Needed',
+        abstract: agentResult.clarification.missing_info,
+        segments: [],
+        questions: [],
+        themes: []
+      }
+    }
+  }
+
+  // Get first canvas (for legacy single-canvas support)
+  const canvas = agentResult.canvases?.[0]
+  if (!canvas) {
+    // Fallback
+    return generateQuantitativeFallback(userQuery)
+  }
 
   return {
-    type: 'qualitative',
-    audienceName: 'Focus Group Participants',
-    audienceId: 'focus-group',
-    explanation: 'We conducted 2 focus group sessions with 12 participants, uncovering 4 key themes around motivations, barriers, and underlying attitudes.',
-    processSteps: [
-      'Designing discussion guide',
-      'Recruiting 12 participants',
-      'Moderating sessions',
-      'Transcribing 6 hours',
-      'Coding themes',
-      'Synthesizing insights',
-    ],
+    type: canvas.type === 'qualitative' ? 'qualitative' : 'quantitative',
+    audienceName: canvas.audience.name,
+    audienceId: canvas.audience.id,
+    explanation: agentResult.explanation || `Research completed for ${canvas.audience.name}`,
+    processSteps: agentResult.processSteps || SURVEY_PROCESS_STEPS,
     report: {
-      type: 'qualitative',
-      title: cleanQuery ? `Focus Group: ${cleanQuery}` : 'Focus Group Insights',
-      abstract:
-        'Participants revealed a complex interplay between practical concerns and emotional drivers. While cost and convenience matter, trust and authenticity emerged as the dominant factors shaping decisions.',
-      segments: [],
-      questions: [],
-      themes: [
-        {
-          id: 'theme-1',
-          topic: 'The Trust Deficit',
-          sentiment: 'negative',
-          summary: 'Participants expressed deep skepticism rooted in past experiences with broken promises and perceived corporate insincerity.',
-          quotes: [
-            {
-              text: "I've been burned too many times. They say one thing in the ads and then... it's just not the same when you actually use it.",
-              attribution: 'Sarah, 34',
-            },
-            {
-              text: "Honestly? I assume everything is marketing spin until proven otherwise. That's just... that's where we're at now.",
-              attribution: 'Marcus, 28',
-            },
-            {
-              text: "My friend recommended it but even then I was like, okay but are they getting paid to say that? You can't trust anyone anymore.",
-              attribution: 'Jennifer, 42',
-            },
-          ],
-        },
-        {
-          id: 'theme-2',
-          topic: 'Price vs. Purpose',
-          sentiment: 'mixed',
-          summary: 'Cost remains a significant barrier, but participants showed willingness to pay more when they understood the underlying value.',
-          quotes: [
-            {
-              text: "It's not that I can't afford it, it's that I need to understand what I'm actually getting. Like, break it down for me.",
-              attribution: 'David, 31',
-            },
-            {
-              text: "I'll pay premium if it actually means something. But if it's just... premium for the sake of premium? No thanks.",
-              attribution: 'Aisha, 27',
-            },
-            {
-              text: "The cheap option always ends up costing more in the long run. I've learned that the hard way, multiple times.",
-              attribution: 'Robert, 45',
-            },
-          ],
-        },
-        {
-          id: 'theme-3',
-          topic: 'Seeking Authenticity',
-          sentiment: 'positive',
-          summary: 'Participants gravitated toward brands and experiences that felt genuine, unpolished, and human.',
-          quotes: [
-            {
-              text: "I love when companies just... own their mistakes? Like, 'yeah we messed up, here's what we're doing about it.' That's refreshing.",
-              attribution: 'Emma, 29',
-            },
-            {
-              text: "The best ones don't try too hard. They just... are what they are. No gimmicks, no pretending to be your best friend.",
-              attribution: 'James, 38',
-            },
-            {
-              text: "Show me the people behind it. I want to see real faces, real stories. Not stock photos and corporate speak.",
-              attribution: 'Maria, 33',
-            },
-          ],
-        },
-        {
-          id: 'theme-4',
-          topic: 'Community Influence',
-          sentiment: 'positive',
-          summary: 'Word-of-mouth and community validation trumped traditional advertising across all participant segments.',
-          quotes: [
-            {
-              text: "If my sister says it's good, that's worth more than a thousand ads. She has no reason to lie to me.",
-              attribution: 'Lisa, 36',
-            },
-            {
-              text: "I basically live in Reddit threads before I make any decision. Real people, real opinions, you know?",
-              attribution: 'Kevin, 25',
-            },
-            {
-              text: "The community around it matters almost as much as the thing itself. Like, who else is using this? Are they people I respect?",
-              attribution: 'Nina, 41',
-            },
-          ],
-        },
-      ],
-    },
+      type: canvas.type,
+      title: canvas.title,
+      abstract: canvas.abstract,
+      segments: canvas.questions[0]?.segments || [],
+      questions: canvas.questions.map(q => ({
+        question: q.question,
+        options: q.options
+      })),
+      themes: canvas.themes
+    }
   }
 }
 
@@ -224,16 +822,8 @@ function generateQuantitativeFallback(query: string): ResearchResult {
     type: 'quantitative',
     audienceName: 'General Population',
     audienceId: 'gen-pop',
-    explanation:
-      "I couldn't access live data, so I've generated a preliminary report based on general trends.",
-    processSteps: [
-      'Planning survey',
-      'Recruiting participants',
-      'Reviewing responses',
-      'Asking additional questions',
-      'Analysing result',
-      'Creating report',
-    ],
+    explanation: "I couldn't access live data, so I've generated a preliminary report based on general trends.",
+    processSteps: SURVEY_PROCESS_STEPS,
     report: {
       type: 'quantitative',
       title: `Research Report: ${query}`,
@@ -241,7 +831,7 @@ function generateQuantitativeFallback(query: string): ResearchResult {
       segments: [],
       questions: [
         {
-          question: `What are the key factors driving ${query.split(' ').slice(-1)[0] || 'trends'}?`,
+          question: 'Key factors driving this trend?',
           options: [
             { label: 'Cost / Pricing', percentage: 42.4 },
             { label: 'Quality & Reliability', percentage: 28.7 },
@@ -269,204 +859,6 @@ function generateQuantitativeFallback(query: string): ResearchResult {
         },
       ],
     },
-  }
-}
-
-export function isQualitativeQuery(query: string): boolean {
-  const lowerQuery = query.toLowerCase()
-  const qualKeywords = [
-    '#focus-group',
-    'focus group',
-    'focus-group',
-    'qualitative',
-    'qual research',
-    'in-depth interview',
-    'in depth interview',
-    'depth interview',
-    'idis',
-    'ethnography',
-    'ethnographic',
-    '/qual',
-    '/focus-group',
-    'exploratory research',
-    'open-ended',
-    'why do they',
-    'understand why',
-    'explore their feelings',
-    'attitudes and perceptions',
-    'deep dive into motivations',
-  ]
-  return qualKeywords.some(keyword => lowerQuery.includes(keyword))
-}
-
-export async function generateResearchData(
-  userQuery: string,
-  currentCanvas: Canvas | null = null
-): Promise<ResearchResult> {
-  const isQualitative = isQualitativeQuery(userQuery)
-  console.log(`[Merlin] Research query: "${userQuery}"`)
-  console.log(`[Merlin] Type: ${isQualitative ? 'QUALITATIVE' : 'QUANTITATIVE'}`)
-
-  // Define the JSON schema for structured output
-  const researchResultSchema = {
-    type: 'object' as const,
-    properties: {
-      type: {
-        type: 'string',
-        enum: ['quantitative', 'qualitative'],
-        description: 'The type of research conducted'
-      },
-      audienceName: {
-        type: 'string',
-        description: 'Human-readable name for the audience (e.g., "Gen Z", "Times Readers")'
-      },
-      audienceId: {
-        type: 'string',
-        description: 'URL-safe identifier for the audience (e.g., "gen-z", "times-readers")'
-      },
-      explanation: {
-        type: 'string',
-        description: 'Brief explanation of the research findings (2-3 sentences)'
-      },
-      processSteps: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'List of 5-6 research process steps that were performed'
-      },
-      report: {
-        type: 'object',
-        properties: {
-          type: {
-            type: 'string',
-            enum: ['quantitative', 'qualitative']
-          },
-          title: {
-            type: 'string',
-            description: 'Concise title for the research report'
-          },
-          abstract: {
-            type: 'string',
-            description: 'Executive summary of findings (2-3 sentences)'
-          },
-          segments: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Comparison segments if applicable, otherwise empty array'
-          },
-          questions: {
-            type: 'array',
-            description: 'For quantitative: 3 survey questions with results. For qualitative: empty array.',
-            items: {
-              type: 'object',
-              properties: {
-                question: { type: 'string' },
-                options: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      label: { type: 'string' },
-                      percentage: { type: 'number' }
-                    },
-                    required: ['label', 'percentage']
-                  }
-                }
-              },
-              required: ['question', 'options']
-            }
-          },
-          themes: {
-            type: 'array',
-            description: 'For qualitative: 3-4 themes with quotes. For quantitative: empty array.',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                topic: { type: 'string' },
-                sentiment: {
-                  type: 'string',
-                  enum: ['positive', 'negative', 'neutral', 'mixed']
-                },
-                summary: { type: 'string' },
-                quotes: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      text: { type: 'string' },
-                      attribution: { type: 'string' }
-                    },
-                    required: ['text', 'attribution']
-                  }
-                }
-              },
-              required: ['id', 'topic', 'sentiment', 'summary', 'quotes']
-            }
-          }
-        },
-        required: ['type', 'title', 'abstract', 'segments', 'questions', 'themes']
-      }
-    },
-    required: ['type', 'audienceName', 'audienceId', 'explanation', 'processSteps', 'report']
-  }
-
-  try {
-    // 30-second timeout to allow for API response
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('API Timeout after 30s')), 30000)
-    )
-
-    const systemPrompt = getSystemPromptWithContext(currentCanvas, userQuery)
-
-    console.log('[Merlin] Calling Claude API with structured output...')
-
-    // Use tool_choice to force structured JSON output
-    const apiCall = anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 4000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userQuery }],
-      tools: [{
-        name: 'generate_research_report',
-        description: 'Generate a structured research report based on the query',
-        input_schema: researchResultSchema
-      }],
-      tool_choice: { type: 'tool', name: 'generate_research_report' }
-    })
-
-    const response = await Promise.race([apiCall, timeoutPromise])
-    console.log('[Merlin] API response received, stop_reason:', response.stop_reason)
-
-    // Check if response was truncated
-    if (response.stop_reason === 'max_tokens') {
-      console.warn('[Merlin] Response truncated due to max_tokens limit')
-      throw new Error('Response truncated - using fallback')
-    }
-
-    // Extract the tool use result
-    const toolUse = response.content.find(block => block.type === 'tool_use')
-    if (toolUse && toolUse.type === 'tool_use') {
-      const result = toolUse.input as ResearchResult
-      console.log('[Merlin] Successfully received structured response')
-
-      // Ensure type consistency
-      if (isQualitative && result.type !== 'qualitative') {
-        result.type = 'qualitative'
-        if (result.report) result.report.type = 'qualitative'
-      }
-      return result
-    }
-
-    console.error('[Merlin] No tool_use in response')
-    throw new Error('No structured output in response')
-  } catch (error) {
-    console.error('[Merlin] API call failed:', error)
-    console.log('[Merlin] Using fallback data')
-
-    if (isQualitative) {
-      return generateQualitativeFallback(userQuery)
-    }
-    return generateQuantitativeFallback(userQuery)
   }
 }
 

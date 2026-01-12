@@ -6,7 +6,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { useConversation, useHistory, useAudiences, useSegmentSelection } from '@/hooks'
-import { generateResearchData, isQualitativeQuery, generateConversationTitle } from '@/services'
+import { generateResearchWithAgent, isQualitativeQuery, generateConversationTitle } from '@/services'
 import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments } from '@/types'
 import {
   mockAccounts,
@@ -99,10 +99,10 @@ const App: React.FC = () => {
       }
     }, 800) // Progress every 800ms
 
-    // Generate title and research data in parallel
-    const [title, data] = await Promise.all([
+    // Generate title and research data in parallel using new agent API
+    const [title, agentResult] = await Promise.all([
       generateConversationTitle(query),
-      generateResearchData(query, conversation.canvas),
+      generateResearchWithAgent(query, conversation.canvas),
     ])
 
     // Stop the step animation
@@ -110,44 +110,54 @@ const App: React.FC = () => {
 
     const thinkingTime = Math.round((Date.now() - startTime) / 1000)
     console.log('Generated title:', title)
-    console.log('Research data received:', data)
+    console.log('Agent result:', agentResult)
     console.log('Thinking time:', thinkingTime, 's')
 
-    // Use API-returned steps or fallback to starting steps
-    const finalSteps = (data.processSteps || startingSteps.map(s => s.label)).map((label, i) => ({
+    // Handle clarification request from agent
+    if (agentResult.type === 'clarification' && agentResult.clarification) {
+      const clarificationMessage: Message = {
+        id: `msg_${Date.now()}_clarification`,
+        role: 'assistant',
+        content: agentResult.clarification.missing_info,
+        processSteps: [
+          { id: 'step_1', label: 'Analyzing query', status: 'complete' as const },
+          { id: 'step_2', label: 'Identifying requirements', status: 'complete' as const },
+        ],
+        clarification: agentResult.clarification,
+        thinkingTime: thinkingTime,
+      }
+
+      setConversation((prev) => ({
+        ...prev,
+        title,
+        status: 'complete',
+        explanation: agentResult.clarification!.missing_info,
+        thinkingTime: thinkingTime,
+        processSteps: clarificationMessage.processSteps!,
+        messages: [...prev.messages, clarificationMessage],
+      }))
+      return
+    }
+
+    // Handle research results
+    const canvas = agentResult.canvases?.[0]
+    if (!canvas) {
+      console.error('No canvas returned from agent')
+      return
+    }
+
+    // Use API-returned steps or fallback
+    const finalSteps = (agentResult.processSteps || startingSteps.map(s => s.label)).map((label, i) => ({
       id: `step_${i}`,
       label: typeof label === 'string' ? label : (label as any).label,
       status: 'complete' as const,
     }))
 
-    // Build the canvas from results
-    const canvas: Canvas = {
-      id: `canvas_${Date.now()}`,
-      title: data.report?.title || 'Research Results',
-      type: data.report?.type || 'quantitative',
-      audience: { id: data.audienceId || 'unknown', name: data.audienceName || 'Audience' },
-      respondents: data.report?.type === 'qualitative' ? 12 : 847,
-      abstract: data.report?.abstract || '',
-      questions: (data.report?.questions || []).map((q, i) => ({
-        id: `q_${i}`,
-        question: q.question,
-        respondents: 847,
-        options: (q.options || []).map((o) => ({
-          label: o.label,
-          percentage: o.percentage || 0,
-        })),
-        segments: data.report?.segments,
-      })),
-      themes: data.report?.themes,
-      createdAt: new Date(),
-      version: 1,
-    }
-
     // Create assistant message with results
     const assistantMessage: Message = {
       id: `msg_${Date.now()}_assistant`,
       role: 'assistant',
-      content: data.explanation,
+      content: agentResult.explanation || `Research completed for ${canvas.audience.name}`,
       processSteps: finalSteps,
       canvas: canvas,
       thinkingTime: thinkingTime,
@@ -161,7 +171,7 @@ const App: React.FC = () => {
       ...prev,
       title,
       status: 'complete',
-      explanation: data.explanation,
+      explanation: agentResult.explanation || '',
       thinkingTime: thinkingTime,
       processSteps: finalSteps,
       messages: [...prev.messages, assistantMessage],

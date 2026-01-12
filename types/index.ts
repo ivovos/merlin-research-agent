@@ -28,3 +28,16 @@ export type {
   SelectedSegment,
   SelectedSegments,
 } from './segment';
+
+// Agent response types
+export type {
+  ClarificationRequest,
+  ToolSelection,
+  AgentDecision,
+  ResearchToolResult,
+  AgentResult,
+  HeatmapData,
+  SentimentData,
+  ComparisonData,
+  CanvasType,
+} from './agentResponse';
