@@ -1,30 +1,38 @@
 import React from 'react';
-import { Conversation, Report } from '../types';
+import type { Conversation, Canvas, SelectedSegment, SelectedSegments } from '@/types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
-import { SuggestionRow } from './SuggestionRow';
-import { FileText } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
+import { InlineCanvas } from './InlineCanvas';
 
 interface WorkingPaneProps {
   conversation: Conversation;
-  onSelectReport: (report?: Report) => void;
+  onSelectCanvas: (canvas?: Canvas) => void;
+  onExpandCanvas?: (canvas: Canvas) => void;
   onFollowUp: (query: string) => void;
   availableAudiences?: any[];
   onCreateAudience?: any;
+  selectedSegments?: SelectedSegments;
+  /** Canvas ID that the selection belongs to */
+  selectionCanvasId?: string | null;
+  onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
+  onClearSegments?: () => void;
+  onRemoveSegment?: (questionId: string, answerLabel: string) => void;
+  onAskSegment?: (query: string, segments: SelectedSegments) => void;
 }
 
-const MOCK_SUGGESTIONS = [
-  "Deep dive into the first question",
-  "Segment results by @age-groups",
-  "Run a /focus-group to explore why",
-  "Compare sentiment with @uk-market",
-  "Visualize data as a /heatmap",
-  "Summarize key takeaways for stakeholders"
-];
-
-export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelectReport, onFollowUp, availableAudiences, onCreateAudience }) => {
+export const WorkingPane: React.FC<WorkingPaneProps> = ({
+  conversation,
+  onExpandCanvas,
+  onFollowUp,
+  availableAudiences,
+  onCreateAudience,
+  selectedSegments,
+  selectionCanvasId,
+  onBarSelect,
+  onClearSegments,
+  onRemoveSegment,
+  onAskSegment,
+}) => {
   // Auto-scroll logic
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -34,24 +42,18 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
-      {/* Navigation Bar */}
-      <div className="h-16 flex items-center justify-center px-4">
-        <h2 className="text-sm font-medium text-foreground">
-          {conversation.query || 'New conversation'}
-        </h2>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-        <div className="max-w-6xl mx-auto space-y-8 w-full">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Main content area with 100px padding on sides */}
+        <div className="px-[100px] py-6 space-y-8">
 
           {/* Query History */}
           <div className="space-y-8">
-            {conversation.messages.map((msg, idx) => {
-              // Render USER message
+            {conversation.messages.map((msg) => {
+              // Render USER message - right aligned, max 50% width
               if (msg.role === 'user') {
                 return (
                   <div key={msg.id} className="flex justify-end animate-in slide-in-from-bottom-2 fade-in duration-300">
-                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-xl text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="bg-secondary/50 border border-border px-6 py-4 rounded-2xl rounded-tr-sm shadow-sm max-w-[50%] text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {msg.content.split(/([@/#][\w-]+)/g).map((part, i) => {
                         if (part.startsWith('@') || part.startsWith('/') || part.startsWith('#')) {
                           return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
@@ -63,7 +65,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
                 );
               }
 
-              // Render ASSISTANT (Result) message
+              // Render ASSISTANT (Result) message - left aligned, centered canvas
               if (msg.role === 'assistant') {
                 return (
                   <div key={msg.id} className="space-y-6 animate-in fade-in duration-500">
@@ -77,34 +79,28 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
                     )}
 
                     {/* 2. Explanation & Metadata */}
-                    <div className="space-y-4 px-2">
+                    <div className="space-y-4">
                       <p className="text-foreground/90 leading-relaxed text-sm">
                         {msg.content}
                       </p>
 
-                      {/* 3. Report Card */}
-                      {msg.report && (
-                        <div
-                          onClick={() => onSelectReport(msg.report)}
-                          className="group bg-card border border-border rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all w-full max-w-md"
-                        >
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                            <FileText className="w-6 h-6 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground truncate">{msg.report.title}</h4>
-                            <p className="text-sm text-muted-foreground truncate">Report • {msg.report.audience.name}</p>
-                          </div>
+                      {/* 3. Inline Canvas - centered, full width within padding */}
+                      {msg.canvas && (
+                        <div className="flex justify-center">
+                          <InlineCanvas
+                            canvas={msg.canvas}
+                            onExpand={() => onExpandCanvas?.(msg.canvas!)}
+                            selectedSegments={selectedSegments}
+                            isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
+                            onBarSelect={onBarSelect}
+                            onClearSegments={onClearSegments}
+                            onRemoveSegment={onRemoveSegment}
+                            onAskSegment={onAskSegment}
+                            className="w-full max-w-3xl"
+                          />
                         </div>
                       )}
 
-                      {/* 4. Suggestions (Only for the latest message or if relevant) */}
-                      {msg.id === conversation.messages[conversation.messages.length - 1].id && (
-                        <SuggestionRow
-                          suggestions={MOCK_SUGGESTIONS}
-                          onSelect={onFollowUp}
-                        />
-                      )}
                     </div>
                   </div>
                 );
@@ -115,7 +111,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
           {/* Current Active Processing State (Only if status is processing/not complete yet) */}
           {conversation.status === 'processing' && (
-            <div className="space-y-4 animate-pulse px-2">
+            <div className="space-y-4 animate-pulse">
               <ProcessSteps
                 steps={conversation.processSteps}
                 isComplete={false}
@@ -128,18 +124,16 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
         </div>
       </div>
 
-      {/* Sticky Bottom Input */}
-      <div className="flex-shrink-0 bg-background p-6 z-10">
-        <div className="max-w-6xl mx-auto w-full">
-          <QueryInput
-            onSubmit={onFollowUp}
-            placeholder="Ask another question"
-            className=""
-            compact={true}
-            availableAudiences={availableAudiences}
-            onCreateAudience={onCreateAudience}
-          />
-        </div>
+      {/* Sticky Bottom Input - same 100px padding */}
+      <div className="flex-shrink-0 bg-background px-[100px] py-6 z-10">
+        <QueryInput
+          onSubmit={onFollowUp}
+          placeholder="Ask another question"
+          className=""
+          compact={true}
+          availableAudiences={availableAudiences}
+          onCreateAudience={onCreateAudience}
+        />
       </div>
     </div>
   );

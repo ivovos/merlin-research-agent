@@ -44,7 +44,6 @@ const ResizableHandle = ({
             !disabled && "w-1 hover:w-2",
             className
         )}
-        disabled={disabled}
         {...props}
     >
         {withHandle && !disabled && (

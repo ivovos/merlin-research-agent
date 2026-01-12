@@ -74,7 +74,7 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
       .slice(0, 3);
   }, [audiences]);
 
-  const renderAudienceRow = (audience: Audience, showProject: boolean = false) => (
+  const renderAudienceRow = (audience: Audience, _showProject: boolean = false) => (
     <TableRow
       key={audience.id}
       className="cursor-pointer hover:bg-gray-50"

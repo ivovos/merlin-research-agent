@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ProcessStep } from '../types';
-import { Loader2, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import type { ProcessStep } from '@/types';
+import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProcessStepsProps {

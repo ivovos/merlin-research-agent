@@ -1,13 +1,25 @@
 import React, { useState, useMemo } from 'react';
-import { QuestionResult } from '../types';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
+import type { QuestionResult, SelectedSegment, SelectedSegments } from '@/types';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList, Cell } from 'recharts';
 import { EditQuestionModal } from './EditQuestionModal';
 import { cn } from '@/lib/utils';
+import { MoreHorizontal, Pencil, RefreshCw, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface QuestionCardProps {
   data: QuestionResult;
   index: number;
+  canvasId?: string;
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
+  onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
+  selectedSegments?: SelectedSegments;
 }
 
 // Helper to get computed CSS variable value
@@ -19,21 +31,48 @@ const getCSSVariable = (varName: string): string => {
   return value ? `hsl(${value})` : '#000000';
 };
 
-export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQuestion }) => {
+export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasId, onEditQuestion, onBarSelect, selectedSegments }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Get computed colors for Recharts
   const primaryColor = useMemo(() => getCSSVariable('--primary'), []);
   const mutedForegroundColor = useMemo(() => getCSSVariable('--muted-foreground'), []);
+
+  // Check if a specific bar is selected
+  const isBarSelected = (label: string) => {
+    if (!selectedSegments || selectedSegments.segments.length === 0) return false;
+    return selectedSegments.segments.some(
+      seg => seg.questionId === data.id && seg.answerLabel === label
+    );
+  };
+
+  // Check if any bars are selected (to determine if we should show inactive state)
+  const hasAnySelection = selectedSegments && selectedSegments.segments.length > 0;
+
+  // Handle bar click
+  const handleBarClick = (entry: any) => {
+    if (!onBarSelect || !canvasId) return;
+    const respondentCount = Math.round(((entry.percentage || 0) / 100) * data.respondents);
+    onBarSelect({
+      questionId: data.id,
+      questionText: data.question,
+      answerLabel: entry.label,
+      percentage: entry.percentage || 0,
+      respondents: respondentCount,
+    }, canvasId);
+  };
   
   // Sort data for better visualization (descending)
   const sortedData = useMemo(() => {
     if (!data.options || data.options.length === 0) return [];
-    return [...data.options].sort((a, b) => {
-      const aVal = a.percentage || 0;
-      const bVal = b.percentage || 0;
-      return bVal - aVal;
-    });
+    // Ensure options have valid structure
+    return [...data.options]
+      .filter(opt => opt && typeof opt.label === 'string')
+      .sort((a, b) => {
+        const aVal = a.percentage || 0;
+        const bVal = b.percentage || 0;
+        return bVal - aVal;
+      });
   }, [data.options]);
 
   // Fallback colors for multi-segment charts
@@ -43,7 +82,32 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
     <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm animate-in slide-in-from-bottom-2 border border-border">
       <div className="flex justify-between items-start mb-4">
         <h4 className="text-sm font-semibold text-muted-foreground">Question {index + 1}</h4>
-        <span className="text-sm text-muted-foreground">{data.respondents} respondents</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{data.respondents} respondents</span>
+          {/* Action dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit question
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => console.log('Re-run question')}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Re-run question
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => console.log('Add audience')}>
+                <Users className="w-4 h-4 mr-2" />
+                Add another audience
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <h3 className="text-lg font-bold text-foreground mb-6 leading-tight">
@@ -97,8 +161,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                   return null;
                 }}
               />
-              {data.segments && data.segments.length > 0 ? (
-                // Multi-segment rendering
+              {data.segments && data.segments.length > 0 && sortedData.length > 0 && sortedData[0][data.segments[0]] !== undefined ? (
+                // Multi-segment rendering - only if options have segment data
                 data.segments.map((seg, i) => (
                   <Bar
                     key={seg}
@@ -106,6 +170,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                     name={seg}
                     fill={i === 0 ? primaryColor : segmentColors[i % segmentColors.length]}
                     radius={[0, 4, 4, 0]}
+                    onClick={(entry) => handleBarClick(entry)}
+                    cursor={onBarSelect ? 'pointer' : undefined}
                   >
                     <LabelList
                       dataKey={seg}
@@ -116,13 +182,28 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, onEditQ
                   </Bar>
                 ))
               ) : (
-                // Default single bar
+                // Default single bar with selection support
                 <Bar
                   dataKey="percentage"
                   fill={primaryColor}
                   fillOpacity={0.9}
                   radius={[4, 4, 4, 4]}
+                  onClick={(entry) => handleBarClick(entry)}
+                  cursor={onBarSelect ? 'pointer' : undefined}
                 >
+                  {sortedData.map((entry, i) => {
+                    const selected = isBarSelected(entry.label);
+                    const opacity = hasAnySelection ? (selected ? 1 : 0.3) : 0.9;
+                    return (
+                      <Cell
+                        key={`cell-${i}`}
+                        fill={primaryColor}
+                        fillOpacity={opacity}
+                        stroke={selected ? primaryColor : undefined}
+                        strokeWidth={selected ? 2 : 0}
+                      />
+                    );
+                  })}
                   <LabelList
                     dataKey="percentage"
                     position="right"

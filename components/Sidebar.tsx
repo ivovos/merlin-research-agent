@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Conversation } from '../types';
+import type { Conversation } from '@/types';
 import { PanelLeftClose, PanelLeftOpen, Plus, Users, MessageSquare, ChevronDown, ChevronRight, Settings, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MonoIcon } from './MonoIcon';
-import type { Account } from '../data/mockData';
+import type { Account } from '@/types';
 import { mockAccounts } from '../data/mockData';
 
 interface SidebarProps {
@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentAccount,
   onAccountChange,
   selectedProject,
-  onProjectSelect,
+  onProjectSelect: _onProjectSelect,
   onAudiencesClick,
   activeView = 'conversation'
 }) => {
