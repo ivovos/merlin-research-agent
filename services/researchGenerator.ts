@@ -142,6 +142,46 @@ const focusGroupResultSchema = {
   required: ['title', 'abstract', 'audience', 'participant_count', 'themes']
 }
 
+// Schema for generating comparison survey results (multi-segment)
+// Each question has results broken down by segment
+const comparisonSurveyResultSchema = {
+  type: 'object' as const,
+  properties: {
+    title: { type: 'string', description: 'Catchy title highlighting the comparison (e.g., "Gen Z vs Millennials: Coffee Habits Compared")' },
+    abstract: { type: 'string', description: 'Executive summary highlighting key differences between segments (2-3 sentences)' },
+    segments: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'List of segment names being compared'
+    },
+    sample_size_per_segment: { type: 'number', description: 'Number of respondents per segment' },
+    questions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          question: { type: 'string' },
+          options: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                label: { type: 'string', description: 'The answer option' }
+                // Segment percentages will be added dynamically based on segments array
+              },
+              required: ['label'],
+              additionalProperties: { type: 'number' } // Allow dynamic segment keys with numeric values
+            },
+            description: 'Each option should have a label and a percentage for each segment (e.g., {"label": "Espresso", "Gen Z": 45.2, "Millennials": 38.7})'
+          }
+        },
+        required: ['question', 'options']
+      }
+    }
+  },
+  required: ['title', 'abstract', 'segments', 'sample_size_per_segment', 'questions']
+}
+
 // Process steps for different research types
 const SURVEY_PROCESS_STEPS = [
   'Designing survey questionnaire',
@@ -339,17 +379,20 @@ async function executeResearchTool(
 ): Promise<Canvas | null> {
   const audience = (toolInput.audience as string) || 'General Population'
   const researchQuestion = (toolInput.research_question as string) || originalQuery
+  const segments = (toolInput.segments as string[] | undefined)
 
   switch (toolName) {
     case 'run_survey':
-      return executeSurveyTool(audience, researchQuestion)
+      // Pass segments for comparison surveys
+      return executeSurveyTool(audience, researchQuestion, segments)
 
     case 'run_focus_group':
       return executeFocusGroupTool(audience, researchQuestion)
 
     case 'run_comparison':
-      const segments = (toolInput.segments as string[]) || ['Group A', 'Group B']
-      return executeComparisonTool(segments, researchQuestion)
+      // Use segments from comparison tool or default
+      const comparisonSegments = segments || ['Group A', 'Group B']
+      return executeComparisonTool(comparisonSegments, researchQuestion)
 
     case 'run_heatmap':
     case 'run_sentiment_analysis':
@@ -366,8 +409,14 @@ async function executeResearchTool(
 
 /**
  * Execute survey tool and generate quantitative canvas
+ * Supports optional segments for comparison surveys
  */
-async function executeSurveyTool(audience: string, researchQuestion: string): Promise<Canvas> {
+async function executeSurveyTool(audience: string, researchQuestion: string, segments?: string[]): Promise<Canvas> {
+  // If segments provided, use comparison survey generation
+  if (segments && segments.length > 1) {
+    return executeComparisonSurveyTool(audience, researchQuestion, segments)
+  }
+
   console.log(`[Merlin Agent] Executing survey for: ${audience}`)
 
   const surveyPrompt = `Generate realistic survey results for the following:
@@ -462,6 +511,169 @@ Guidelines:
 
   // Fallback
   return generateFallbackSurveyCanvas(audience, researchQuestion)
+}
+
+/**
+ * Execute comparison survey tool - generates survey with multiple segments
+ * Each question shows side-by-side results for each segment
+ */
+async function executeComparisonSurveyTool(audience: string, researchQuestion: string, segments: string[]): Promise<Canvas> {
+  console.log(`[Merlin Agent] Executing comparison survey for segments: ${segments.join(' vs ')}`)
+
+  const comparisonPrompt = `Generate realistic comparative survey results for the following:
+Audience: ${audience}
+Research Question: ${researchQuestion}
+Segments to Compare: ${segments.join(', ')}
+
+Guidelines:
+- Generate 3 specific, measurable questions that compare the segments
+- For each question, provide percentages for EACH segment separately
+- Each option should have a percentage for each segment (e.g., {"label": "Option A", "${segments[0]}": 45.2, "${segments[1]}": 38.7})
+- Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
+- Show meaningful differences between segments where appropriate
+- Percentages for each segment should sum to approximately 100% within each question
+- Make the title highlight the comparison (e.g., "${segments[0]} vs ${segments[1]}: Topic Compared")
+- Write a 2-sentence abstract summarizing key differences between segments
+
+IMPORTANT: Each option must include numeric percentage values for all segments: ${segments.map(s => `"${s}": <number>`).join(', ')}`
+
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: comparisonPrompt }],
+      tools: [{
+        name: 'generate_comparison_survey_results',
+        description: 'Generate structured comparison survey results with segment breakdowns',
+        input_schema: comparisonSurveyResultSchema
+      }],
+      tool_choice: { type: 'tool', name: 'generate_comparison_survey_results' }
+    })
+
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (toolUse && toolUse.type === 'tool_use') {
+      const result = toolUse.input as {
+        title: string
+        abstract: string
+        segments: string[]
+        sample_size_per_segment: number
+        questions: Array<{
+          question: string
+          options: Array<{ label: string; [segment: string]: string | number }>
+        }>
+      }
+
+      console.log('[Merlin Agent] Comparison Survey API response:', JSON.stringify(result, null, 2))
+
+      // Handle questions being returned as a string (JSON) instead of array
+      let questionsArray: any[] = []
+      if (typeof result.questions === 'string') {
+        try {
+          const sanitizedJson = result.questions.replace(
+            /:\s*(\d+\.?\d*)%/g,
+            ': "$1%"'
+          )
+          questionsArray = JSON.parse(sanitizedJson)
+          console.log('[Merlin Agent] Parsed comparison questions from JSON string (sanitized)')
+        } catch (e) {
+          console.error('[Merlin Agent] Failed to parse comparison questions string:', e)
+        }
+      } else if (Array.isArray(result.questions)) {
+        questionsArray = result.questions
+      }
+
+      // Normalize options with segment data
+      const questions = questionsArray.map((q: any, idx: number) => ({
+        id: `q${idx + 1}`,
+        question: q.question || '',
+        respondents: (result.sample_size_per_segment || 500) * segments.length,
+        segments: result.segments || segments,
+        options: normalizeComparisonOptions(q.options, result.segments || segments)
+      }))
+
+      console.log('[Merlin Agent] Processed comparison questions:', questions.length, questions)
+
+      // Calculate total respondents across all segments
+      const totalRespondents = (result.sample_size_per_segment || 500) * segments.length
+
+      return {
+        id: `canvas-${Date.now()}`,
+        title: result.title || `${segments.join(' vs ')}: Survey Results`,
+        type: 'quantitative',
+        audience: {
+          id: audience.toLowerCase().replace(/\s+/g, '-'),
+          name: audience
+        },
+        respondents: totalRespondents,
+        abstract: result.abstract || '',
+        questions,
+        themes: [],
+        createdAt: new Date()
+      }
+    } else {
+      console.log('[Merlin Agent] No tool_use block found in comparison response:', response.content)
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Comparison survey generation failed:', error)
+  }
+
+  // Fallback to generating separate single surveys (not ideal but works)
+  return generateFallbackComparisonCanvas(audience, researchQuestion, segments)
+}
+
+/**
+ * Normalize options for comparison surveys - handles segment percentage data
+ */
+function normalizeComparisonOptions(options: unknown, segments: string[]): Array<{ label: string; [key: string]: string | number }> {
+  if (!Array.isArray(options)) return []
+
+  return options.filter(opt => opt && typeof opt === 'object' && 'label' in opt).map(opt => {
+    const normalized: { label: string; [key: string]: string | number } = {
+      label: String(opt.label || '')
+    }
+
+    // Extract segment percentages
+    for (const segment of segments) {
+      const value = opt[segment]
+      normalized[segment] = parsePercentage(value)
+    }
+
+    return normalized
+  })
+}
+
+/**
+ * Fallback comparison canvas when API fails
+ */
+function generateFallbackComparisonCanvas(audience: string, researchQuestion: string, segments: string[]): Canvas {
+  console.log('[Merlin Agent] Using fallback comparison canvas')
+
+  // Generate mock comparison data
+  const mockQuestions = [
+    {
+      id: 'q1',
+      question: `How do ${segments.join(' and ')} compare on preferences?`,
+      respondents: 500 * segments.length,
+      segments,
+      options: [
+        { label: 'Option A', ...Object.fromEntries(segments.map(s => [s, Math.round(Math.random() * 40 + 20)])) },
+        { label: 'Option B', ...Object.fromEntries(segments.map(s => [s, Math.round(Math.random() * 30 + 15)])) },
+        { label: 'Option C', ...Object.fromEntries(segments.map(s => [s, Math.round(Math.random() * 20 + 10)])) },
+      ]
+    }
+  ]
+
+  return {
+    id: `canvas-${Date.now()}`,
+    title: `${segments.join(' vs ')}: Comparison`,
+    type: 'quantitative',
+    audience: { id: audience.toLowerCase().replace(/\s+/g, '-'), name: audience },
+    respondents: 500 * segments.length,
+    abstract: `Comparison of ${segments.join(' and ')} on ${researchQuestion}.`,
+    questions: mockQuestions as any,
+    themes: [],
+    createdAt: new Date()
+  }
 }
 
 /**
