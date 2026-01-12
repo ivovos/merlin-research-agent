@@ -19,6 +19,8 @@ import {
   GitCompare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -128,9 +130,9 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold text-foreground">{canvas.title}</h2>
-                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                <Badge variant="secondary" className="text-xs font-medium">
                   v{version}
-                </span>
+                </Badge>
               </div>
               <span className="text-sm text-muted-foreground">
                 {canvas.respondents} respondents
@@ -138,12 +140,12 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             </div>
 
             {/* Audience badge */}
-            <div className="flex items-center gap-2 bg-secondary/50 border border-border px-2 py-1 rounded-full">
+            <Badge variant="outline" className="gap-2 px-2 py-1">
               <div className="w-4 h-4 bg-foreground text-background flex items-center justify-center rounded text-[10px] font-serif font-bold">
                 {canvas.audience.icon}
               </div>
               <span className="text-xs font-medium">{canvas.audience.name}</span>
-            </div>
+            </Badge>
 
             {/* Add audience to compare button */}
             <Button
@@ -249,11 +251,11 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
               {/* Left: Segment info and attributes */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {/* Segment summary */}
-                <div className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-xs flex-shrink-0">
+                <Badge className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 flex-shrink-0">
                   <Users className="w-3.5 h-3.5" />
                   <span className="font-semibold">{selectedSegments.totalRespondents.toLocaleString()}</span>
                   <span className="text-primary/70">respondents</span>
-                </div>
+                </Badge>
 
                 {/* Attributes list - scrollable */}
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-1">
@@ -264,20 +266,23 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                       return null;
                     }
                     return (
-                      <div
+                      <Badge
                         key={`${seg.questionId}-${seg.answerLabel}-${idx}`}
-                        className="flex items-center gap-1.5 bg-secondary text-secondary-foreground border border-border px-2 py-1 rounded-md text-xs flex-shrink-0"
+                        variant="secondary"
+                        className="gap-1.5 px-2 py-1 flex-shrink-0 rounded-md"
                       >
                         <span className="truncate max-w-[100px]">{seg.answerLabel}</span>
                         <span className="text-muted-foreground">({seg.percentage}%)</span>
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
                           onClick={() => onRemoveSegment(seg.questionId, seg.answerLabel)}
-                          className="hover:text-foreground transition-colors ml-0.5"
                           title="Remove"
                         >
                           <X className="w-3 h-3" />
-                        </button>
-                      </div>
+                        </Button>
+                      </Badge>
                     );
                   })}
                 </div>
@@ -380,20 +385,21 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
               {hasSelection && (
                 <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-2 pr-14 max-w-[calc(100%-60px)]">
                   {/* Summary pill with total */}
-                  <div className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-sm">
+                  <Badge className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-sm">
                     <Users className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="font-medium">New segment</span>
                     <span className="text-primary/70">•</span>
                     <span>{selectedSegments.totalRespondents.toLocaleString()} respondents</span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent hover:text-primary/70"
                       onClick={onClearSegments}
-                      className="ml-1 hover:text-primary/70 transition-colors"
                       title="Clear all selections"
                     >
                       <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                    </Button>
+                  </Badge>
                   {/* Individual segment pills */}
                   {selectedSegments.segments.map((seg, idx) => {
                     // Defensive check - ensure seg has expected properties
@@ -402,21 +408,23 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                       return null;
                     }
                     return (
-                      <div
+                      <Badge
                         key={`${seg.questionId}-${seg.answerLabel}-${idx}`}
-                        className="flex items-center gap-1.5 bg-secondary text-secondary-foreground border border-border px-2 py-1 rounded-full text-xs"
+                        variant="secondary"
+                        className="gap-1.5 px-2 py-1 text-xs"
                       >
                         <span className="truncate max-w-[120px]">{seg.answerLabel}</span>
                         <span className="text-muted-foreground">({(seg.respondents || 0).toLocaleString()})</span>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 hover:bg-transparent"
                           onClick={() => onRemoveSegment(seg.questionId, seg.answerLabel)}
-                          className="hover:text-foreground transition-colors"
                           title="Remove this selection"
                         >
                           <X className="w-3 h-3" />
-                        </button>
-                      </div>
+                        </Button>
+                      </Badge>
                     );
                   })}
                 </div>
@@ -480,33 +488,36 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   );
 };
 
+// Sentiment badge variant mapping using design tokens
+const sentimentVariants: Record<string, { className: string }> = {
+  positive: { className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400' },
+  negative: { className: 'bg-destructive/10 text-destructive border-destructive/20' },
+  neutral: { className: 'bg-muted text-muted-foreground border-border' },
+  mixed: { className: 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400' },
+};
+
 // Full Theme Card for expanded view
 const FullThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => {
   const [showAllQuotes, setShowAllQuotes] = useState(true);
   const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
 
-  const sentimentColors = {
-    positive: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    mixed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  };
-
   const displayedQuotes = showAllQuotes ? theme.quotes : theme.quotes.slice(0, 2);
+  const sentimentStyle = sentimentVariants[theme.sentiment] || sentimentVariants.neutral;
 
   return (
-    <div className="bg-background border border-border rounded-xl p-6 shadow-sm">
+    <Card className="p-6">
       <div className="flex justify-between items-start mb-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <span
+            <Badge
+              variant="outline"
               className={cn(
-                'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
-                sentimentColors[theme.sentiment]
+                'text-xs font-bold uppercase tracking-wider',
+                sentimentStyle.className
               )}
             >
               {theme.sentiment}
-            </span>
+            </Badge>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Users className="w-3 h-3" />
               {theme.quotes.length} participant{theme.quotes.length !== 1 ? 's' : ''}
@@ -551,12 +562,14 @@ const FullThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => {
             Verbatim Responses
           </h4>
           {theme.quotes.length > 2 && (
-            <button
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-xs"
               onClick={() => setShowAllQuotes(!showAllQuotes)}
-              className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
             >
               {showAllQuotes ? 'Collapse' : `Show all ${theme.quotes.length}`}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -594,6 +607,6 @@ const FullThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => {
             ))}
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
