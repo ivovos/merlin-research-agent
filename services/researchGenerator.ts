@@ -1,5 +1,5 @@
 import { anthropic } from './api'
-import type { Report } from '@/types'
+import type { Canvas } from '@/types'
 
 export interface ResearchResult {
   type: 'quantitative' | 'qualitative' | 'update'
@@ -35,134 +35,183 @@ The user has asked a specific research question.
 Your task is to simulate the execution of this specific research project and generate a realistic, easy-to-read report.
 
 **CRITICAL: REPORT TYPE DETERMINATION**
-1. **Qualitative (Focus Group)**: If query contains "#focus-group" or asks for qualitative insights/focus group.
-   - Set "type": "qualitative".
-   - "respondents": Small number (8-15).
-   - Generate "themes" array instead of "questions".
-2. **Quantitative (Survey)**: Default behavior.
-   - Set "type": "quantitative".
-   - "respondents": Large number (100+).
-   - Generate "questions" array.
+Detect qualitative keywords: "focus group", "qualitative", "qual", "in-depth interview", "ethnography", "exploratory", "why do they", "understand why", etc.
 
-**CRITICAL: AUDIENCE SEGMENTATION LOGIC**
-Analyze the user's request to determine the number of audience segments to visualize.
-1. **Single Audience**: If the user asks about a general group (e.g., "What do teens like?", "Survey parents"), use a SINGLE segment.
-   - Output 'segments': [] (empty array).
-   - Each option should have: { "label": "string", "percentage": number }
-2. **Comparison**: If the user asks to compare groups (e.g., "Teens vs Adults", "Compare UK and US"), use MULTIPLE segments.
-   - Output 'segments': ["Teens", "Adults"].
-   - Each option should have: { "label": "string", "Teens": number, "Adults": number }
-   - You can have 2, 3, or more segments if requested.
+1. **Qualitative (Focus Group/IDIs)**: If query mentions qualitative research methods.
+   - Set "type": "qualitative" and "report.type": "qualitative".
+   - Generate "themes" array with 3-4 rich themes (NOT questions).
+   - Set "questions": [] (empty array for qualitative).
+
+2. **Quantitative (Survey)**: Default for all other queries.
+   - Set "type": "quantitative" and "report.type": "quantitative".
+   - Generate "questions" array with 3 specific questions.
+   - Set "themes": [] (empty array for quantitative).
+
+**QUALITATIVE RESEARCH GUIDELINES:**
+When generating qualitative results:
+- **Themes**: Generate 3-4 distinct themes that emerged from discussion
+- **Topic**: Evocative 2-4 word theme name (e.g., "The Trust Deficit", "Price vs. Purpose")
+- **Sentiment**: Match the emotional tone - positive, negative, neutral, or mixed
+- **Summary**: One compelling sentence capturing the insight
+- **Quotes**: 2-3 realistic, conversational quotes per theme
+  - Use natural speech patterns, hesitations, emphasis
+  - Attribution format: "Name, Age" (e.g., "Sarah, 34" or "Mike, 28")
+  - Make quotes feel authentic - include filler words, interruptions, emotions
+- **Process Steps** for qual: "Designing discussion guide", "Recruiting 12 participants", "Moderating sessions", "Transcribing 8 hours", "Coding themes", "Synthesizing insights"
+
+**QUANTITATIVE RESEARCH GUIDELINES:**
+When generating quantitative results:
+- **Questions**: 3 specific, measurable questions with clear options
+- **Options**: 4-6 response options per question with realistic percentages
+- **Process Steps** for quant: "Designing survey", "Recruiting 500+ respondents", "Collecting responses", "Cleaning data", "Running analysis", "Generating report"
 
 **DATA REALISM GUIDELINES (STRICT):**
-- **AVOID ROUND NUMBERS**: Do NOT use 50%, 25%, 10%, or 0% unless absolutely necessary.
-- **USE NUANCED STATISTICS**: Use specific values like 42.8%, 17%, 87.3% to reflect real-world messiness.
-- **REAL WORLD TRENDS**: Leverage your knowledge base to approximate *actual* market stats.
-- **AVOID PERFECT SPLITS**: Never generate a 50/50 split. Always show a clear winner or a realistic distribution.
+- **AVOID ROUND NUMBERS**: Use specific values like 42.8%, 17.3%, 87.1%
+- **REAL WORLD TRENDS**: Leverage your knowledge to approximate actual market statistics
+- **AVOID PERFECT SPLITS**: Never generate 50/50. Show clear winners or realistic distributions.
 
-1. **Identify the Audience**: Extract or infer the target audience.
-2. **Process Steps**: Generate 5 specific, technical research steps relevant to this query. **CRITICAL**: Keep step labels extremely concise (max 3-5 words) and action-oriented.
-3. **Research Report**: Create a synthetic report that directly answers the user's question.
-    - Title: Catchy and direct.
-    - Summary: Concise (1-2 sentences).
+**AUDIENCE SEGMENTATION (Quantitative only):**
+- Single audience: 'segments': []
+- Comparison: 'segments': ["Group A", "Group B"] with per-segment percentages
 
-    **IF QUALITATIVE**:
-    - "themes": 3 distinct themes.
-      - "topic": Short title.
-      - "sentiment": "positive" | "negative" | "neutral" | "mixed".
-      - "summary": 1 sentence description.
-      - "quotes": 2 realistic quotes from participants.
-
-    **IF QUANTITATIVE**:
-    - "questions": 3 specific questions with plausible data.
-
-4. **Explanation**: A one-sentence summary of the methodology and key finding.
-
-Output strictly valid JSON matching this structure:
+Output strictly valid JSON:
 {
-  "type": "quantitative" | "qualitative" | "update",
+  "type": "quantitative" | "qualitative",
   "audienceName": "string",
-  "audienceId": "string (slug)",
-  "processSteps": ["step1", "step2", "step3", "step4", "step5"],
-  "explanation": "string",
+  "audienceId": "string-slug",
+  "processSteps": ["step1", "step2", "step3", "step4", "step5", "step6"],
+  "explanation": "string - one sentence methodology + key finding",
   "report": {
-    "title": "string",
-    "abstract": "string",
+    "type": "quantitative" | "qualitative",
+    "title": "string - catchy, direct",
+    "abstract": "string - 1-2 sentence summary of key insight",
     "segments": [],
-    "questions": [
-      {
-        "question": "What is your primary concern?",
-        "options": [
-          { "label": "Cost", "percentage": 42.3 },
-          { "label": "Quality", "percentage": 31.8 }
-        ]
-      }
-    ],
+    "questions": [],
     "themes": []
   }
-}
+}`
 
-CRITICAL: For quantitative reports, EVERY question MUST have an "options" array with 3-6 options.`
-
-function getSystemPromptWithContext(currentReport: Report | null, userQuery: string): string {
-  if (!currentReport) return SYSTEM_PROMPT
+function getSystemPromptWithContext(currentCanvas: Canvas | null, userQuery: string): string {
+  if (!currentCanvas) return SYSTEM_PROMPT
 
   return `${SYSTEM_PROMPT}
 
-CURRENT REPORT CONTEXT:
-${JSON.stringify(currentReport, null, 2)}
+CURRENT CANVAS CONTEXT:
+${JSON.stringify(currentCanvas, null, 2)}
 The user is asking a follow-up question: "${userQuery}".
 DECISION LOGIC:
-- DEFAULT to creating a NEW report for follow-up questions to maintain history. Set "type": "new".
-- ONLY if the user explicitly asks to UPDATE, MODIFY, or CHANGE the existing report, then set "type": "update".`
+- DEFAULT to creating a NEW canvas for follow-up questions to maintain history. Set "type": "new".
+- ONLY if the user explicitly asks to UPDATE, MODIFY, or CHANGE the existing canvas, then set "type": "update".`
 }
 
 function generateQualitativeFallback(query: string): ResearchResult {
+  // Clean up query for title
+  const cleanQuery = query
+    .replace(/#focus-group/gi, '')
+    .replace(/\/qual/gi, '')
+    .replace(/qualitative/gi, '')
+    .replace(/focus group/gi, '')
+    .trim()
+
   return {
     type: 'qualitative',
-    audienceName: 'Target Audience',
-    audienceId: 'audience',
-    explanation: 'Generated qualitative insights based on focus group simulation.',
+    audienceName: 'Focus Group Participants',
+    audienceId: 'focus-group',
+    explanation: 'We conducted 2 focus group sessions with 12 participants, uncovering 4 key themes around motivations, barriers, and underlying attitudes.',
     processSteps: [
       'Designing discussion guide',
-      'Recruiting panel',
-      'Moderating focus group',
-      'Transcribing sessions',
+      'Recruiting 12 participants',
+      'Moderating sessions',
+      'Transcribing 6 hours',
       'Coding themes',
       'Synthesizing insights',
     ],
     report: {
       type: 'qualitative',
-      title: `Focus Group Insights: ${query.replace('#focus-group', '').trim()}`,
+      title: cleanQuery ? `Focus Group: ${cleanQuery}` : 'Focus Group Insights',
       abstract:
-        'Participants engaged in a lively discussion about the topic, revealing deep-seated values and conflicting priorities.',
+        'Participants revealed a complex interplay between practical concerns and emotional drivers. While cost and convenience matter, trust and authenticity emerged as the dominant factors shaping decisions.',
       segments: [],
       questions: [],
       themes: [
         {
           id: 'theme-1',
-          topic: 'Core Values',
-          sentiment: 'positive',
-          summary: 'Participants consistently prioritized authenticity and transparency.',
+          topic: 'The Trust Deficit',
+          sentiment: 'negative',
+          summary: 'Participants expressed deep skepticism rooted in past experiences with broken promises and perceived corporate insincerity.',
           quotes: [
             {
-              text: "I just want brands to be real with me. If you messed up, own it.",
-              attribution: 'Participant 3',
+              text: "I've been burned too many times. They say one thing in the ads and then... it's just not the same when you actually use it.",
+              attribution: 'Sarah, 34',
             },
             {
-              text: "It's not about being perfect, it's about being honest.",
-              attribution: 'Participant 7',
+              text: "Honestly? I assume everything is marketing spin until proven otherwise. That's just... that's where we're at now.",
+              attribution: 'Marcus, 28',
+            },
+            {
+              text: "My friend recommended it but even then I was like, okay but are they getting paid to say that? You can't trust anyone anymore.",
+              attribution: 'Jennifer, 42',
             },
           ],
         },
         {
           id: 'theme-2',
-          topic: 'Barriers to Adoption',
-          sentiment: 'negative',
-          summary: 'Cost remains a significant barrier, but trust is the bigger issue.',
+          topic: 'Price vs. Purpose',
+          sentiment: 'mixed',
+          summary: 'Cost remains a significant barrier, but participants showed willingness to pay more when they understood the underlying value.',
           quotes: [
-            { text: "It's too expensive for what it is.", attribution: 'Participant 1' },
-            { text: "I don't trust them with my data.", attribution: 'Participant 5' },
+            {
+              text: "It's not that I can't afford it, it's that I need to understand what I'm actually getting. Like, break it down for me.",
+              attribution: 'David, 31',
+            },
+            {
+              text: "I'll pay premium if it actually means something. But if it's just... premium for the sake of premium? No thanks.",
+              attribution: 'Aisha, 27',
+            },
+            {
+              text: "The cheap option always ends up costing more in the long run. I've learned that the hard way, multiple times.",
+              attribution: 'Robert, 45',
+            },
+          ],
+        },
+        {
+          id: 'theme-3',
+          topic: 'Seeking Authenticity',
+          sentiment: 'positive',
+          summary: 'Participants gravitated toward brands and experiences that felt genuine, unpolished, and human.',
+          quotes: [
+            {
+              text: "I love when companies just... own their mistakes? Like, 'yeah we messed up, here's what we're doing about it.' That's refreshing.",
+              attribution: 'Emma, 29',
+            },
+            {
+              text: "The best ones don't try too hard. They just... are what they are. No gimmicks, no pretending to be your best friend.",
+              attribution: 'James, 38',
+            },
+            {
+              text: "Show me the people behind it. I want to see real faces, real stories. Not stock photos and corporate speak.",
+              attribution: 'Maria, 33',
+            },
+          ],
+        },
+        {
+          id: 'theme-4',
+          topic: 'Community Influence',
+          sentiment: 'positive',
+          summary: 'Word-of-mouth and community validation trumped traditional advertising across all participant segments.',
+          quotes: [
+            {
+              text: "If my sister says it's good, that's worth more than a thousand ads. She has no reason to lie to me.",
+              attribution: 'Lisa, 36',
+            },
+            {
+              text: "I basically live in Reddit threads before I make any decision. Real people, real opinions, you know?",
+              attribution: 'Kevin, 25',
+            },
+            {
+              text: "The community around it matters almost as much as the thing itself. Like, who else is using this? Are they people I respect?",
+              attribution: 'Nina, 41',
+            },
           ],
         },
       ],
@@ -224,54 +273,224 @@ function generateQuantitativeFallback(query: string): ResearchResult {
 }
 
 export function isQualitativeQuery(query: string): boolean {
-  return query.includes('#focus-group') || query.toLowerCase().includes('focus group')
+  const lowerQuery = query.toLowerCase()
+  const qualKeywords = [
+    '#focus-group',
+    'focus group',
+    'focus-group',
+    'qualitative',
+    'qual research',
+    'in-depth interview',
+    'in depth interview',
+    'depth interview',
+    'idis',
+    'ethnography',
+    'ethnographic',
+    '/qual',
+    '/focus-group',
+    'exploratory research',
+    'open-ended',
+    'why do they',
+    'understand why',
+    'explore their feelings',
+    'attitudes and perceptions',
+    'deep dive into motivations',
+  ]
+  return qualKeywords.some(keyword => lowerQuery.includes(keyword))
 }
 
 export async function generateResearchData(
   userQuery: string,
-  currentReport: Report | null = null
+  currentCanvas: Canvas | null = null
 ): Promise<ResearchResult> {
   const isQualitative = isQualitativeQuery(userQuery)
+  console.log(`[Merlin] Research query: "${userQuery}"`)
+  console.log(`[Merlin] Type: ${isQualitative ? 'QUALITATIVE' : 'QUANTITATIVE'}`)
 
-  // Immediate bypass for focus groups - skip API for robustness
-  if (isQualitative) {
-    console.log('Qualitative query detected, using synthetic generator.')
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    return generateQualitativeFallback(userQuery)
+  // Define the JSON schema for structured output
+  const researchResultSchema = {
+    type: 'object' as const,
+    properties: {
+      type: {
+        type: 'string',
+        enum: ['quantitative', 'qualitative'],
+        description: 'The type of research conducted'
+      },
+      audienceName: {
+        type: 'string',
+        description: 'Human-readable name for the audience (e.g., "Gen Z", "Times Readers")'
+      },
+      audienceId: {
+        type: 'string',
+        description: 'URL-safe identifier for the audience (e.g., "gen-z", "times-readers")'
+      },
+      explanation: {
+        type: 'string',
+        description: 'Brief explanation of the research findings (2-3 sentences)'
+      },
+      processSteps: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'List of 5-6 research process steps that were performed'
+      },
+      report: {
+        type: 'object',
+        properties: {
+          type: {
+            type: 'string',
+            enum: ['quantitative', 'qualitative']
+          },
+          title: {
+            type: 'string',
+            description: 'Concise title for the research report'
+          },
+          abstract: {
+            type: 'string',
+            description: 'Executive summary of findings (2-3 sentences)'
+          },
+          segments: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Comparison segments if applicable, otherwise empty array'
+          },
+          questions: {
+            type: 'array',
+            description: 'For quantitative: 3 survey questions with results. For qualitative: empty array.',
+            items: {
+              type: 'object',
+              properties: {
+                question: { type: 'string' },
+                options: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      label: { type: 'string' },
+                      percentage: { type: 'number' }
+                    },
+                    required: ['label', 'percentage']
+                  }
+                }
+              },
+              required: ['question', 'options']
+            }
+          },
+          themes: {
+            type: 'array',
+            description: 'For qualitative: 3-4 themes with quotes. For quantitative: empty array.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                topic: { type: 'string' },
+                sentiment: {
+                  type: 'string',
+                  enum: ['positive', 'negative', 'neutral', 'mixed']
+                },
+                summary: { type: 'string' },
+                quotes: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      text: { type: 'string' },
+                      attribution: { type: 'string' }
+                    },
+                    required: ['text', 'attribution']
+                  }
+                }
+              },
+              required: ['id', 'topic', 'sentiment', 'summary', 'quotes']
+            }
+          }
+        },
+        required: ['type', 'title', 'abstract', 'segments', 'questions', 'themes']
+      }
+    },
+    required: ['type', 'audienceName', 'audienceId', 'explanation', 'processSteps', 'report']
   }
 
   try {
-    // 8-second timeout for snappier experience
+    // 30-second timeout to allow for API response
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('API Timeout')), 8000)
+      setTimeout(() => reject(new Error('API Timeout after 30s')), 30000)
     )
 
-    const systemPrompt = getSystemPromptWithContext(currentReport, userQuery)
+    const systemPrompt = getSystemPromptWithContext(currentCanvas, userQuery)
 
+    console.log('[Merlin] Calling Claude API with structured output...')
+
+    // Use tool_choice to force structured JSON output
     const apiCall = anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 1500,
+      max_tokens: 4000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userQuery }],
+      tools: [{
+        name: 'generate_research_report',
+        description: 'Generate a structured research report based on the query',
+        input_schema: researchResultSchema
+      }],
+      tool_choice: { type: 'tool', name: 'generate_research_report' }
     })
 
     const response = await Promise.race([apiCall, timeoutPromise])
+    console.log('[Merlin] API response received, stop_reason:', response.stop_reason)
 
-    if (response.content && response.content[0]?.type === 'text') {
-      const text = response.content[0].text
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]) as ResearchResult
-      }
-      return JSON.parse(text) as ResearchResult
+    // Check if response was truncated
+    if (response.stop_reason === 'max_tokens') {
+      console.warn('[Merlin] Response truncated due to max_tokens limit')
+      throw new Error('Response truncated - using fallback')
     }
-    throw new Error('Invalid API response format')
+
+    // Extract the tool use result
+    const toolUse = response.content.find(block => block.type === 'tool_use')
+    if (toolUse && toolUse.type === 'tool_use') {
+      const result = toolUse.input as ResearchResult
+      console.log('[Merlin] Successfully received structured response')
+
+      // Ensure type consistency
+      if (isQualitative && result.type !== 'qualitative') {
+        result.type = 'qualitative'
+        if (result.report) result.report.type = 'qualitative'
+      }
+      return result
+    }
+
+    console.error('[Merlin] No tool_use in response')
+    throw new Error('No structured output in response')
   } catch (error) {
-    console.warn('Claude generation failed or timed out, generating smart fallback.', error)
+    console.error('[Merlin] API call failed:', error)
+    console.log('[Merlin] Using fallback data')
 
     if (isQualitative) {
       return generateQualitativeFallback(userQuery)
     }
     return generateQuantitativeFallback(userQuery)
+  }
+}
+
+// Generate a concise title for a conversation query
+export async function generateConversationTitle(query: string): Promise<string> {
+  console.log('[Merlin] Generating title for query...')
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 50,
+      system: 'Generate a concise 3-5 word title summarizing the research query. Output only the title, no quotes or punctuation. Be descriptive but brief.',
+      messages: [{ role: 'user', content: query }],
+    })
+
+    if (response.content && response.content[0]?.type === 'text') {
+      const title = response.content[0].text.trim()
+      console.log('[Merlin] Generated title:', title)
+      return title
+    }
+    throw new Error('Invalid response')
+  } catch (error) {
+    console.error('[Merlin] Title generation failed:', error)
+    // Fallback: create a simple title from the query
+    const words = query.split(' ').slice(0, 4)
+    return words.join(' ') + (query.split(' ').length > 4 ? '...' : '')
   }
 }

@@ -1,5 +1,5 @@
 import type { Audience } from './audience';
-import type { Report } from './report';
+import type { Canvas } from './canvas';
 
 export interface ProcessStep {
   id: string;
@@ -14,18 +14,19 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   processSteps?: ProcessStep[];
-  report?: Report;
+  canvas?: Canvas;
   thinkingTime?: number;
 }
 
 export interface Conversation {
   id: string;
   query: string;
+  title?: string; // Generated concise title
   messages: Message[];
   audience: Audience;
   processSteps: ProcessStep[];
   thinkingTime: number; // seconds
   explanation: string;
-  report: Report | null;
+  canvas: Canvas | null;
   status: 'idle' | 'processing' | 'complete';
 }

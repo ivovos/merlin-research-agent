@@ -14,10 +14,17 @@ export type {
   Conversation,
 } from './conversation';
 
-// Report types
+// Canvas types (formerly Report)
 export type {
   QuestionOption,
   QuestionResult,
   QualitativeTheme,
-  Report,
-} from './report';
+  Canvas,
+  Report, // Backwards compatibility alias
+} from './canvas';
+
+// Segment selection types
+export type {
+  SelectedSegment,
+  SelectedSegments,
+} from './segment';

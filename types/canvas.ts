@@ -25,7 +25,7 @@ export interface QualitativeTheme {
   }>;
 }
 
-export interface Report {
+export interface Canvas {
   id: string;
   title: string;
   type?: 'quantitative' | 'qualitative';
@@ -35,4 +35,8 @@ export interface Report {
   questions: QuestionResult[];
   themes?: QualitativeTheme[];
   createdAt: Date;
+  version?: number; // For canvas versioning
 }
+
+// Backwards compatibility alias
+export type Report = Canvas;

@@ -71,7 +71,7 @@ export function AppSidebar({
   history = [],
   onSelectHistory,
 }: AppSidebarProps) {
-  const { state } = useSidebar()
+  const { state, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [isProjectsOpen, setIsProjectsOpen] = React.useState(true)
 
@@ -231,26 +231,41 @@ export function AppSidebar({
           <SidebarGroupLabel>Recent</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {allItems.map((item) => {
-                if (item.status === "idle" && item.query === "") return null
-                const isActive =
-                  item.id === conversation?.id && activeView === "conversation"
+              {isCollapsed ? (
+                // When collapsed, show single icon that opens sidebar
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setOpen(true)}
+                    tooltip="Recent conversations"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Recent</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : (
+                // When expanded, show list without icons
+                allItems.map((item) => {
+                  if (item.status === "idle" && item.query === "") return null
+                  const isActive =
+                    item.id === conversation?.id && activeView === "conversation"
 
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => onSelectHistory?.(item)}
-                      isActive={isActive}
-                      tooltip={item.query || "New Conversation"}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="truncate">
-                        {item.query || "New Conversation"}
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
+                  const displayTitle = item.title || item.query || "New Conversation"
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => onSelectHistory?.(item)}
+                        isActive={isActive}
+                        tooltip={displayTitle}
+                        className="pl-2"
+                      >
+                        <span className="truncate">
+                          {displayTitle}
+                        </span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

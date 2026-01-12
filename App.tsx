@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react'
 import { AppSidebar, MainHeader } from '@/components/layout/AppSidebar'
-import { RightPanel } from '@/components/layout/RightPanel'
 import {
   SidebarInset,
   SidebarProvider,
+  useSidebar,
 } from '@/components/ui/sidebar'
-import { useConversation, useHistory, useAudiences, usePanel } from '@/hooks'
-import { generateResearchData, isQualitativeQuery } from '@/services'
-import type { Account, AudienceDetails, Conversation, Report, Message } from '@/types'
+import { useConversation, useHistory, useAudiences, useSegmentSelection } from '@/hooks'
+import { generateResearchData, isQualitativeQuery, generateConversationTitle } from '@/services'
+import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments } from '@/types'
 import {
   mockAccounts,
   wonderhoodAccount,
@@ -15,12 +15,12 @@ import {
   initialQualitativeSteps,
 } from '@/data/mockData'
 
-// Import existing feature components (to be refactored later)
+// Import feature components
 import { WorkingPane } from '@/components/WorkingPane'
 import { QueryInput } from '@/components/QueryInput'
 import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
-import { ReportPane } from '@/components/ReportPane'
+import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 
 type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
@@ -42,15 +42,24 @@ const App: React.FC = () => {
 
   const { history, addToHistory } = useHistory()
   const { audiences, createAudience } = useAudiences()
-  const { panelState, toggleFullscreen } = usePanel()
+  const {
+    selectedSegments,
+    canvasId: selectionCanvasId,
+    selectSegment,
+    removeSegment,
+    clearSegments,
+    hasSelection,
+    isForCanvas,
+  } = useSegmentSelection()
 
-  // Report panel state (simplified from usePanel for now)
-  const [isReportOpen, setIsReportOpen] = useState(false)
+  // Expanded canvas state - when set, replaces WorkingPane with ExpandedCanvas
+  const [expandedCanvas, setExpandedCanvas] = useState<Canvas | null>(null)
 
   // Start research simulation
   const startSimulation = useCallback(async (query: string) => {
     const isQualitative = isQualitativeQuery(query)
-    const startingSteps = isQualitative ? initialQualitativeSteps : initialProcessSteps
+    const startingSteps = isQualitative ? (initialQualitativeSteps || []) : (initialProcessSteps || [])
+    const startTime = Date.now()
 
     // Update conversation state
     const newMessage: Message = {
@@ -59,54 +68,108 @@ const App: React.FC = () => {
       content: query,
     }
 
+    // Initialize with first step in-progress
+    const initialSteps = startingSteps.map((s, i) => ({
+      ...s,
+      status: i === 0 ? 'in-progress' as const : 'pending' as const,
+    }))
+
     setConversation((prev) => ({
       ...prev,
       query,
       messages: [...prev.messages, newMessage],
       status: 'processing',
-      processSteps: startingSteps.map((s) => ({ ...s, status: 'pending' as const })),
+      processSteps: initialSteps,
     }))
 
-    // Generate research data
-    const data = await generateResearchData(query, conversation.report)
+    // Animate through steps while API calls run
+    let currentStepIndex = 0
+    const stepInterval = setInterval(() => {
+      currentStepIndex++
+      if (currentStepIndex < startingSteps.length) {
+        setConversation((prev) => ({
+          ...prev,
+          processSteps: prev.processSteps.map((s, i) => ({
+            ...s,
+            status: i < currentStepIndex ? 'complete' as const
+              : i === currentStepIndex ? 'in-progress' as const
+              : 'pending' as const,
+          })),
+        }))
+      }
+    }, 800) // Progress every 800ms
 
-    // Simulate step progression
-    const steps = data.processSteps.map((label, i) => ({
+    // Generate title and research data in parallel
+    const [title, data] = await Promise.all([
+      generateConversationTitle(query),
+      generateResearchData(query, conversation.canvas),
+    ])
+
+    // Stop the step animation
+    clearInterval(stepInterval)
+
+    const thinkingTime = Math.round((Date.now() - startTime) / 1000)
+    console.log('Generated title:', title)
+    console.log('Research data received:', data)
+    console.log('Thinking time:', thinkingTime, 's')
+
+    // Use API-returned steps or fallback to starting steps
+    const finalSteps = (data.processSteps || startingSteps.map(s => s.label)).map((label, i) => ({
       id: `step_${i}`,
-      label,
-      status: 'pending' as const,
+      label: typeof label === 'string' ? label : (label as any).label,
+      status: 'complete' as const,
     }))
+
+    // Build the canvas from results
+    const canvas: Canvas = {
+      id: `canvas_${Date.now()}`,
+      title: data.report?.title || 'Research Results',
+      type: data.report?.type || 'quantitative',
+      audience: { id: data.audienceId || 'unknown', name: data.audienceName || 'Audience' },
+      respondents: data.report?.type === 'qualitative' ? 12 : 847,
+      abstract: data.report?.abstract || '',
+      questions: (data.report?.questions || []).map((q, i) => ({
+        id: `q_${i}`,
+        question: q.question,
+        respondents: 847,
+        options: (q.options || []).map((o) => ({
+          label: o.label,
+          percentage: o.percentage || 0,
+        })),
+        segments: data.report?.segments,
+      })),
+      themes: data.report?.themes,
+      createdAt: new Date(),
+      version: 1,
+    }
+
+    // Create assistant message with results
+    const assistantMessage: Message = {
+      id: `msg_${Date.now()}_assistant`,
+      role: 'assistant',
+      content: data.explanation,
+      processSteps: finalSteps,
+      canvas: canvas,
+      thinkingTime: thinkingTime,
+    }
+
+    // Clear any existing segment selection when new canvas is created
+    clearSegments()
 
     // Update with results
     setConversation((prev) => ({
       ...prev,
+      title,
       status: 'complete',
       explanation: data.explanation,
-      processSteps: steps.map((s) => ({ ...s, status: 'complete' as const })),
-      report: {
-        id: `report_${Date.now()}`,
-        title: data.report.title,
-        type: data.report.type || 'quantitative',
-        audience: { id: data.audienceId, name: data.audienceName },
-        respondents: data.report.type === 'qualitative' ? 12 : 847,
-        abstract: data.report.abstract,
-        questions: data.report.questions.map((q, i) => ({
-          id: `q_${i}`,
-          question: q.question,
-          respondents: 847,
-          options: q.options.map((o) => ({
-            label: o.label,
-            percentage: o.percentage || 0,
-          })),
-          segments: data.report.segments,
-        })),
-        themes: data.report.themes,
-        createdAt: new Date(),
-      },
+      thinkingTime: thinkingTime,
+      processSteps: finalSteps,
+      messages: [...prev.messages, assistantMessage],
+      canvas: canvas,
     }))
 
-    setIsReportOpen(true)
-  }, [conversation.report, setConversation])
+    // Don't auto-expand canvas - show inline instead
+  }, [conversation.canvas, setConversation, clearSegments])
 
   // Handle follow-up questions
   const handleFollowUp = useCallback(async (query: string) => {
@@ -123,18 +186,20 @@ const App: React.FC = () => {
       addToHistory(conversation)
     }
     startNewConversation()
-    setIsReportOpen(false)
+    setExpandedCanvas(null)
+    clearSegments()
     setActiveView('conversation')
-  }, [conversation, addToHistory, startNewConversation])
+  }, [conversation, addToHistory, startNewConversation, clearSegments])
 
   const handleSelectHistory = useCallback((conv: Conversation) => {
     if (conversation.query && conversation.id !== conv.id) {
       addToHistory(conversation)
     }
     setConversation(conv)
-    setIsReportOpen(!!conv.report)
+    setExpandedCanvas(null)
+    clearSegments()
     setActiveView('conversation')
-  }, [conversation, addToHistory, setConversation])
+  }, [conversation, addToHistory, setConversation, clearSegments])
 
   const handleAudiencesClick = useCallback(() => {
     setActiveView('audiences')
@@ -164,13 +229,22 @@ const App: React.FC = () => {
     setSelectedAudience(null)
   }, [])
 
-  const handleSelectReport = useCallback((_report?: Report) => {
-    setIsReportOpen(true)
+  const handleExpandCanvas = useCallback((canvas: Canvas) => {
+    setExpandedCanvas(canvas)
   }, [])
 
-  const handleCloseReport = useCallback(() => {
-    setIsReportOpen(false)
+  const handleCloseExpandedCanvas = useCallback(() => {
+    setExpandedCanvas(null)
   }, [])
+
+  const handleCanvasPrompt = useCallback(async (prompt: string, segments?: SelectedSegments) => {
+    // Handle canvas prompts - could modify existing canvas or create follow-up
+    console.log('Canvas prompt:', prompt, 'with segments:', segments)
+    // For now, treat as a follow-up question
+    if (prompt.trim()) {
+      await handleFollowUp(prompt)
+    }
+  }, [handleFollowUp])
 
   const handleEditQuestion = useCallback((questionId: string, newQuestion: string) => {
     // Handle question editing
@@ -207,12 +281,27 @@ const App: React.FC = () => {
                 ? 'Audiences'
                 : activeView === 'audienceDetail' && selectedAudience
                 ? selectedAudience.name
+                : activeView === 'conversation' && conversation.title
+                ? conversation.title
                 : undefined
             }
           />
 
           <div className="flex-1 overflow-hidden">
-            {activeView === 'audiences' ? (
+            {/* Expanded Canvas - replaces main content when active */}
+            {expandedCanvas ? (
+              <ExpandedCanvas
+                canvas={expandedCanvas}
+                onClose={handleCloseExpandedCanvas}
+                onEditQuestion={handleEditQuestion}
+                onCanvasPrompt={handleCanvasPrompt}
+                selectedSegments={selectedSegments}
+                isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
+                onBarSelect={selectSegment}
+                onClearSegments={clearSegments}
+                onRemoveSegment={removeSegment}
+              />
+            ) : activeView === 'audiences' ? (
               <AudiencesList
                 account={currentAccount}
                 selectedProject={selectedProject}
@@ -242,31 +331,20 @@ const App: React.FC = () => {
             ) : (
               <WorkingPane
                 conversation={conversation}
-                onSelectReport={handleSelectReport}
+                onSelectCanvas={handleExpandCanvas}
+                onExpandCanvas={handleExpandCanvas}
                 onFollowUp={handleFollowUp}
                 availableAudiences={audiences}
                 onCreateAudience={createAudience}
+                selectedSegments={selectedSegments}
+                selectionCanvasId={selectionCanvasId}
+                onBarSelect={selectSegment}
+                onClearSegments={clearSegments}
+                onRemoveSegment={removeSegment}
               />
             )}
           </div>
         </main>
-
-        {/* Right panel for report */}
-        {activeView === 'conversation' && isReportOpen && conversation.report && (
-          <RightPanel
-            open={isReportOpen}
-            title="Research Report"
-            onClose={handleCloseReport}
-            onExpand={toggleFullscreen}
-            isFullscreen={panelState.isFullscreen}
-          >
-            <ReportPane
-              conversation={conversation}
-              onClose={handleCloseReport}
-              onEditQuestion={handleEditQuestion}
-            />
-          </RightPanel>
-        )}
       </SidebarInset>
     </SidebarProvider>
   )

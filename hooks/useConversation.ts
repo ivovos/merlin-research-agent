@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { Conversation, Message, ProcessStep, Report, Audience } from '@/types'
+import type { Conversation, Message, ProcessStep, Canvas, Audience } from '@/types'
 import { initialProcessSteps, mockAudience } from '@/data/mockData'
 
 // Generate a unique ID
@@ -10,10 +10,10 @@ const createInitialConversation = (): Conversation => ({
   query: '',
   messages: [],
   audience: mockAudience,
-  processSteps: initialProcessSteps,
+  processSteps: initialProcessSteps || [],
   thinkingTime: 0,
   explanation: '',
-  report: null,
+  canvas: null,
   status: 'idle',
 })
 
@@ -28,7 +28,7 @@ export interface UseConversationReturn {
   setStatus: (status: Conversation['status']) => void
   setProcessSteps: (steps: ProcessStep[]) => void
   updateProcessStep: (stepId: string, updates: Partial<ProcessStep>) => void
-  setReport: (report: Report | null) => void
+  setCanvas: (canvas: Canvas | null) => void
   setThinkingTime: (time: number) => void
   setExplanation: (explanation: string) => void
   resetConversation: () => void
@@ -82,8 +82,8 @@ export function useConversation(
     []
   )
 
-  const setReport = useCallback((report: Report | null) => {
-    setConversation((prev) => ({ ...prev, report }))
+  const setCanvas = useCallback((canvas: Canvas | null) => {
+    setConversation((prev) => ({ ...prev, canvas }))
   }, [])
 
   const setThinkingTime = useCallback((thinkingTime: number) => {
@@ -108,7 +108,7 @@ export function useConversation(
     setStatus,
     setProcessSteps,
     updateProcessStep,
-    setReport,
+    setCanvas,
     setThinkingTime,
     setExplanation,
     resetConversation,

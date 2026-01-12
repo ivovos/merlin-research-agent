@@ -436,19 +436,19 @@ export const mockAudiences: ConversationAudience[] = [
 ];
 
 export const initialProcessSteps: ProcessStep[] = [
-  { id: '1', label: 'Planning survey', status: 'pending' },
-  { id: '2', label: 'Recruiting participants', status: 'pending' },
-  { id: '3', label: 'Reviewing responses', status: 'pending' },
-  { id: '4', label: 'Asking additional questions', status: 'pending' },
-  { id: '5', label: 'Analysing result', status: 'pending' },
-  { id: '6', label: 'Creating report', status: 'pending' },
+  { id: '1', label: 'Designing survey questions', status: 'pending' },
+  { id: '2', label: 'Recruiting 500+ respondents', status: 'pending' },
+  { id: '3', label: 'Collecting responses', status: 'pending' },
+  { id: '4', label: 'Cleaning & validating data', status: 'pending' },
+  { id: '5', label: 'Running statistical analysis', status: 'pending' },
+  { id: '6', label: 'Generating report', status: 'pending' },
 ];
 
 export const initialQualitativeSteps: ProcessStep[] = [
   { id: 'q1', label: 'Designing discussion guide', status: 'pending' },
-  { id: 'q2', label: 'Recruiting panel', status: 'pending' },
-  { id: 'q3', label: 'Moderating focus group', status: 'pending' },
-  { id: 'q4', label: 'Transcribing sessions', status: 'pending' },
+  { id: 'q2', label: 'Recruiting 12 participants', status: 'pending' },
+  { id: 'q3', label: 'Moderating sessions', status: 'pending' },
+  { id: 'q4', label: 'Transcribing 6 hours', status: 'pending' },
   { id: 'q5', label: 'Coding themes', status: 'pending' },
   { id: 'q6', label: 'Synthesizing insights', status: 'pending' },
 ];
@@ -569,27 +569,52 @@ export const mockQualitativeReport: Report = {
   title: 'Focus Group: Gen Z on "Adulting"',
   type: 'qualitative',
   audience: { id: 'gen-z', name: 'Gen Z', icon: 'Z' },
-  respondents: 12, // Focus groups are smaller
-  abstract: "Participants expressed deep anxiety about financial stability but showed resilience through community building. The concept of 'adulting' is viewed as a performative act rather than a milestone.",
-  questions: [], // Empty for qualitative
+  respondents: 12,
+  abstract: "Participants expressed deep anxiety about financial stability but showed resilience through community building. The concept of 'adulting' is viewed as a performative act rather than a milestone — something you perform on social media rather than actually achieve.",
+  questions: [],
   themes: [
     {
       id: 'theme-1',
       topic: 'Financial Anxiety vs. Freedom',
       sentiment: 'negative',
-      summary: "Participants feel trapped by rising costs but find freedom in gig economy flexibility.",
+      summary: "Participants feel trapped by rising costs but find unexpected freedom in rejecting traditional milestones altogether.",
       quotes: [
-        { text: "I make okay money, but I can't imagine ever buying a house. It feels like a distinct impossibility.", attribution: "Alex, 24" },
-        { text: "I'd rather live in a van and travel than work 9-5 just to pay rent for a box I don't own.", attribution: "Sam, 22" }
+        { text: "I make okay money, but I can't imagine ever buying a house. It feels like a distinct impossibility. Like, my parents bought their house at 25. I'm 26 and I have roommates.", attribution: "Alex, 24" },
+        { text: "I'd rather live in a van and travel than work 9-5 just to pay rent for a box I don't own. At least the van is mine.", attribution: "Sam, 22" },
+        { text: "The whole system is rigged against us. So why play by their rules? I've stopped trying to 'make it' in the traditional sense.", attribution: "Maya, 25" }
       ]
     },
     {
       id: 'theme-2',
       topic: 'Community as Currency',
       sentiment: 'positive',
-      summary: "Strong emphasis on mutual aid and digital communities replacing traditional support structures.",
+      summary: "Digital communities and mutual aid networks have replaced traditional institutions as primary support structures.",
       quotes: [
-        { text: "My discord server is my safety net. If I'm short on cash, someone there helps out. We take care of each other.", attribution: "Jordan, 23" }
+        { text: "My Discord server is my safety net. If I'm short on cash, someone there helps out. We take care of each other. It's more reliable than any bank.", attribution: "Jordan, 23" },
+        { text: "I crowdfunded my surgery through Twitter. Strangers came through when the system wouldn't. That's community.", attribution: "Riley, 27" },
+        { text: "My online friends know me better than my family does. They've seen me at my worst and my best. That's real connection.", attribution: "Kai, 21" }
+      ]
+    },
+    {
+      id: 'theme-3',
+      topic: 'Performative Adulthood',
+      sentiment: 'mixed',
+      summary: "The concept of 'adulting' has become a social media performance rather than a genuine life stage, creating both humor and anxiety.",
+      quotes: [
+        { text: "I post about doing my taxes like it's an achievement because honestly? It feels like one. But it's also kind of sad that this is what we celebrate.", attribution: "Taylor, 26" },
+        { text: "Adulting is a meme. We joke about it because the alternative is crying. Making your bed shouldn't feel like a victory but here we are.", attribution: "Chris, 24" },
+        { text: "My mom doesn't get why I 'brag' about basic stuff online. But she also doesn't get that nobody taught us this stuff. We're figuring it out in public.", attribution: "Zoe, 23" }
+      ]
+    },
+    {
+      id: 'theme-4',
+      topic: 'Redefining Success',
+      sentiment: 'positive',
+      summary: "Participants are actively rejecting boomer definitions of success in favor of metrics centered on mental health, authenticity, and personal fulfillment.",
+      quotes: [
+        { text: "Success to me is having time. Time to rest, time for friends, time to just exist without grinding. That's the dream.", attribution: "Devon, 25" },
+        { text: "My parents think I'm failing because I don't want a corporate job. But I make enough, I'm happy, I'm not destroying my mental health. That's winning.", attribution: "Jamie, 28" },
+        { text: "I'd rather be 'broke' and free than rich and miserable like every adult I grew up watching. They had the houses and the cars and they were all depressed.", attribution: "Morgan, 22" }
       ]
     }
   ],
@@ -601,13 +626,13 @@ const createHistoryItem = (rep: Report, i: number): Conversation => ({
   query: rep.questions[0]?.question || 'Focus group discussion', // Use first question as the query
   messages: [
     { id: `msg_u_${i}`, role: 'user', content: rep.questions[0]?.question || 'Focus group discussion' },
-    { id: `msg_a_${i}`, role: 'assistant', content: "Analysis complete.", processSteps: initialProcessSteps, report: rep, thinkingTime: 3.2 }
+    { id: `msg_a_${i}`, role: 'assistant', content: "Analysis complete.", processSteps: initialProcessSteps, canvas: rep, thinkingTime: 3.2 }
   ],
   audience: rep.audience,
   processSteps: initialProcessSteps.map(s => ({ ...s, status: 'complete' as const })),
   thinkingTime: 3.2,
   explanation: "Analysis complete.",
-  report: rep,
+  canvas: rep,
   status: 'complete'
 });
 
