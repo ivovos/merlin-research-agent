@@ -1,7 +1,7 @@
 import React from 'react';
-import { Conversation } from '../types';
+import type { Conversation } from '@/types';
 import { QuestionCard } from './QuestionCard';
-import { Share2, Users, X } from 'lucide-react';
+import { Share2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ReportPaneProps {

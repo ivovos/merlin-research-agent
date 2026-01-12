@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { QuestionResult } from '../types';
+import type { QuestionResult } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList } from 'recharts';
 import { EditQuestionModal } from './EditQuestionModal';
-import { cn } from '@/lib/utils';
 
 interface QuestionCardProps {
   data: QuestionResult;

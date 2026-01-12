@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Send, ChevronDown, ChevronUp } from 'lucide-react';
-import { MonoIcon } from './MonoIcon';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Button } from './ui/Button';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
-import type { Account, Audience } from '../data/mockData';
+import type { Account, AudienceDetails } from '@/types';
 
 interface AudienceDetailProps {
-  audience: Audience;
+  audience: AudienceDetails;
   account: Account;
   onBack: () => void;
-  onAskQuestion: (question: string, audience: Audience) => void;
+  onAskQuestion: (question: string, audience: AudienceDetails) => void;
 }
 
 export const AudienceDetail: React.FC<AudienceDetailProps> = ({

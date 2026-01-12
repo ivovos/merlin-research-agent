@@ -1,11 +1,9 @@
 import React from 'react';
-import { Conversation, Report } from '../types';
+import type { Conversation, Report } from '@/types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
 import { SuggestionRow } from './SuggestionRow';
 import { FileText } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
 
 interface WorkingPaneProps {
   conversation: Conversation;
@@ -46,7 +44,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
 
           {/* Query History */}
           <div className="space-y-8">
-            {conversation.messages.map((msg, idx) => {
+            {conversation.messages.map((msg) => {
               // Render USER message
               if (msg.role === 'user') {
                 return (

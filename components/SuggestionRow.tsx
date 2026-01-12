@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 
 interface SuggestionRowProps {
     suggestions: string[];

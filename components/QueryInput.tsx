@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockAudiences } from '../data/mockData';
-import { Audience } from '../types';
+import type { Audience } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface QueryInputProps {
@@ -33,8 +33,8 @@ const RESEARCH_METHODS = [
 
 export const QueryInput: React.FC<QueryInputProps> = ({
   onSubmit,
-  isExpanded = false,
-  placeholder: staticPlaceholder = "What do @times-readers want from our podcast?",
+  isExpanded: _isExpanded = false,
+  placeholder: _staticPlaceholder = "What do @times-readers want from our podcast?",
   className = "",
   compact = false,
   availableAudiences = mockAudiences,
@@ -60,7 +60,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const [showPickerAbove, setShowPickerAbove] = useState(false);
 
   // Calculate if picker should show above or below
-  const calculatePickerDirection = (containerRef: React.RefObject<HTMLDivElement>) => {
+  const calculatePickerDirection = (containerRef: React.RefObject<HTMLDivElement | null>) => {
     if (!containerRef.current) return false;
 
     const containerRect = containerRef.current.getBoundingClientRect();
