@@ -1,7 +1,7 @@
 import React from 'react';
 import { Conversation } from '../types';
 import { QuestionCard } from './QuestionCard';
-import { Share2, Users, X } from 'lucide-react';
+import { Share2, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ReportPaneProps {
@@ -35,7 +35,7 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
                         {report.title}
                      </h1>
 
-                     <div className="flex items-center gap-2 mb-8">
+                     <div className="flex items-center gap-2 mb-4">
                         <div className="flex items-center gap-2 bg-secondary/50 border border-border px-3 py-1.5 rounded-full">
                            <div className="w-5 h-5 bg-foreground text-background flex items-center justify-center rounded-md text-xs font-serif font-bold">
                               {report.audience.icon}
@@ -45,6 +45,14 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
                         <span className="text-sm text-muted-foreground">•</span>
                         <span className="text-sm text-muted-foreground">{report.respondents} respondents</span>
                      </div>
+
+                     {/* Key Insight - highlighted finding from Claude API */}
+                     {report.keyInsight && (
+                        <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg mb-8">
+                           <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                           <p className="text-sm text-foreground/90 leading-relaxed">{report.keyInsight}</p>
+                        </div>
+                     )}
 
                      {/* Summary (formerly Abstract) */}
                      <div className="bg-transparent">
@@ -98,6 +106,15 @@ export const ReportPane: React.FC<ReportPaneProps> = ({ conversation, onClose, o
                         {report.questions.map((q, i) => (
                            <QuestionCard key={q.id} data={q} index={i} onEditQuestion={onEditQuestion} />
                         ))}
+                     </div>
+                  )}
+
+                  {/* Follow-up Suggestion - agent's suggestion from Claude API */}
+                  {report.followUpSuggestion && (
+                     <div className="mt-8 pt-6 border-t border-border">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                           {report.followUpSuggestion}
+                        </p>
                      </div>
                   )}
                </div>

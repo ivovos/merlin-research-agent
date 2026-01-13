@@ -392,10 +392,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
       )}
 
       {compact ? (
-        // Compact Single-Height Layout
-        <div className="relative bg-background rounded-full border border-input shadow-none px-3 py-2 transition-all focus-within:border-primary flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
-            <Plus className="w-5 h-5" />
+        // Compact Single-Height Layout - floating with backdrop blur
+        <div className="relative bg-background/80 backdrop-blur-xl rounded-full border border-border shadow-lg px-3 py-1.5 transition-all focus-within:border-primary focus-within:shadow-xl flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-7 w-7 hover:bg-transparent">
+            <Plus className="w-4 h-4" />
           </Button>
 
           <textarea
@@ -407,11 +407,11 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onFocus={() => setIsAnimating(false)}
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
-            style={{ height: '40px', lineHeight: '24px' }}
+            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-1.5 text-sm placeholder:text-muted-foreground text-foreground leading-normal"
+            style={{ height: '32px', lineHeight: '20px' }}
           />
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div ref={audienceContainerRef}>
               <button
                 onClick={() => {
@@ -419,10 +419,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   setShowMethodPicker(false);
                   setAudienceSearch('');
                 }}
-                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
                 title="Audience"
               >
-                <Users className="w-5 h-5" />
+                <Users className="w-4 h-4" />
               </button>
             </div>
             <div ref={methodContainerRef}>
@@ -431,7 +431,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   setShowMethodPicker(!showMethodPicker);
                   setShowAudiencePicker(false);
                 }}
-                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
+                className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-base w-7 h-7 flex items-center justify-center"
                 title="Methods"
               >
                 /
@@ -439,11 +439,11 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             </div>
 
             <button
-              className="h-10 w-10 bg-primary text-primary-foreground rounded-[12px] flex items-center justify-center hover:opacity-90 transition-opacity"
+              className="h-8 w-8 bg-primary text-primary-foreground rounded-[10px] flex items-center justify-center hover:opacity-90 transition-opacity"
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
             >
-              <ArrowUp className="w-5 h-5" />
+              <ArrowUp className="w-4 h-4" />
             </button>
           </div>
         </div>

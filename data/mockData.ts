@@ -459,6 +459,8 @@ export const mockReport: Report = {
   audience: mockAudience,
   respondents: 512,
   abstract: "40% of Times readers say they'd tune into a podcast about how journalists got the scoop — four times more than any other format tested. Opinion and debate ranked last at 5.5%. The hook isn't the news — it's how the news gets made.",
+  keyInsight: "Readers want the story behind the story — 40% prefer hearing how journalists got the scoop vs. just 5.5% for opinion and debate.",
+  followUpSuggestion: "You might want to explore what specific types of 'behind the scenes' content resonate most — investigative stories vs. breaking news vs. features.",
   questions: [
     {
       id: 'q1',
@@ -505,6 +507,8 @@ const report2: Report = {
   audience: { id: 'gen-z', name: 'Gen Z', icon: 'Z' },
   respondents: 850,
   abstract: "Gen Z is driving a massive resurgence in vintage and second-hand fashion. 78% of respondents prefer thrifting over fast fashion, citing sustainability and uniqueness as key drivers.",
+  keyInsight: "Uniqueness beats sustainability as a driver — 40.5% prioritize style over 35.2% for ethics.",
+  followUpSuggestion: "Consider exploring how Gen Z discovers vintage items and what platforms they trust most for resale.",
   questions: [
     {
       id: 'q1-r2',
@@ -538,6 +542,8 @@ const report3: Report = {
   audience: { id: 'tech-enthusiasts', name: 'Tech Workers', icon: 'T' },
   respondents: 420,
   abstract: "While 88% of tech workers report higher productivity at home, 62% feel a disconnect from company culture. The challenge is balancing output with belonging.",
+  keyInsight: "The productivity-connection paradox: 88% are more productive at home but 45% feel disconnected from their team.",
+  followUpSuggestion: "It might be worth diving deeper into what connection activities actually work — async vs. sync, social vs. work-focused.",
   questions: [
     {
       id: 'q1-r3',

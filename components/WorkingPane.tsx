@@ -41,7 +41,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-6 pb-24 scrollbar-hide">
         <div className="max-w-6xl mx-auto space-y-8 w-full">
 
           {/* Query History */}
@@ -128,9 +128,9 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({ conversation, onSelect
         </div>
       </div>
 
-      {/* Sticky Bottom Input */}
-      <div className="flex-shrink-0 bg-background p-6 z-10">
-        <div className="max-w-6xl mx-auto w-full">
+      {/* Floating Bottom Input */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 z-10 pointer-events-none">
+        <div className="max-w-2xl mx-auto w-full pointer-events-auto">
           <QueryInput
             onSubmit={onFollowUp}
             placeholder="Ask another question"
