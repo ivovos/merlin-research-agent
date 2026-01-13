@@ -253,6 +253,16 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
         </div>
       )}
 
+      {/* Key Insight - highlighted finding from Claude API */}
+      {canvas.keyInsight && (
+        <div className="px-4 pt-3 pb-0">
+          <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
+          </div>
+        </div>
+      )}
+
       {/* Content area - show all charts */}
       <div className="overflow-y-auto scrollbar-hide">
         <div className="p-4 space-y-4">

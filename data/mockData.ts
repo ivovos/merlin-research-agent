@@ -592,6 +592,8 @@ export const mockReport: Report = {
   audience: mockAudience,
   respondents: 512,
   abstract: "40% of Times readers say they'd tune into a podcast about how journalists got the scoop — four times more than any other format tested. Opinion and debate ranked last at 5.5%. The hook isn't the news — it's how the news gets made.",
+  keyInsight: "Readers want the story behind the story — 40% prefer hearing how journalists got the scoop vs. just 5.5% for opinion and debate.",
+  followUpSuggestion: "You might want to explore what specific types of 'behind the scenes' content resonate most — investigative stories vs. breaking news vs. features.",
   questions: [
     {
       id: 'q1',
@@ -806,6 +808,8 @@ const mubiTierReport1: Report = {
   audience: mubiBasicGlobalAudience,
   respondents: 2847,
   abstract: '59.6% of subscribers would choose an Essential tier, with annual preferred over monthly. High-engagement users show strongest Premium interest at 38.4%, while 14.5% of low-engagement users would choose none of the options.',
+  keyInsight: "High-engagement users are 2x more likely to choose Premium tier (38.4%) compared to all subscribers (22.1%).",
+  followUpSuggestion: "Consider exploring what specific Premium features drive high-engagement users — cinema tickets vs. 4K streaming vs. early access.",
   questions: [
     {
       id: 'q1',
