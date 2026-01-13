@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
 import type { Audience, SelectedSegments } from '@/types';
 import { cn } from '@/lib/utils';
@@ -13,10 +14,12 @@ interface QueryInputProps {
   compact?: boolean;
   availableAudiences?: Audience[];
   onCreateAudience?: (name: string) => Audience;
-  /** Selected segments to show in the input */
+  /** Selected segments from chart interactions */
   selectedSegments?: SelectedSegments;
-  /** Callback to clear segment selection */
+  /** Clear all selected segments */
   onClearSegments?: () => void;
+  /** Remove a specific segment */
+  onRemoveSegment?: (questionId: string, answerLabel: string) => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -45,6 +48,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   onCreateAudience,
   selectedSegments,
   onClearSegments,
+  onRemoveSegment,
 }) => {
   const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
@@ -157,13 +161,9 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (query.trim()) {
+    if (query.trim() || hasSegmentSelection) {
       onSubmit(query, hasSegmentSelection ? selectedSegments : undefined);
       setQuery('');
-      // Clear segments after submitting
-      if (hasSegmentSelection && onClearSegments) {
-        onClearSegments();
-      }
     }
   };
 
@@ -238,9 +238,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       if (!compact) {
-        const scrollHeight = textareaRef.current.scrollHeight;
-        const minHeight = 2.8 * 16; // 2.8rem in pixels (2.8 * 16px base)
-        textareaRef.current.style.height = Math.max(scrollHeight, minHeight) + 'px';
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
       }
     }
   }, [query, compact]);
@@ -290,22 +288,56 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-            {filteredAudiences.map(audience => (
-              <button
-                key={audience.id}
-                onClick={() => selectAudience(audience)}
-                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
-              >
-                <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
-                  {audience.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{audience.name}</p>
-                  <p className="text-xs text-muted-foreground">@{audience.id}</p>
-                </div>
-              </button>
-            ))}
+          <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+            {filteredAudiences.map(audience => {
+              // Get source badge label based on sourceLabel or source
+              const sourceLabel = (audience as any).sourceLabel || (audience as any).source;
+              const getBadgeStyle = () => {
+                const source = (audience as any).source || '';
+                if (source.includes('_1p') || source === 'mubi_1p' || source === 'canva_1p' || source === 'wonderhood_1p') {
+                  return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+                }
+                if (source === 'electric_twin') {
+                  return 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300';
+                }
+                if (source === 'electric_twin_attention') {
+                  return 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                }
+                return 'bg-muted text-muted-foreground';
+              };
+              const getBadgeText = () => {
+                const source = (audience as any).source || '';
+                if (source === 'mubi_1p') return '1P';
+                if (source === 'canva_1p') return '1P';
+                if (source === 'wonderhood_1p') return '1P';
+                if (source === 'electric_twin') return 'ET';
+                if (source === 'electric_twin_attention') return 'ET';
+                return '';
+              };
+
+              return (
+                <button
+                  key={audience.id}
+                  onClick={() => selectAudience(audience)}
+                  className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
+                >
+                  <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
+                    {audience.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">{audience.name}</p>
+                      {getBadgeText() && (
+                        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded", getBadgeStyle())}>
+                          {getBadgeText()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">@{audience.id}</p>
+                  </div>
+                </button>
+              );
+            })}
 
             {/* Create New Option */}
             {filteredAudiences.length === 0 && audienceSearch.trim() && onCreateAudience && (
@@ -405,75 +437,90 @@ export const QueryInput: React.FC<QueryInputProps> = ({
       )}
 
       {compact ? (
-        // Compact Single-Height Layout with floating style
-        <div className="relative bg-background/80 backdrop-blur-xl rounded-full border border-border shadow-lg px-3 py-1.5 transition-all focus-within:border-primary focus-within:shadow-xl flex items-center gap-2">
-          {/* Segment pill - shows when segments are selected */}
-          {hasSegmentSelection ? (
-            <div className="flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full text-xs flex-shrink-0">
-              <Users className="w-3 h-3" />
-              <span className="font-semibold">{selectedSegments!.totalRespondents.toLocaleString()}</span>
+        // Compact Single-Height Layout (with optional segment selection)
+        <div className={cn(
+          "relative bg-background border border-input shadow-none transition-all rounded-full px-3 py-2"
+        )}>
+          <div className="flex items-center gap-3">
+            {/* Segment pill - shown inline when segments selected */}
+            {hasSegmentSelection ? (
+              <Badge className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-sm flex-shrink-0">
+                <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="font-medium truncate max-w-[200px]">
+                  {/* Generate concise segment name from selected answers */}
+                  {selectedSegments!.segments.length === 1
+                    ? selectedSegments!.segments[0].answerLabel
+                    : selectedSegments!.segments.length === 2
+                      ? `${selectedSegments!.segments[0].answerLabel} + ${selectedSegments!.segments[1].answerLabel}`
+                      : `${selectedSegments!.segments[0].answerLabel} +${selectedSegments!.segments.length - 1} more`
+                  }
+                </span>
+                <span className="text-primary/70">•</span>
+                <span className="flex-shrink-0">{selectedSegments!.totalRespondents.toLocaleString()}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 ml-0.5 hover:bg-transparent hover:text-primary/70 flex-shrink-0"
+                  onClick={onClearSegments}
+                  title="Clear segment"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </Badge>
+            ) : (
+              <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
+                <Plus className="w-5 h-5" />
+              </Button>
+            )}
+
+            <textarea
+              ref={textareaRef}
+              value={query}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder={hasSegmentSelection ? "Ask about this segment..." : placeholderText}
+              onFocus={() => setIsAnimating(false)}
+              onBlur={() => !query && setIsAnimating(true)}
+              rows={1}
+              className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
+              style={{ height: '40px', lineHeight: '24px' }}
+            />
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div ref={audienceContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowAudiencePicker(!showAudiencePicker);
+                    setShowMethodPicker(false);
+                    setAudienceSearch('');
+                  }}
+                  className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                  title="Audience"
+                >
+                  <Users className="w-5 h-5" />
+                </button>
+              </div>
+              <div ref={methodContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowMethodPicker(!showMethodPicker);
+                    setShowAudiencePicker(false);
+                  }}
+                  className="p-2 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
+                  title="Methods"
+                >
+                  /
+                </button>
+              </div>
+
               <button
-                type="button"
-                onClick={onClearSegments}
-                className="hover:text-primary/70 transition-colors ml-0.5"
-                title="Remove segment from query"
+                className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+                onClick={() => handleSubmit()}
+                disabled={!query.trim() && !hasSegmentSelection}
               >
-                <X className="w-3 h-3" />
+                <ArrowUp className="w-5 h-5" />
               </button>
             </div>
-          ) : (
-            <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-7 w-7 hover:bg-transparent">
-              <Plus className="w-4 h-4" />
-            </Button>
-          )}
-
-          <textarea
-            ref={textareaRef}
-            value={query}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            placeholder={hasSegmentSelection ? "Ask this segment a question..." : placeholderText}
-            onFocus={() => setIsAnimating(false)}
-            onBlur={() => !query && setIsAnimating(true)}
-            rows={1}
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-1 text-sm placeholder:text-muted-foreground text-foreground leading-normal"
-            style={{ height: '32px', lineHeight: '20px' }}
-          />
-
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div ref={audienceContainerRef}>
-              <button
-                onClick={() => {
-                  setShowAudiencePicker(!showAudiencePicker);
-                  setShowMethodPicker(false);
-                  setAudienceSearch('');
-                }}
-                className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-                title="Audience"
-              >
-                <Users className="w-4 h-4" />
-              </button>
-            </div>
-            <div ref={methodContainerRef}>
-              <button
-                onClick={() => {
-                  setShowMethodPicker(!showMethodPicker);
-                  setShowAudiencePicker(false);
-                }}
-                className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-base w-7 h-7 flex items-center justify-center"
-                title="Methods"
-              >
-                /
-              </button>
-            </div>
-
-            <button
-              className="h-8 w-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
-              onClick={() => handleSubmit()}
-              disabled={!query.trim()}
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
           </div>
         </div>
       ) : (
@@ -484,7 +531,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           <div
             aria-hidden="true"
             className="absolute top-4 left-4 right-4 text-base leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
-            style={{ minHeight: '2.8rem' }}
+            style={{ minHeight: '40px' }}
           >
             {query.split(/([@\/][\w-]+)/g).map((part, i) => {
               if (part.startsWith('@') || part.startsWith('/')) {
@@ -505,7 +552,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
             spellCheck={false}
-            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-96 min-h-[2.8rem] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
+            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[40px] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
             style={{ lineHeight: '1.4' }}
           />
 
@@ -535,7 +582,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg"
+                  className="h-9 w-9 rounded-md bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg"
                   title="Methods"
                 >
                   /

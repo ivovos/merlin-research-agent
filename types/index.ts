@@ -5,6 +5,8 @@ export type {
   Segment,
   Project,
   Account,
+  ResearchProject,
+  UploadedBrief,
 } from './audience';
 
 // Conversation types

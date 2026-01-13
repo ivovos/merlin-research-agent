@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Canvas, QuestionResult, QualitativeTheme, SelectedSegment, SelectedSegments } from '@/types';
+import type { BrandColors } from '@/types/audience';
 import {
   Maximize2,
   Copy,
@@ -13,6 +14,7 @@ import {
   MoreHorizontal,
   X,
   Users,
+  Send,
   Eye,
   UserPlus,
   GitCompare,
@@ -27,6 +29,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
+// Default brand colors (MUBI)
+const DEFAULT_BRAND_COLORS: BrandColors = {
+  primary: '#2768E3',   // MUBI Blue
+  secondary: '#1BD571', // MUBI Green
+  tertiary: '#E32768',  // MUBI Pink
+  quaternary: '#D5711B', // MUBI Orange
+};
+
 interface InlineCanvasProps {
   canvas: Canvas;
   onExpand?: () => void;
@@ -37,6 +47,9 @@ interface InlineCanvasProps {
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
   onClearSegments?: () => void;
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
+  onAskSegment?: (query: string, segments: SelectedSegments) => void;
+  /** Brand colors for chart theming */
+  brandColors?: BrandColors;
 }
 
 export const InlineCanvas: React.FC<InlineCanvasProps> = ({
@@ -48,9 +61,12 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
   onBarSelect,
   onClearSegments,
   onRemoveSegment,
+  onAskSegment,
 }) => {
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments && selectedSegments.segments.length > 0;
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCopy = () => {
     const text = `${canvas.title}\n\n${canvas.abstract}`;
@@ -67,6 +83,21 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
 
   const handleRefresh = () => {
     console.log('Refresh canvas');
+  };
+
+  const handleSubmitQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim() && hasSelection && onAskSegment) {
+      onAskSegment(inputValue.trim(), selectedSegments!);
+      setInputValue('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmitQuestion(e);
+    }
   };
 
   return (
@@ -253,19 +284,17 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
         </div>
       )}
 
-      {/* Key Insight - highlighted finding from Claude API */}
-      {canvas.keyInsight && (
-        <div className="px-4 pt-3 pb-0">
-          <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-            <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
-          </div>
-        </div>
-      )}
-
       {/* Content area - show all charts */}
       <div className="overflow-y-auto scrollbar-hide">
         <div className="p-4 space-y-4">
+          {/* Key Insight */}
+          {canvas.keyInsight && (
+            <div className="flex items-start gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
+            </div>
+          )}
+
           {/* Survey Questions */}
           {canvas.type === 'qualitative' && Array.isArray(canvas.themes) && canvas.themes.length > 0 ? (
             <div className="space-y-4">
@@ -301,25 +330,71 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
         </div>
       </div>
 
-      {/* Footer - simple helper text */}
+      {/* Footer - Input with segment pill when selected, otherwise simple footer */}
       <div className="px-4 py-3 border-t border-border bg-background">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {hasSelection
-              ? "Segment selected — use the input below to ask a follow-up"
-              : "Click bars to select a segment"
-            }
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-xs"
-            onClick={onExpand}
-          >
-            <Sparkles className="w-3 h-3" />
-            Open Canvas
-          </Button>
-        </div>
+        {hasSelection ? (
+          <form onSubmit={handleSubmitQuestion} className="flex items-center gap-2">
+            {/* Input with segment pill */}
+            <div className="flex-1 relative">
+              <div className="flex items-center gap-2 w-full rounded-lg border border-border bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary">
+                {/* Segment pill */}
+                <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full text-xs flex-shrink-0">
+                  <Users className="w-3 h-3" />
+                  <span className="font-medium">{selectedSegments!.totalRespondents.toLocaleString()}</span>
+                  <button
+                    type="button"
+                    onClick={onClearSegments}
+                    className="hover:text-primary/70 transition-colors"
+                    title="Remove segment from query"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Input field */}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask this segment a question..."
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
+                />
+              </div>
+            </div>
+
+            {/* Submit button */}
+            <Button
+              type="submit"
+              size="icon"
+              disabled={!inputValue.trim()}
+              className={cn(
+                'h-9 w-9 rounded-lg transition-all duration-200 flex-shrink-0',
+                inputValue.trim()
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'bg-muted text-muted-foreground'
+              )}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </form>
+        ) : (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Click bars to select audience, expand for full controls
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-xs"
+              onClick={onExpand}
+            >
+              <Sparkles className="w-3 h-3" />
+              Open Canvas
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -332,13 +407,19 @@ const MiniQuestionCard: React.FC<{
   canvasId: string;
   selectedSegments?: SelectedSegments;
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
+  brandColors?: BrandColors;
 }> = ({
   data,
   index,
   canvasId,
   selectedSegments,
   onBarSelect,
+  brandColors = DEFAULT_BRAND_COLORS,
 }) => {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = React.useState<{ x: number; y: number } | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
   // Helper to parse percentage values (handles "37.2%" strings)
   const parsePercentage = (value: unknown): number => {
     if (typeof value === 'number') return value;
@@ -353,10 +434,11 @@ const MiniQuestionCard: React.FC<{
   // Normalize and sort options - handle both array and object formats
   const sortedOptions = React.useMemo(() => {
     const opts = data.options;
-    let normalized: Array<{ label: string; percentage: number }> = [];
+    let normalized: Array<{ label: string; percentage: number; [key: string]: unknown }> = [];
 
     if (Array.isArray(opts)) {
       normalized = opts.filter(opt => opt && typeof opt.label === 'string').map(opt => ({
+        ...opt, // Preserve segment keys like 'mubi-users': 45
         label: String(opt.label),
         percentage: parsePercentage(opt.percentage)
       }));
@@ -397,8 +479,26 @@ const MiniQuestionCard: React.FC<{
     }, canvasId);
   };
 
+  const handleMouseEnter = (idx: number, event: React.MouseEvent<HTMLDivElement>) => {
+    setHoveredIndex(idx);
+    if (containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const targetRect = event.currentTarget.getBoundingClientRect();
+      // Position tooltip 100px above the bar
+      setTooltipPosition({
+        x: targetRect.left - containerRect.left + targetRect.width / 2,
+        y: targetRect.top - containerRect.top - 100,
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+    setTooltipPosition(null);
+  };
+
   return (
-    <div className="bg-background border border-border rounded-lg p-5 min-h-[220px]">
+    <div ref={containerRef} className="bg-background border border-border rounded-lg p-5 min-h-[220px] relative">
       <div className="flex justify-between items-start mb-3">
         <span className="text-xs font-semibold text-muted-foreground">
           Q{index + 1}
@@ -411,50 +511,166 @@ const MiniQuestionCard: React.FC<{
         {data.question}
       </h4>
 
-      {/* Simple horizontal bars - clickable for selection */}
+      {/* Horizontal bars - support both single and multi-segment */}
       <div className="space-y-3">
         {sortedOptions.slice(0, 4).map((option, i) => {
           const selected = isBarSelected(option.label);
-          const opacity = hasAnySelection ? (selected ? 1 : 0.3) : 1;
+          const isHovered = hoveredIndex === i;
+          const baseOpacity = hasAnySelection ? (selected ? 1 : 0.3) : 1;
+          const opacity = hoveredIndex === null ? baseOpacity : (isHovered ? 1 : 0.3);
+          const hasSegments = data.segments && data.segments.length > 0 && option[data.segments[0]] !== undefined;
+
+          // Use brand colors for segments
+          const segmentColors = [
+            brandColors.primary,
+            brandColors.secondary,
+            brandColors.tertiary || '#E32768',
+            brandColors.quaternary || '#D5711B',
+          ];
 
           return (
             <div
               key={i}
               className={cn(
-                "flex items-center gap-3 cursor-pointer rounded-md px-1 py-0.5 -mx-1 transition-all",
+                "cursor-pointer rounded-md px-1 py-0.5 -mx-1 transition-all",
                 selected && "bg-primary/5",
                 onBarSelect && "hover:bg-muted/50"
               )}
               onClick={() => handleBarClick(option)}
+              onMouseEnter={(e) => handleMouseEnter(i, e)}
+              onMouseLeave={handleMouseLeave}
             >
-              <span
-                className="text-xs text-muted-foreground w-[45%] flex-shrink-0 leading-tight transition-opacity"
-                style={{ opacity }}
-              >
-                {option.label}
-              </span>
-              <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-300",
-                    "bg-primary"
-                  )}
-                  style={{
-                    width: `${option.percentage}%`,
-                    opacity,
-                  }}
-                />
-              </div>
-              <span
-                className="text-xs font-medium text-foreground w-12 text-right flex-shrink-0 transition-opacity"
-                style={{ opacity }}
-              >
-                {option.percentage}%
-              </span>
+              {hasSegments ? (
+                // Multi-segment bars VERTICALLY stacked
+                <div className="flex items-start gap-3">
+                  <span
+                    className="text-xs text-muted-foreground w-[45%] flex-shrink-0 leading-tight transition-opacity text-right pt-0.5"
+                    style={{ opacity }}
+                  >
+                    {option.label}
+                  </span>
+                  <div className="flex-1 flex flex-col gap-1">
+                    {data.segments!.map((seg, segIdx) => {
+                      const segValue = parsePercentage(option[seg]);
+                      return (
+                        <div key={seg} className="flex items-center gap-1">
+                          <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{
+                                width: `${segValue}%`,
+                                backgroundColor: segmentColors[segIdx % segmentColors.length],
+                                opacity,
+                              }}
+                            />
+                          </div>
+                          <span
+                            className="text-[10px] font-bold w-8 text-right flex-shrink-0 transition-opacity"
+                            style={{
+                              opacity,
+                              color: segmentColors[segIdx % segmentColors.length]
+                            }}
+                          >
+                            {segValue}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                // Single bar
+                <div className="flex items-center gap-3">
+                  <span
+                    className="text-xs text-muted-foreground w-[45%] flex-shrink-0 leading-tight transition-opacity text-right"
+                    style={{ opacity }}
+                  >
+                    {option.label}
+                  </span>
+                  <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${option.percentage}%`,
+                        backgroundColor: brandColors.primary,
+                        opacity,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-xs font-bold text-foreground w-12 text-right flex-shrink-0 transition-opacity"
+                    style={{ opacity }}
+                  >
+                    {option.percentage}%
+                  </span>
+                </div>
+              )}
             </div>
           );
         })}
+
+        {/* Legend for multi-segment */}
+        {data.segments && data.segments.length > 0 && sortedOptions[0]?.[data.segments[0]] !== undefined && (
+          <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-muted-foreground">
+            {data.segments.map((seg, i) => {
+              const segmentColors = [
+                brandColors.primary,
+                brandColors.secondary,
+                brandColors.tertiary || '#E32768',
+                brandColors.quaternary || '#D5711B',
+              ];
+              return (
+                <div key={seg} className="flex items-center gap-1.5">
+                  <div
+                    className="w-2 h-2 rounded-sm"
+                    style={{ backgroundColor: segmentColors[i % segmentColors.length] }}
+                  />
+                  {seg}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Tooltip */}
+      {hoveredIndex !== null && tooltipPosition && sortedOptions[hoveredIndex] && (
+        <div
+          className="absolute z-50 bg-popover border border-border p-3 rounded shadow-lg text-sm pointer-events-none"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <p className="font-semibold text-popover-foreground mb-1">{sortedOptions[hoveredIndex].label}</p>
+          {data.segments && data.segments.length > 0 && sortedOptions[hoveredIndex][data.segments[0]] !== undefined ? (
+            // Multi-segment tooltip
+            <div className="space-y-1">
+              {data.segments.map((seg, segIdx) => {
+                const segmentColors = [
+                  brandColors.primary,
+                  brandColors.secondary,
+                  brandColors.tertiary || '#E32768',
+                  brandColors.quaternary || '#D5711B',
+                ];
+                return (
+                  <p key={seg} className="flex justify-between gap-4" style={{ color: segmentColors[segIdx % segmentColors.length] }}>
+                    <span>{seg}:</span>
+                    <span>{parsePercentage(sortedOptions[hoveredIndex][seg])}%</span>
+                  </p>
+                );
+              })}
+            </div>
+          ) : (
+            // Single value tooltip
+            <p className="flex justify-between gap-4">
+              <span>Value:</span>
+              <span>{sortedOptions[hoveredIndex].percentage}%</span>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

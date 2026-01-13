@@ -43,6 +43,44 @@ function normalizeOptions(options: unknown): Array<{ label: string; percentage: 
   return []
 }
 
+/**
+ * Detect if a query is asking for a comparison between segments
+ * Returns array of segments if comparison detected, empty array otherwise
+ */
+function detectComparisonSegments(query: string): string[] {
+  console.log('[Merlin Agent] Detecting comparison segments in query:', query)
+
+  // Check for comparison patterns like "vs", "versus", "compared to", "comparing"
+  const comparisonPatterns = [
+    /(.+?)\s+vs\.?\s+(.+)/i,
+    /(.+?)\s+versus\s+(.+)/i,
+    /compar(?:e|ing)\s+(.+?)\s+(?:to|and|with)\s+(.+)/i,
+    /(.+?)\s+compared\s+to\s+(.+)/i,
+  ]
+
+  for (const pattern of comparisonPatterns) {
+    const match = query.match(pattern)
+    if (match) {
+      // Extract the two groups being compared
+      const seg1 = match[1].trim().replace(/^@/, '')
+      const seg2 = match[2].trim().replace(/^@/, '')
+      console.log('[Merlin Agent] Pattern match found:', { seg1, seg2 })
+      if (seg1 && seg2) {
+        return [seg1, seg2]
+      }
+    }
+  }
+
+  // Also check for @mentions - if multiple @mentions, treat as comparison
+  const atMentions = query.match(/@[\w-]+/g)
+  console.log('[Merlin Agent] @mentions found:', atMentions)
+  if (atMentions && atMentions.length >= 2) {
+    return atMentions.map(m => m.replace('@', ''))
+  }
+
+  return []
+}
+
 // Legacy interface for backwards compatibility
 export interface ResearchResult {
   type: 'quantitative' | 'qualitative' | 'update'
@@ -324,7 +362,22 @@ export async function generateResearchWithAgent(
 
   } catch (error) {
     console.error('[Merlin Agent] Error:', error)
-    // Return fallback survey
+
+    // Check if the query is asking for a comparison
+    const detectedSegments = detectComparisonSegments(userQuery)
+    if (detectedSegments.length >= 2) {
+      console.log('[Merlin Agent] Detected comparison query in fallback, segments:', detectedSegments)
+      // Generate comparison fallback with detected segments
+      const canvas = generateFallbackComparisonCanvas('General Population', userQuery, detectedSegments)
+      return {
+        type: 'single_canvas',
+        canvases: [canvas],
+        processSteps: COMPARISON_PROCESS_STEPS,
+        explanation: `Comparison research completed for ${detectedSegments.join(' vs ')}`
+      }
+    }
+
+    // Return fallback survey for non-comparison queries
     return executeToolAsSurvey(userQuery, 'General Population')
   }
 }

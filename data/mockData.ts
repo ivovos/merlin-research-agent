@@ -28,15 +28,123 @@ export interface Project {
   audiences: Audience[];
 }
 
+export interface BrandColors {
+  primary: string;
+  secondary: string;
+  tertiary?: string;
+  quaternary?: string;
+}
+
 export interface Account {
   id: string;
   name: string;
   type: 'brand' | 'agency';
   icon: string; // 2-letter abbreviation
   logo?: string; // Optional logo URL
+  brandColors?: BrandColors; // Brand-specific colors for charts
   projects?: Project[];
   audiences?: Audience[]; // For brand accounts without projects
+  researchProjects?: ResearchProject[]; // Research workspaces
 }
+
+// Research Project - a workspace that groups conversations, canvases, and briefs
+export interface ResearchProject {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string; // 2-letter code or emoji
+  color?: string; // Optional color for theming
+  createdAt: string;
+  updatedAt: string;
+  audienceIds: string[]; // References to audiences used in this project
+  conversationIds: string[]; // Conversations belonging to this project
+  canvasIds: string[]; // Canvases created in this project
+  briefs?: UploadedBrief[];
+  status: 'active' | 'archived' | 'completed';
+  tags?: string[];
+}
+
+export interface UploadedBrief {
+  id: string;
+  name: string;
+  type: 'pdf' | 'docx' | 'txt' | 'md' | 'url';
+  uploadedAt: string;
+  summary?: string;
+  url?: string;
+}
+
+// MUBI Research Projects
+export const mubiResearchProjects: ResearchProject[] = [
+  {
+    id: 'proj_q1_churn',
+    name: 'Q1 Churn Prevention',
+    description: 'Understanding why subscribers cancel and identifying early warning signals. Focus on content discovery friction and competitive alternatives.',
+    icon: 'CH',
+    color: '#E32768',
+    createdAt: '2026-01-02T09:00:00Z',
+    updatedAt: '2026-01-11T16:00:00Z',
+    audienceIds: ['mubi-churned-30d', 'mubi-basic-global'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_churn',
+        name: 'Churn Analysis Brief.pdf',
+        type: 'pdf',
+        uploadedAt: '2026-01-02T09:30:00Z',
+        summary: 'Analysis of Q4 churn patterns and competitive landscape assessment.'
+      }
+    ],
+    status: 'active',
+    tags: ['churn', 'retention', 'q1-2026']
+  },
+  {
+    id: 'proj_uk_expansion',
+    name: 'UK Cinema Expansion',
+    description: 'Research to support cinema partner negotiations in the UK market. Understanding subscriber cinema habits and venue preferences.',
+    icon: 'UK',
+    color: '#1BD571',
+    createdAt: '2026-01-08T11:00:00Z',
+    updatedAt: '2026-01-10T09:00:00Z',
+    audienceIds: ['mubi-uk-subs', 'mubi-premium-global'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_uk',
+        name: 'UK Partnership Deck.pdf',
+        type: 'pdf',
+        uploadedAt: '2026-01-08T11:15:00Z',
+        summary: 'Target cinema chains and partnership terms for UK Go expansion.'
+      }
+    ],
+    status: 'active',
+    tags: ['uk', 'cinema', 'partnerships']
+  },
+  {
+    id: 'proj_content_strategy',
+    name: '2026 Content Strategy',
+    description: 'Research to inform content licensing decisions. What types of films drive engagement and retention across different audience segments?',
+    icon: 'CS',
+    color: '#D5711B',
+    createdAt: '2025-12-15T14:00:00Z',
+    updatedAt: '2026-01-03T10:00:00Z',
+    audienceIds: ['mubi-basic-global', 'mubi-film-buffs', 'mubi-casual-viewers'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_content',
+        name: 'Content Acquisition Plan.pdf',
+        type: 'pdf',
+        uploadedAt: '2025-12-15T14:30:00Z',
+        summary: 'Licensing budget allocation and genre priorities for 2026.'
+      }
+    ],
+    status: 'active',
+    tags: ['content', 'licensing', 'strategy']
+  }
+];
 
 // Mock data for a brand account (Canva)
 export const canvaAccount: Account = {
@@ -45,6 +153,12 @@ export const canvaAccount: Account = {
   type: 'brand',
   icon: 'CV',
   logo: '/assets/canva-logo.png',
+  brandColors: {
+    primary: '#00C4CC',   // Canva Teal
+    secondary: '#7D2AE8', // Canva Purple
+    tertiary: '#FF6B6B',  // Canva Coral
+    quaternary: '#FFD166', // Canva Yellow
+  },
   projects: [
     {
       id: 'design-platform',
@@ -64,7 +178,8 @@ export const canvaAccount: Account = {
             { id: 's3', name: 'Freelance social managers', count: 960, percentage: 30 },
           ],
           updatedAt: '2026-01-07',
-          source: 'LinkedIn, Survey',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'design-platform',
           description: 'Social media professionals creating platform-specific content daily',
         },
@@ -80,7 +195,8 @@ export const canvaAccount: Account = {
             { id: 's7', name: 'Podcast hosts', count: 450, percentage: 10 },
           ],
           updatedAt: '2026-01-06',
-          source: 'Creator Network, Analytics',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'design-platform',
           description: 'Digital content creators building personal brands across platforms',
         },
@@ -96,7 +212,8 @@ export const canvaAccount: Account = {
             { id: 's11', name: 'Retail shops', count: 280, percentage: 10 },
           ],
           updatedAt: '2026-01-05',
-          source: 'Survey, CRM',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'design-platform',
           description: 'Small business owners creating their own marketing materials',
         },
@@ -112,7 +229,8 @@ export const canvaAccount: Account = {
             { id: 's15', name: 'Product marketing', count: 240, percentage: 10 },
           ],
           updatedAt: '2026-01-04',
-          source: 'CRM, LinkedIn',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'design-platform',
           description: 'Corporate marketing teams producing campaign materials',
         },
@@ -137,7 +255,8 @@ export const canvaAccount: Account = {
             { id: 's19', name: 'Special education teachers', count: 520, percentage: 10 },
           ],
           updatedAt: '2026-01-03',
-          source: 'Survey, Education Network',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'education',
           description: 'K-12 teachers creating lesson materials, presentations, and classroom resources',
         },
@@ -152,7 +271,8 @@ export const canvaAccount: Account = {
             { id: 's22', name: 'Student org leaders', count: 850, percentage: 10 },
           ],
           updatedAt: '2026-01-02',
-          source: 'Campus Survey, Analytics',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'education',
           description: 'College students creating presentations, posters, and resumes',
         },
@@ -168,7 +288,8 @@ export const canvaAccount: Account = {
             { id: 's26', name: 'Course designers', count: 120, percentage: 10 },
           ],
           updatedAt: '2026-01-01',
-          source: 'Survey, LinkedIn',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'education',
           description: 'University faculty creating course materials and academic presentations',
         },
@@ -183,7 +304,8 @@ export const canvaAccount: Account = {
             { id: 's29', name: 'EdTech instructors', count: 560, percentage: 20 },
           ],
           updatedAt: '2025-12-30',
-          source: 'Creator Network, Survey',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'education',
           description: 'Educators creating online learning materials and course graphics',
         },
@@ -207,7 +329,8 @@ export const canvaAccount: Account = {
             { id: 's33', name: 'Internal comms', count: 180, percentage: 10 },
           ],
           updatedAt: '2026-01-07',
-          source: 'CRM, LinkedIn',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'enterprise',
           description: 'HR teams creating recruitment materials, onboarding docs, and internal communications',
         },
@@ -223,7 +346,8 @@ export const canvaAccount: Account = {
             { id: 's37', name: 'Business development', count: 220, percentage: 10 },
           ],
           updatedAt: '2026-01-06',
-          source: 'CRM, Survey',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'enterprise',
           description: 'Sales professionals creating proposals, pitch decks, and client-facing materials',
         },
@@ -239,7 +363,8 @@ export const canvaAccount: Account = {
             { id: 's41', name: 'Culture teams', count: 95, percentage: 10 },
           ],
           updatedAt: '2026-01-05',
-          source: 'CRM, Analytics',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'enterprise',
           description: 'Internal communications teams creating company updates, newsletters, and announcements',
         },
@@ -255,7 +380,8 @@ export const canvaAccount: Account = {
             { id: 's45', name: 'Volunteer coordinators', count: 340, percentage: 10 },
           ],
           updatedAt: '2026-01-04',
-          source: 'Survey, Partner Network',
+          source: 'canva_1p',
+          sourceLabel: 'Canva Customer Data',
           projectId: 'enterprise',
           description: 'Non-profit teams creating fundraising campaigns, event materials, and impact reports',
         },
@@ -264,146 +390,19 @@ export const canvaAccount: Account = {
   ],
 };
 
-// Mock data for MUBI (streaming service brand)
-// Note: Projects are research workspaces that group conversations, not audience categories
-// Audiences are account-level and shared across projects
-export const mubiAccount: Account = {
-  id: 'mubi',
-  name: 'MUBI',
-  type: 'brand',
-  icon: 'MU',
-  logo: '/assets/mubi-logo.png',
-  // Audiences are flat - available across all projects
-  audiences: [
-    {
-      id: 'mubi-basic-global',
-      name: 'Basic Subscribers (Global)',
-      icon: 'BS',
-      agents: 2847,
-      segments: [
-        { id: 'seg-high', name: 'High Engagement', count: 569, percentage: 20 },
-        { id: 'seg-med', name: 'Medium Engagement', count: 1424, percentage: 50 },
-        { id: 'seg-low', name: 'Low Engagement', count: 854, percentage: 30 },
-      ],
-      updatedAt: '2026-01-10',
-      source: 'CRM, Streaming Analytics',
-      description: 'Current MUBI Basic subscribers worldwide, segmented by platform engagement',
-    },
-    {
-      id: 'mubi-go-subscribers',
-      name: 'Go Subscribers',
-      icon: 'GO',
-      agents: 1850,
-      segments: [
-        { id: 'seg-go-active', name: 'Active Cinema-goers', count: 925, percentage: 50 },
-        { id: 'seg-go-occasional', name: 'Occasional Cinema-goers', count: 555, percentage: 30 },
-        { id: 'seg-go-lapsed', name: 'Lapsed Cinema-goers', count: 370, percentage: 20 },
-      ],
-      updatedAt: '2026-01-10',
-      source: 'CRM, Box Office Data',
-      description: 'MUBI Go tier subscribers with weekly cinema ticket benefit',
-    },
-    {
-      id: 'mubi-churned',
-      name: 'Churned Subscribers',
-      icon: 'CH',
-      agents: 1500,
-      segments: [
-        { id: 'seg-recent', name: 'Last 30 days', count: 450, percentage: 30 },
-        { id: 'seg-medium', name: '1-3 months ago', count: 525, percentage: 35 },
-        { id: 'seg-long', name: '3-6 months ago', count: 525, percentage: 35 },
-      ],
-      updatedAt: '2026-01-08',
-      source: 'CRM, Exit Surveys',
-      description: 'Former subscribers who cancelled within the last 6 months',
-    },
-    {
-      id: 'mubi-trialists',
-      name: 'Free Trial Users',
-      icon: 'FT',
-      agents: 3200,
-      segments: [
-        { id: 'seg-active-trial', name: 'Active in Trial', count: 1280, percentage: 40 },
-        { id: 'seg-likely-convert', name: 'Likely to Convert', count: 960, percentage: 30 },
-        { id: 'seg-at-risk', name: 'At Risk of Drop-off', count: 960, percentage: 30 },
-      ],
-      updatedAt: '2026-01-11',
-      source: 'Product Analytics',
-      description: 'Users currently on free trial, segmented by conversion likelihood',
-    },
-    {
-      id: 'mubi-uk-market',
-      name: 'UK Subscribers',
-      icon: 'UK',
-      agents: 4200,
-      segments: [
-        { id: 'seg-uk-basic', name: 'Basic Tier', count: 2940, percentage: 70 },
-        { id: 'seg-uk-go', name: 'Go Tier', count: 1260, percentage: 30 },
-      ],
-      updatedAt: '2026-01-09',
-      source: 'CRM, Payment Data',
-      description: 'UK market subscribers - highest Go tier adoption market',
-    },
-    {
-      id: 'mubi-us-market',
-      name: 'US Subscribers',
-      icon: 'US',
-      agents: 3156,
-      segments: [
-        { id: 'seg-us-basic', name: 'Basic Tier', count: 3061, percentage: 97 },
-        { id: 'seg-us-go', name: 'Go Tier', count: 95, percentage: 3 },
-      ],
-      updatedAt: '2026-01-08',
-      source: 'CRM, Payment Data',
-      description: 'US market subscribers - Go tier launching soon',
-    },
-    {
-      id: 'mubi-arthouse-prospects',
-      name: 'Arthouse Film Enthusiasts',
-      icon: 'AH',
-      agents: 4000,
-      segments: [
-        { id: 'seg-criterion', name: 'Criterion Channel Users', count: 1200, percentage: 30 },
-        { id: 'seg-letterboxd', name: 'Letterboxd Power Users', count: 1600, percentage: 40 },
-        { id: 'seg-festival', name: 'Film Festival Attendees', count: 1200, percentage: 30 },
-      ],
-      updatedAt: '2026-01-05',
-      source: 'Survey, Social Media',
-      description: 'Non-subscribers active in arthouse film communities - acquisition targets',
-    },
-  ],
-  // Projects are research workspaces that group conversations, canvases, and briefs
-  // They reference audiences by ID rather than containing them
-  projects: [
-    {
-      id: 'proj_go_pricing',
-      name: 'Go Tier Pricing Research',
-      icon: 'GO',
-      audiences: [], // Projects use audienceIds to reference account-level audiences
-    },
-    {
-      id: 'proj_churn_analysis',
-      name: 'Churn Analysis Q1 2026',
-      icon: 'CH',
-      audiences: [],
-    },
-    {
-      id: 'proj_uk_expansion',
-      name: 'UK Market Go Expansion',
-      icon: 'UK',
-      audiences: [],
-    },
-  ],
-};
-
 // Mock data for an agency account (Wonderhood Studios)
-
 export const wonderhoodAccount: Account = {
   id: 'wonderhood',
   name: 'Wonderhood Studios',
   type: 'agency',
   icon: 'WS',
   logo: '/assets/wonderhood.png',
+  brandColors: {
+    primary: '#FF4F00',   // Wonderhood Orange
+    secondary: '#1A1A1A', // Wonderhood Black
+    tertiary: '#6B46C1',  // Wonderhood Purple
+    quaternary: '#10B981', // Wonderhood Green
+  },
   projects: [
     {
       id: 'bp',
@@ -423,7 +422,8 @@ export const wonderhoodAccount: Account = {
             { id: 's12', name: 'Tech enthusiasts', count: 300, percentage: 20 },
           ],
           updatedAt: '2026-01-06',
-          source: 'Survey, Social media',
+          source: 'wonderhood_1p',
+          sourceLabel: 'Wonderhood Data',
           projectId: 'bp',
           description: 'Early adopters of electric vehicles',
         },
@@ -439,7 +439,8 @@ export const wonderhoodAccount: Account = {
             { id: 's15', name: 'Public transport', count: 120, percentage: 15 },
           ],
           updatedAt: '2026-01-04',
-          source: 'LinkedIn',
+          source: 'wonderhood_1p',
+          sourceLabel: 'Wonderhood Data',
           projectId: 'bp',
           description: 'Professionals managing vehicle fleets',
         },
@@ -463,7 +464,8 @@ export const wonderhoodAccount: Account = {
             { id: 's18', name: 'Opinion readers', count: 640, percentage: 20 },
           ],
           updatedAt: '2026-01-07',
-          source: 'CRM, Analytics',
+          source: 'wonderhood_1p',
+          sourceLabel: 'Wonderhood Data',
           projectId: 'times',
           description: 'Current digital subscribers to The Times',
         },
@@ -479,7 +481,8 @@ export const wonderhoodAccount: Account = {
             { id: 's21', name: 'Competitors readers', count: 480, percentage: 20 },
           ],
           updatedAt: '2026-01-02',
-          source: 'Survey, Analytics',
+          source: 'wonderhood_1p',
+          sourceLabel: 'Wonderhood Data',
           projectId: 'times',
           description: 'Potential future subscribers to target',
         },
@@ -503,7 +506,8 @@ export const wonderhoodAccount: Account = {
             { id: 's24', name: 'Adventure seekers', count: 560, percentage: 20 },
           ],
           updatedAt: '2026-01-05',
-          source: 'Social media, Events',
+          source: 'wonderhood_1p',
+          sourceLabel: 'Wonderhood Data',
           projectId: 'redbull',
           description: 'Fans of extreme sports and adventure',
         },
@@ -512,23 +516,533 @@ export const wonderhoodAccount: Account = {
   ],
 };
 
-export const mockAccounts: Account[] = [canvaAccount, mubiAccount, wonderhoodAccount];
+// Mock data for MUBI brand account
+export const mubiAccount: Account = {
+  id: 'mubi',
+  name: 'MUBI',
+  type: 'brand',
+  icon: 'MB',
+  logo: '/assets/mubi-logo.png',
+  brandColors: {
+    primary: '#2768E3',   // MUBI Blue
+    secondary: '#1BD571', // MUBI Green
+    tertiary: '#E32768',  // MUBI Pink (complementary)
+    quaternary: '#D5711B', // MUBI Orange (complementary)
+  },
+  researchProjects: mubiResearchProjects,
+  audiences: [
+    // ============================================================================
+    // MUBI 1st Party Audiences (Customer Data)
+    // ============================================================================
+    {
+      id: 'mubi-basic-global',
+      name: 'Global Basic Subscribers',
+      icon: 'GB',
+      agents: 2847,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'high', name: 'High Engagement', count: 569, percentage: 20 },
+        { id: 'med', name: 'Medium Engagement', count: 1424, percentage: 50 },
+        { id: 'low', name: 'Low Engagement', count: 854, percentage: 30 },
+      ],
+      updatedAt: '2026-01-10',
+      description: 'Active MUBI Basic subscribers worldwide',
+    },
+    {
+      id: 'mubi-premium-global',
+      name: 'Global Premium (MUBI Go)',
+      icon: 'GP',
+      agents: 450,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'high-go', name: 'High Cinema Attendance', count: 180, percentage: 40 },
+        { id: 'med-go', name: 'Medium Cinema Attendance', count: 180, percentage: 40 },
+        { id: 'low-go', name: 'Low Cinema Attendance', count: 90, percentage: 20 },
+      ],
+      updatedAt: '2026-01-09',
+      description: 'Premium MUBI Go subscribers with cinema credits',
+    },
+    {
+      id: 'mubi-us-subs',
+      name: 'US Subscribers',
+      icon: 'US',
+      agents: 3156,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'us-basic', name: 'MUBI Basic', count: 3061, percentage: 97 },
+        { id: 'us-go', name: 'MUBI Go', count: 95, percentage: 3 },
+      ],
+      updatedAt: '2026-01-08',
+      description: 'MUBI subscribers in the United States',
+    },
+    {
+      id: 'mubi-uk-subs',
+      name: 'UK Subscribers',
+      icon: 'UK',
+      agents: 1800,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'uk-basic', name: 'MUBI Basic', count: 1620, percentage: 90 },
+        { id: 'uk-go', name: 'MUBI Go', count: 180, percentage: 10 },
+      ],
+      updatedAt: '2026-01-07',
+      description: 'MUBI subscribers in the United Kingdom',
+    },
+    {
+      id: 'mubi-uk-london',
+      name: 'UK Subscribers - London',
+      icon: 'LN',
+      agents: 450,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'london-high', name: 'High Cinema Spend', count: 135, percentage: 30 },
+        { id: 'london-med', name: 'Medium Cinema Spend', count: 225, percentage: 50 },
+        { id: 'london-low', name: 'Low Cinema Spend', count: 90, percentage: 20 },
+      ],
+      updatedAt: '2026-01-06',
+      description: 'London-based MUBI subscribers for cinema behavior analysis',
+    },
+    {
+      id: 'mubi-de-subs',
+      name: 'Germany Subscribers',
+      icon: 'DE',
+      agents: 950,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'de-basic', name: 'MUBI Basic', count: 855, percentage: 90 },
+        { id: 'de-go', name: 'MUBI Go', count: 95, percentage: 10 },
+      ],
+      updatedAt: '2026-01-05',
+      description: 'MUBI subscribers in Germany',
+    },
+    {
+      id: 'mubi-mx-subs',
+      name: 'Mexico Subscribers',
+      icon: 'MX',
+      agents: 650,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'mx-basic', name: 'MUBI Basic', count: 618, percentage: 95 },
+        { id: 'mx-go', name: 'MUBI Go', count: 32, percentage: 5 },
+      ],
+      updatedAt: '2026-01-04',
+      description: 'MUBI subscribers in Mexico',
+    },
+    {
+      id: 'mubi-br-subs',
+      name: 'Brazil Subscribers',
+      icon: 'BR',
+      agents: 550,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'br-basic', name: 'MUBI Basic', count: 522, percentage: 95 },
+        { id: 'br-go', name: 'MUBI Go', count: 28, percentage: 5 },
+      ],
+      updatedAt: '2026-01-03',
+      description: 'MUBI subscribers in Brazil',
+    },
+    {
+      id: 'mubi-potential-upgraders',
+      name: 'Potential Upgraders',
+      icon: 'PU',
+      agents: 2500,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'cinema-interest', name: 'High Cinema Interest', count: 1000, percentage: 40 },
+        { id: 'quality-focused', name: 'Quality-Focused', count: 875, percentage: 35 },
+        { id: 'price-sensitive', name: 'Price-Sensitive', count: 625, percentage: 25 },
+      ],
+      updatedAt: '2026-01-02',
+      description: 'Basic subscribers showing upgrade potential based on behavior signals',
+    },
+    {
+      id: 'mubi-churn-risk',
+      name: 'Churn Risk Subscribers',
+      icon: 'CR',
+      agents: 300,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'low-usage', name: 'Low Usage', count: 120, percentage: 40 },
+        { id: 'price-objection', name: 'Price Objection', count: 90, percentage: 30 },
+        { id: 'content-dissatisfied', name: 'Content Dissatisfied', count: 90, percentage: 30 },
+      ],
+      updatedAt: '2026-01-01',
+      description: 'Subscribers at risk of churning based on engagement patterns',
+    },
+    {
+      id: 'mubi-bnpl-interested',
+      name: 'BNPL-Interested Subscribers',
+      icon: 'BP',
+      agents: 850,
+      source: 'mubi_1p',
+      sourceLabel: 'MUBI Customer Data',
+      segments: [
+        { id: 'premium-considerer', name: 'Premium Considerers', count: 510, percentage: 60 },
+        { id: 'ultimate-considerer', name: 'Ultimate Considerers', count: 340, percentage: 40 },
+      ],
+      updatedAt: '2025-12-30',
+      description: 'Subscribers who would upgrade with buy now pay later options',
+    },
+    // ============================================================================
+    // Electric Twin Synthetic Audiences (Prospect Panels for MUBI)
+    // ============================================================================
+    {
+      id: 'mubi-cinephiles-global',
+      name: 'ET- Global Cinephiles (Non-members)',
+      icon: 'GC',
+      agents: 5000,
+      source: 'electric_twin',
+      sourceLabel: 'Electric Twin Panel',
+      segments: [
+        { id: 'us-cinephiles', name: 'United States', count: 1500, percentage: 30 },
+        { id: 'uk-cinephiles', name: 'United Kingdom', count: 1000, percentage: 20 },
+        { id: 'eu-cinephiles', name: 'Europe (Other)', count: 1250, percentage: 25 },
+        { id: 'row-cinephiles', name: 'Rest of World', count: 1250, percentage: 25 },
+      ],
+      updatedAt: '2026-01-05',
+      description: '18+ with streaming subscriptions interested in independent/specialty films',
+    },
+    {
+      id: 'mubi-cinephiles-us',
+      name: 'ET- US Cinephiles',
+      icon: 'UC',
+      agents: 3500,
+      source: 'electric_twin',
+      sourceLabel: 'Electric Twin Panel',
+      segments: [
+        { id: 'multi-sub', name: 'Multi-Subscription', count: 1400, percentage: 40 },
+        { id: 'single-sub', name: 'Single Subscription', count: 1050, percentage: 30 },
+        { id: 'no-sub', name: 'No Current Subscription', count: 1050, percentage: 30 },
+      ],
+      updatedAt: '2026-01-04',
+      description: 'US-based film enthusiasts by streaming subscription status',
+    },
+    {
+      id: 'mubi-cinephiles-uk',
+      name: 'ET- UK Cinephiles',
+      icon: 'KC',
+      agents: 1800,
+      source: 'electric_twin',
+      sourceLabel: 'Electric Twin Panel',
+      segments: [
+        { id: 'high-cinema', name: 'High Cinema Attendance (3+/mo)', count: 540, percentage: 30 },
+        { id: 'med-cinema', name: 'Medium Cinema Attendance (1-2/mo)', count: 720, percentage: 40 },
+        { id: 'low-cinema', name: 'Low Cinema Attendance (<1/mo)', count: 540, percentage: 30 },
+      ],
+      updatedAt: '2026-01-03',
+      description: 'UK-based film enthusiasts by cinema attendance frequency',
+    },
+    {
+      id: 'mubi-japan-indie',
+      name: 'ET- Japan - Independent Film Enthusiasts',
+      icon: 'JP',
+      agents: 2200,
+      source: 'electric_twin',
+      sourceLabel: 'Electric Twin Panel',
+      segments: [
+        { id: 'jp-high', name: 'High Interest', count: 660, percentage: 30 },
+        { id: 'jp-med', name: 'Medium Interest', count: 880, percentage: 40 },
+        { id: 'jp-low', name: 'Low Interest', count: 660, percentage: 30 },
+      ],
+      updatedAt: '2026-01-02',
+      description: 'Japanese consumers interested in independent and arthouse cinema',
+    },
+    {
+      id: 'mubi-streaming-prospects',
+      name: 'ET- Streaming Service Prospects',
+      icon: 'SP',
+      agents: 8000,
+      source: 'electric_twin',
+      sourceLabel: 'Electric Twin Panel',
+      segments: [
+        { id: 'netflix-only', name: 'Netflix Only', count: 2400, percentage: 30 },
+        { id: 'multi-platform', name: 'Multi-Platform (2-3)', count: 3200, percentage: 40 },
+        { id: 'heavy-streamers', name: 'Heavy Streamers (4+)', count: 2400, percentage: 30 },
+      ],
+      updatedAt: '2026-01-01',
+      description: 'General population streaming subscribers for acquisition research',
+    },
+  ],
+};
+
+// Electric Twin Generic Audiences (Available to ALL accounts)
+export const electricTwinGenericAudiences: Audience[] = [
+  // ============================================================================
+  // Media & Entertainment Consumers
+  // ============================================================================
+  {
+    id: 'et-streamers-multi',
+    name: 'ET- Multi-Platform Streamers',
+    icon: 'MS',
+    agents: 4500,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: '2-3-subs', name: '2-3 Subscriptions', count: 1800, percentage: 40 },
+      { id: '4-5-subs', name: '4-5 Subscriptions', count: 1575, percentage: 35 },
+      { id: '6-plus-subs', name: '6+ Subscriptions', count: 1125, percentage: 25 },
+    ],
+    updatedAt: '2026-01-10',
+    description: 'Consumers with multiple streaming service subscriptions',
+  },
+  {
+    id: 'et-cord-cutters',
+    name: 'ET- Cord Cutters',
+    icon: 'CC',
+    agents: 2800,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'recent', name: 'Recent (< 2 years)', count: 840, percentage: 30 },
+      { id: 'established', name: 'Established (2-5 years)', count: 1120, percentage: 40 },
+      { id: 'never-had', name: 'Never Had Cable', count: 840, percentage: 30 },
+    ],
+    updatedAt: '2026-01-09',
+    description: 'Consumers who have cancelled or never had traditional cable TV',
+  },
+  {
+    id: 'et-binge-watchers',
+    name: 'ET- Binge Watchers',
+    icon: 'BW',
+    agents: 3800,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'weekly', name: 'Weekly Bingers', count: 1520, percentage: 40 },
+      { id: 'monthly', name: 'Monthly Bingers', count: 1330, percentage: 35 },
+      { id: 'occasional', name: 'Occasional Bingers', count: 950, percentage: 25 },
+    ],
+    updatedAt: '2026-01-08',
+    description: 'Consumers who regularly watch multiple episodes/seasons in one sitting',
+  },
+  // ============================================================================
+  // Digital Attention Profiles
+  // ============================================================================
+  {
+    id: 'et-subscription-fatigued',
+    name: 'ET- Subscription Fatigued',
+    icon: 'SF',
+    agents: 4200,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'recent-churn', name: 'Churned Last 3 Months', count: 1260, percentage: 30 },
+      { id: '6mo-churn', name: 'Churned Last 6 Months', count: 1680, percentage: 40 },
+      { id: '12mo-churn', name: 'Churned Last 12 Months', count: 1260, percentage: 30 },
+    ],
+    updatedAt: '2026-01-07',
+    description: 'Consumers who have cancelled streaming subscriptions due to cost or overload',
+  },
+  {
+    id: 'et-deep-engagers',
+    name: 'ET- Deep Engagers',
+    icon: 'DE',
+    agents: 3800,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: '30min', name: '30-60 min sessions', count: 1520, percentage: 40 },
+      { id: '1hr', name: '1-2 hour sessions', count: 1330, percentage: 35 },
+      { id: '2hr', name: '2+ hour sessions', count: 950, percentage: 25 },
+    ],
+    updatedAt: '2026-01-06',
+    description: 'Consumers who regularly engage with long-form content (30+ minute sessions)',
+  },
+  {
+    id: 'et-content-skippers',
+    name: 'ET- Content Skippers',
+    icon: 'CS',
+    agents: 4100,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'intro-skip', name: 'Intro Skippers', count: 1640, percentage: 40 },
+      { id: 'midroll-skip', name: 'Mid-roll Skippers', count: 1230, percentage: 30 },
+      { id: 'recap-skip', name: 'Recap Skippers', count: 1230, percentage: 30 },
+    ],
+    updatedAt: '2026-01-05',
+    description: 'Consumers who frequently skip intros, recaps, or mid-roll content',
+  },
+  // ============================================================================
+  // Generational Attention Cohorts
+  // ============================================================================
+  {
+    id: 'et-gen-z-digital-natives',
+    name: 'ET- Gen Z Digital Natives',
+    icon: 'GZ',
+    agents: 5500,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'tiktok', name: 'TikTok Primary', count: 2200, percentage: 40 },
+      { id: 'youtube', name: 'YouTube Primary', count: 1925, percentage: 35 },
+      { id: 'instagram', name: 'Instagram Primary', count: 1375, percentage: 25 },
+    ],
+    updatedAt: '2026-01-04',
+    description: '18-26 year olds who grew up with smartphones and streaming',
+  },
+  {
+    id: 'et-millennial-streamers',
+    name: 'ET- Millennial Streamers',
+    icon: 'ML',
+    agents: 5600,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'single', name: 'Single Household', count: 1680, percentage: 30 },
+      { id: 'couple', name: 'Couple Household', count: 1960, percentage: 35 },
+      { id: 'family', name: 'Family Household', count: 1960, percentage: 35 },
+    ],
+    updatedAt: '2026-01-03',
+    description: '27-42 year olds by household composition and streaming behavior',
+  },
+  {
+    id: 'et-gen-x-adopters',
+    name: 'ET- Gen X Digital Adopters',
+    icon: 'GX',
+    agents: 4200,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'early', name: 'Early Adopter', count: 1260, percentage: 30 },
+      { id: 'mainstream', name: 'Mainstream', count: 2100, percentage: 50 },
+      { id: 'reluctant', name: 'Reluctant', count: 840, percentage: 20 },
+    ],
+    updatedAt: '2026-01-02',
+    description: '43-58 year olds by tech adoption comfort level',
+  },
+  // ============================================================================
+  // Time & Context Segments
+  // ============================================================================
+  {
+    id: 'et-evening-unwinders',
+    name: 'ET- Evening Unwinders',
+    icon: 'EU',
+    agents: 6700,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'early-evening', name: '6-8pm Start', count: 2010, percentage: 30 },
+      { id: 'prime-time', name: '8-10pm Start', count: 2680, percentage: 40 },
+      { id: 'late-night', name: '10pm+ Start', count: 2010, percentage: 30 },
+    ],
+    updatedAt: '2026-01-01',
+    description: 'Consumers who primarily stream in evening hours to relax',
+  },
+  {
+    id: 'et-weekend-warriors',
+    name: 'ET- Weekend Binge Warriors',
+    icon: 'WW',
+    agents: 5100,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'light', name: '5-10 hrs/weekend', count: 1530, percentage: 30 },
+      { id: 'moderate', name: '10-20 hrs/weekend', count: 2040, percentage: 40 },
+      { id: 'heavy', name: '20+ hrs/weekend', count: 1530, percentage: 30 },
+    ],
+    updatedAt: '2025-12-30',
+    description: 'Consumers who concentrate streaming activity on weekends',
+  },
+  // ============================================================================
+  // Social & Creator Economy
+  // ============================================================================
+  {
+    id: 'et-creator-followers',
+    name: 'ET- Creator Economy Followers',
+    icon: 'CF',
+    agents: 7200,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'youtube', name: 'YouTube Followers', count: 2880, percentage: 40 },
+      { id: 'tiktok', name: 'TikTok Followers', count: 2160, percentage: 30 },
+      { id: 'twitch-patreon', name: 'Twitch/Patreon', count: 2160, percentage: 30 },
+    ],
+    updatedAt: '2025-12-28',
+    description: 'Consumers who regularly follow and support content creators',
+  },
+  {
+    id: 'et-premium-upgraders',
+    name: 'ET- Premium Upgraders',
+    icon: 'UP',
+    agents: 2200,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'ad-free', name: 'Ad-Free Motivated', count: 880, percentage: 40 },
+      { id: 'features', name: 'Features Motivated', count: 660, percentage: 30 },
+      { id: 'content', name: 'Content Motivated', count: 660, percentage: 30 },
+    ],
+    updatedAt: '2025-12-26',
+    description: 'Consumers who have upgraded to premium tiers by motivation type',
+  },
+  {
+    id: 'et-free-tier-loyalists',
+    name: 'ET- Free Tier Loyalists',
+    icon: 'FT',
+    agents: 5800,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'high-tolerance', name: 'High Ad Tolerance', count: 1740, percentage: 30 },
+      { id: 'med-tolerance', name: 'Medium Ad Tolerance', count: 2320, percentage: 40 },
+      { id: 'low-tolerance', name: 'Low Ad Tolerance', count: 1740, percentage: 30 },
+    ],
+    updatedAt: '2025-12-24',
+    description: 'Consumers who consistently use free/ad-supported tiers',
+  },
+  {
+    id: 'et-bnpl-users',
+    name: 'ET- Buy Now Pay Later Users',
+    icon: 'BN',
+    agents: 3100,
+    source: 'electric_twin_attention',
+    sourceLabel: 'Electric Twin - Attention Economy',
+    segments: [
+      { id: 'entertainment', name: 'Entertainment BNPL', count: 930, percentage: 30 },
+      { id: 'retail', name: 'Retail BNPL', count: 1240, percentage: 40 },
+      { id: 'travel', name: 'Travel BNPL', count: 930, percentage: 30 },
+    ],
+    updatedAt: '2025-12-22',
+    description: 'Consumers who use buy now pay later services by category',
+  },
+] as unknown as Audience[];
+
+export const mockAccounts: Account[] = [mubiAccount, canvaAccount, wonderhoodAccount];
 
 // Helper function to get all audiences from an account
-export const getAllAudiences = (account: Account): Audience[] => {
+// includeGenericET: whether to include Electric Twin generic audiences (default: true)
+export const getAllAudiences = (account: Account, includeGenericET: boolean = true): Audience[] => {
+  let accountAudiences: Audience[] = [];
+
   if (account.type === 'brand') {
     // Support both patterns: direct audiences array or projects structure
     if (account.audiences) {
-      return account.audiences;
+      accountAudiences = account.audiences;
+    } else if (account.projects) {
+      accountAudiences = account.projects.flatMap(project => project.audiences);
     }
-    if (account.projects) {
-      return account.projects.flatMap(project => project.audiences);
-    }
+  } else if (account.type === 'agency' && account.projects) {
+    accountAudiences = account.projects.flatMap(project => project.audiences);
   }
-  if (account.type === 'agency' && account.projects) {
-    return account.projects.flatMap(project => project.audiences);
+
+  // Include Electric Twin generic audiences (available to all accounts)
+  if (includeGenericET) {
+    return [...accountAudiences, ...electricTwinGenericAudiences] as Audience[];
   }
-  return [];
+
+  return accountAudiences;
 };
 
 // Helper function to get audiences by project
@@ -592,8 +1106,6 @@ export const mockReport: Report = {
   audience: mockAudience,
   respondents: 512,
   abstract: "40% of Times readers say they'd tune into a podcast about how journalists got the scoop — four times more than any other format tested. Opinion and debate ranked last at 5.5%. The hook isn't the news — it's how the news gets made.",
-  keyInsight: "Readers want the story behind the story — 40% prefer hearing how journalists got the scoop vs. just 5.5% for opinion and debate.",
-  followUpSuggestion: "You might want to explore what specific types of 'behind the scenes' content resonate most — investigative stories vs. breaking news vs. features.",
   questions: [
     {
       id: 'q1',
@@ -771,14 +1283,11 @@ const createHistoryItem = (rep: Report, i: number): Conversation => ({
   status: 'complete'
 });
 
-export const mockHistory: Conversation[] = [
-  createHistoryItem(mockReport, 0),
-  createHistoryItem(report2, 1),
-  createHistoryItem(report3, 2)
-];
+// mockHistory will be populated with MUBI conversations below
+export let mockHistory: Conversation[] = [];
 
 // ============================================================================
-// MUBI Mock Conversations
+// MUBI Mock Conversations (Real Research Data)
 // ============================================================================
 
 // MUBI Audience references for conversations
@@ -808,8 +1317,8 @@ const mubiTierReport1: Report = {
   audience: mubiBasicGlobalAudience,
   respondents: 2847,
   abstract: '59.6% of subscribers would choose an Essential tier, with annual preferred over monthly. High-engagement users show strongest Premium interest at 38.4%, while 14.5% of low-engagement users would choose none of the options.',
-  keyInsight: "High-engagement users are 2x more likely to choose Premium tier (38.4%) compared to all subscribers (22.1%).",
-  followUpSuggestion: "Consider exploring what specific Premium features drive high-engagement users — cinema tickets vs. 4K streaming vs. early access.",
+  keyInsight: 'High-engagement users are 4x more likely to choose Premium than low-engagement users (38.4% vs 8.3%).',
+  followUpSuggestion: 'Want me to dig into what features are driving Premium interest?',
   questions: [
     {
       id: 'q1',
@@ -835,6 +1344,8 @@ const mubiFeatureReport: Report = {
   audience: mubiBasicGlobalAudience,
   respondents: 2847,
   abstract: '4K streaming (72%) and cinema tickets (68%) are the top value drivers for Premium. Magazine and store discounts show minimal appeal at under 25%.',
+  keyInsight: 'Cinema tickets and 4K streaming are the killer features — magazine discounts barely register.',
+  followUpSuggestion: 'Should we cross-tab this with cinema attendance to see who values the tickets most?',
   questions: [
     {
       id: 'q2',
@@ -861,6 +1372,8 @@ const mubiCinemaHeatmap: Report = {
   audience: mubiBasicGlobalAudience,
   respondents: 2847,
   abstract: 'Cinema attendance strongly predicts tier preference. Weekly cinema-goers show 36% Ultimate interest vs just 2% among non-attendees. Premium peaks at 38% for monthly attendees.',
+  keyInsight: 'Weekly cinema-goers are 18x more likely to want Ultimate than non-attendees.',
+  followUpSuggestion: 'The "None" respondents are interesting — want to run a focus group with them?',
   questions: [
     {
       id: 'q3-crosstab',
@@ -886,6 +1399,7 @@ const mubiWhyNoneReport: Report = {
   audience: mubiBasicGlobalAudience,
   respondents: 24,
   abstract: 'Price sensitivity is the primary barrier (14 mentions), followed by cinema ticket irrelevance for home-focused viewers (11 mentions). Quality upgrades like 4K hold minimal appeal for laptop viewers.',
+  keyInsight: 'It\'s not about the features — it\'s subscription fatigue. These users feel "maxed out" on streaming costs.',
   questions: [],
   themes: [
     {
@@ -961,7 +1475,7 @@ export const mubiConversation1: Conversation = {
       thinkingTime: 4.2,
       processSteps: [
         { id: '1', label: 'Designing survey questions', status: 'complete' },
-        { id: '2', label: 'Recruiting respondents', status: 'complete', totalResponses: 2847 },
+        { id: '2', label: 'Recruiting respondents', status: 'complete' },
         { id: '3', label: 'Running analysis', status: 'complete' }
       ],
       canvas: mubiTierReport1
@@ -1013,6 +1527,8 @@ const mubiUSTierReport: Report = {
   audience: mubiUSAudience,
   respondents: 3156,
   abstract: '74.2% of US subscribers would choose Essential tier, with strong annual preference (42.8%). Go subscribers show dramatically different behavior: 47.4% would choose Premium vs 17.3% of Basic subscribers.',
+  keyInsight: 'Go subscribers are 3x more likely to choose Premium — they already value cinema access.',
+  followUpSuggestion: 'The 10.5% "None" among Go users is concerning. Should we explore why?',
   questions: [
     {
       id: 'q1-us',
@@ -1148,7 +1664,7 @@ export const mubiConversation2: Conversation = {
     {
       id: 'msg-002-2',
       role: 'assistant',
-      content: 'To build the right synthetic audience, I need:\n\n1. Current Basic vs Go subscriber split?\n2. Engagement weighting (high/medium/low)?\n3. Any specific regions within the US?',
+      content: 'I need audience composition details to weight the synthetic panel correctly.\n\n1. Current Basic vs Go subscriber split?\n2. Engagement weighting (high/medium/low)?\n3. Any specific regions within the US?',
       clarification: {
         type: 'clarification',
         missing_info: 'I need audience composition details to weight the synthetic panel correctly.',
@@ -1215,6 +1731,8 @@ const mubiABTestReport: Report = {
   audience: mubiPotentialUpgradersAudience,
   respondents: 2500,
   abstract: 'Cinema-led messaging (Message A) outperforms quality-led (Message B) with 56% positive intent vs 47%. "Very likely" responses are 30% higher for the cinema-first approach.',
+  keyInsight: 'Lead with the cinema ticket — it lifts "Very likely" by 30% over quality-first messaging.',
+  followUpSuggestion: 'Should we break this down by cinema attendance to see who responds best?',
   questions: [
     {
       id: 'q1-variant-a',
@@ -1427,3 +1945,6 @@ export const mubiRecentQuestions = [
   { id: 'rq-mubi-2', text: 'Which tier would US subscribers choose with the new structure?', timestamp: '2026-01-12' },
   { id: 'rq-mubi-3', text: 'Which messaging resonates better for Premium tier positioning?', timestamp: '2026-01-12' }
 ];
+
+// Populate mockHistory with MUBI conversations for demo
+mockHistory = [...mubiConversations];
