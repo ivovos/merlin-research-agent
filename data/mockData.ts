@@ -265,6 +265,57 @@ export const canvaAccount: Account = {
 };
 
 // Mock data for an agency account (Wonderhood Studios)
+// Mock data for MUBI (streaming service brand)
+export const mubiAccount: Account = {
+  id: 'mubi',
+  name: 'MUBI',
+  type: 'brand',
+  icon: 'MU',
+  audiences: [
+    {
+      id: 'mubi-basic-global',
+      name: 'Basic Subscribers (Global)',
+      icon: 'BS',
+      agents: 2847,
+      segments: [
+        { id: 'seg-high', name: 'High Engagement', count: 569, percentage: 20 },
+        { id: 'seg-med', name: 'Medium Engagement', count: 1424, percentage: 50 },
+        { id: 'seg-low', name: 'Low Engagement', count: 854, percentage: 30 },
+      ],
+      updatedAt: '2026-01-10',
+      source: 'CRM, Streaming Analytics',
+      description: 'Current MUBI Basic subscribers worldwide, segmented by platform engagement',
+    },
+    {
+      id: 'mubi-us-market',
+      name: 'US Subscribers',
+      icon: 'US',
+      agents: 3156,
+      segments: [
+        { id: 'seg-basic', name: 'Basic Subscribers', count: 3061, percentage: 97 },
+        { id: 'seg-go', name: 'Go Subscribers', count: 95, percentage: 3 },
+      ],
+      updatedAt: '2026-01-08',
+      source: 'CRM, Payment Data',
+      description: 'US market subscribers across Basic and Go tiers',
+    },
+    {
+      id: 'mubi-potential-upgraders',
+      name: 'Potential Upgraders',
+      icon: 'PU',
+      agents: 2500,
+      segments: [
+        { id: 'seg-cinema', name: 'Cinema-goers', count: 875, percentage: 35 },
+        { id: 'seg-quality', name: 'Quality-focused', count: 750, percentage: 30 },
+        { id: 'seg-casual', name: 'Casual Viewers', count: 875, percentage: 35 },
+      ],
+      updatedAt: '2026-01-09',
+      source: 'Survey, Behavioral Analytics',
+      description: 'Subscribers likely to upgrade based on engagement and feature interest signals',
+    },
+  ],
+};
+
 export const wonderhoodAccount: Account = {
   id: 'wonderhood',
   name: 'Wonderhood Studios',
@@ -379,7 +430,7 @@ export const wonderhoodAccount: Account = {
   ],
 };
 
-export const mockAccounts: Account[] = [canvaAccount, wonderhoodAccount];
+export const mockAccounts: Account[] = [canvaAccount, mubiAccount, wonderhoodAccount];
 
 // Helper function to get all audiences from an account
 export const getAllAudiences = (account: Account): Audience[] => {
@@ -640,4 +691,653 @@ export const mockHistory: Conversation[] = [
   createHistoryItem(mockReport, 0),
   createHistoryItem(report2, 1),
   createHistoryItem(report3, 2)
+];
+
+// ============================================================================
+// MUBI Mock Conversations
+// ============================================================================
+
+// MUBI Audience references for conversations
+const mubiBasicGlobalAudience: ConversationAudience = {
+  id: 'mubi-basic-global',
+  name: 'Basic Subscribers (Global)',
+  icon: 'BS'
+};
+
+const mubiUSAudience: ConversationAudience = {
+  id: 'mubi-us-market',
+  name: 'US Subscribers',
+  icon: 'US'
+};
+
+const mubiPotentialUpgradersAudience: ConversationAudience = {
+  id: 'mubi-potential-upgraders',
+  name: 'Potential Upgraders',
+  icon: 'PU'
+};
+
+// Conversation 1: Subscription Tier Optimization (Basic Subscribers Global)
+const mubiTierReport1: Report = {
+  id: 'canvas-mubi-001',
+  title: 'Purchase Intent by Tier',
+  type: 'quantitative',
+  audience: mubiBasicGlobalAudience,
+  respondents: 2847,
+  abstract: '59.6% of subscribers would choose an Essential tier, with annual preferred over monthly. High-engagement users show strongest Premium interest at 38.4%, while 14.5% of low-engagement users would choose none of the options.',
+  questions: [
+    {
+      id: 'q1',
+      question: 'Which tier would you choose?',
+      respondents: 2847,
+      segments: ['All Subs', 'High Eng.', 'Med Eng.', 'Low Eng.'],
+      options: [
+        { label: 'Essential Monthly ($14.99)', percentage: 28.4, 'All Subs': 28.4, 'High Eng.': 18.2, 'Med Eng.': 32.1, 'Low Eng.': 38.7 },
+        { label: 'Essential Annual ($119.99)', percentage: 31.2, 'All Subs': 31.2, 'High Eng.': 24.6, 'Med Eng.': 33.8, 'Low Eng.': 36.4 },
+        { label: 'Premium ($199.99/yr)', percentage: 22.1, 'All Subs': 22.1, 'High Eng.': 38.4, 'Med Eng.': 21.2, 'Low Eng.': 8.3 },
+        { label: 'Ultimate ($299.99/yr)', percentage: 8.5, 'All Subs': 8.5, 'High Eng.': 14.2, 'Med Eng.': 6.8, 'Low Eng.': 2.1 },
+        { label: 'None of these', percentage: 9.8, 'All Subs': 9.8, 'High Eng.': 4.6, 'Med Eng.': 6.1, 'Low Eng.': 14.5 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T10:15:00Z')
+};
+
+const mubiFeatureReport: Report = {
+  id: 'canvas-mubi-002',
+  title: 'Feature Value Ranking',
+  type: 'quantitative',
+  audience: mubiBasicGlobalAudience,
+  respondents: 2847,
+  abstract: '4K streaming (72%) and cinema tickets (68%) are the top value drivers for Premium. Magazine and store discounts show minimal appeal at under 25%.',
+  questions: [
+    {
+      id: 'q2',
+      question: 'Which Premium features would be most valuable to you? (Select up to 3)',
+      respondents: 2847,
+      options: [
+        { label: '4K + Dolby Atmos streaming', percentage: 72 },
+        { label: '1 cinema ticket per week', percentage: 68 },
+        { label: 'Offline viewing', percentage: 61 },
+        { label: '48hr early access to releases', percentage: 54 },
+        { label: '4 devices simultaneously', percentage: 48 },
+        { label: '25% Notebook Magazine discount', percentage: 23 },
+        { label: '10% MUBI Store discount', percentage: 19 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T10:16:00Z')
+};
+
+const mubiCinemaHeatmap: Report = {
+  id: 'canvas-mubi-003',
+  title: 'Tier Preference × Cinema Attendance',
+  type: 'quantitative',
+  audience: mubiBasicGlobalAudience,
+  respondents: 2847,
+  abstract: 'Cinema attendance strongly predicts tier preference. Weekly cinema-goers show 36% Ultimate interest vs just 2% among non-attendees. Premium peaks at 38% for monthly attendees.',
+  questions: [
+    {
+      id: 'q3-crosstab',
+      question: 'Which tier would you choose? (by cinema attendance)',
+      respondents: 2847,
+      segments: ['Never', '1-2x/year', 'Monthly', 'Weekly+'],
+      options: [
+        { label: 'Essential Monthly', percentage: 25, 'Never': 42, '1-2x/year': 31, 'Monthly': 18, 'Weekly+': 8 },
+        { label: 'Essential Annual', percentage: 27, 'Never': 38, '1-2x/year': 35, 'Monthly': 24, 'Weekly+': 12 },
+        { label: 'Premium', percentage: 27, 'Never': 12, '1-2x/year': 22, 'Monthly': 34, 'Weekly+': 38 },
+        { label: 'Ultimate', percentage: 15, 'Never': 2, '1-2x/year': 5, 'Monthly': 18, 'Weekly+': 36 },
+        { label: 'None', percentage: 6, 'Never': 6, '1-2x/year': 7, 'Monthly': 6, 'Weekly+': 6 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T10:20:00Z')
+};
+
+const mubiWhyNoneReport: Report = {
+  id: 'canvas-mubi-004',
+  title: 'Why "None of These"?',
+  type: 'qualitative',
+  audience: mubiBasicGlobalAudience,
+  respondents: 24,
+  abstract: 'Price sensitivity is the primary barrier (14 mentions), followed by cinema ticket irrelevance for home-focused viewers (11 mentions). Quality upgrades like 4K hold minimal appeal for laptop viewers.',
+  questions: [],
+  themes: [
+    {
+      id: 'theme-price',
+      topic: 'Price Sensitivity',
+      sentiment: 'negative',
+      summary: 'Participants feel overwhelmed by streaming subscription costs and see $200/year as excessive for their viewing habits.',
+      quotes: [
+        { text: 'I already feel like I\'m paying enough for streaming services.', attribution: 'Participant 3, 34' },
+        { text: '$200 a year is too much when I barely watch 2 films a month.', attribution: 'Participant 8, 28' },
+        { text: 'I\'m already juggling Netflix, Spotify, and my gym. Something has to give.', attribution: 'Participant 15, 31' }
+      ]
+    },
+    {
+      id: 'theme-cinema',
+      topic: 'Cinema Ticket Irrelevance',
+      sentiment: 'negative',
+      summary: 'For many subscribers, the cinema benefit holds no value due to location or preference for home viewing.',
+      quotes: [
+        { text: 'I don\'t live near any partner cinemas.', attribution: 'Participant 5, 42' },
+        { text: 'I watch MUBI at home specifically because I don\'t want to go out.', attribution: 'Participant 11, 26' },
+        { text: 'The nearest arthouse cinema is 45 minutes away. Not worth it.', attribution: 'Participant 19, 38' }
+      ]
+    },
+    {
+      id: 'theme-4k',
+      topic: '4K Not a Priority',
+      sentiment: 'neutral',
+      summary: 'Quality upgrades don\'t resonate with viewers who primarily watch on laptops or smaller screens.',
+      quotes: [
+        { text: 'I watch on my laptop, 4K makes no difference.', attribution: 'Participant 2, 29' },
+        { text: 'The content matters more than the resolution.', attribution: 'Participant 14, 33' }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T10:30:00Z')
+};
+
+export const mubiConversation1: Conversation = {
+  id: 'conv-mubi-001',
+  query: 'How would our existing basic subscribers react to new subscription tiers?',
+  title: 'Subscription Tier Optimization',
+  audience: mubiBasicGlobalAudience,
+  status: 'complete',
+  thinkingTime: 18.4,
+  explanation: 'Research explored subscriber reactions to proposed Essential/Premium/Ultimate tier structure, feature preferences, and barriers to upgrade.',
+  processSteps: [
+    { id: '1', label: 'Analyzing tier structure', status: 'complete' },
+    { id: '2', label: 'Designing survey questions', status: 'complete' },
+    { id: '3', label: 'Recruiting 2,847 respondents', status: 'complete' },
+    { id: '4', label: 'Running statistical analysis', status: 'complete' }
+  ],
+  messages: [
+    {
+      id: 'msg-001-1',
+      role: 'user',
+      content: 'Hi! We\'re exploring expanding our subscription tiering into three tiers. The pricing shared is in USD. I would like to understand how our existing basic subscribers in the world would react to this tiering?\n\n**MUBI ESSENTIAL** — Monthly ($14.99) or Annual ($119.99). Full HD (1080p) on 2 devices.\n\n**MUBI PREMIUM** — $199.99/year. 4K + Dolby Atmos, 4 devices, offline viewing. 1 cinema ticket per week, early access.\n\n**MUBI ULTIMATE** — $299.99/year. Unlimited cinema tickets, full Notebook subscription, VIP perks.'
+    },
+    {
+      id: 'msg-001-2',
+      role: 'assistant',
+      content: 'Great research brief! I\'d recommend we ask:\n\n1. **Tier Selection** — Which tier would you choose?\n2. **Feature Value** — Which features are most valuable to you?\n3. **Price Sensitivity** — How do you feel about the pricing?\n\nWould you like me to run these questions with your synthetic audience?'
+    },
+    {
+      id: 'msg-001-3',
+      role: 'user',
+      content: 'Yes please. Also interested in what features are driving uptake for Premium vs current?'
+    },
+    {
+      id: 'msg-001-4',
+      role: 'assistant',
+      content: 'I\'ve run the purchase intent survey across 2,400 synthetic respondents:',
+      thinkingTime: 4.2,
+      processSteps: [
+        { id: '1', label: 'Designing survey questions', status: 'complete' },
+        { id: '2', label: 'Recruiting respondents', status: 'complete', totalResponses: 2847 },
+        { id: '3', label: 'Running analysis', status: 'complete' }
+      ],
+      canvas: mubiTierReport1
+    },
+    {
+      id: 'msg-001-5',
+      role: 'assistant',
+      content: 'And the feature value responses:',
+      canvas: mubiFeatureReport
+    },
+    {
+      id: 'msg-001-6',
+      role: 'user',
+      content: 'I\'d like to understand the relationship between cinema attendance and tier preference. Can you show me a cross-tab?'
+    },
+    {
+      id: 'msg-001-7',
+      role: 'assistant',
+      content: 'Here\'s the heatmap showing tier preference by cinema attendance frequency:',
+      thinkingTime: 2.8,
+      canvas: mubiCinemaHeatmap
+    },
+    {
+      id: 'msg-001-8',
+      role: 'user',
+      content: 'Can we run a focus group to understand why people are choosing "None"?'
+    },
+    {
+      id: 'msg-001-9',
+      role: 'assistant',
+      content: 'Here are the focus group findings from those who selected "None":',
+      thinkingTime: 6.2,
+      processSteps: [
+        { id: '1', label: 'Recruiting "None" respondents', status: 'complete' },
+        { id: '2', label: 'Running focus group sessions', status: 'complete' },
+        { id: '3', label: 'Analyzing themes', status: 'complete' }
+      ],
+      canvas: mubiWhyNoneReport
+    }
+  ],
+  canvas: mubiWhyNoneReport
+};
+
+// Conversation 2: US Market Tier Migration
+const mubiUSTierReport: Report = {
+  id: 'canvas-mubi-n01',
+  title: 'Tier Selection (US Market)',
+  type: 'quantitative',
+  audience: mubiUSAudience,
+  respondents: 3156,
+  abstract: '74.2% of US subscribers would choose Essential tier, with strong annual preference (42.8%). Go subscribers show dramatically different behavior: 47.4% would choose Premium vs 17.3% of Basic subscribers.',
+  questions: [
+    {
+      id: 'q1-us',
+      question: 'Which subscription tier would you choose?',
+      respondents: 3156,
+      segments: ['All US', 'Basic', 'Go'],
+      options: [
+        { label: 'Essential Monthly ($14.99/mo)', percentage: 31.4, 'All US': 31.4, 'Basic': 32.1, 'Go': 8.4 },
+        { label: 'Essential Annual ($119.99/yr)', percentage: 42.8, 'All US': 42.8, 'Basic': 43.9, 'Go': 7.4 },
+        { label: 'Premium ($199.99/yr)', percentage: 18.2, 'All US': 18.2, 'Basic': 17.3, 'Go': 47.4 },
+        { label: 'Ultimate ($299.99/yr)', percentage: 4.1, 'All US': 4.1, 'Basic': 3.4, 'Go': 26.3 },
+        { label: 'None of these', percentage: 3.5, 'All US': 3.5, 'Basic': 3.3, 'Go': 10.5 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T11:00:00Z')
+};
+
+const mubiUSWhyNoneReport: Report = {
+  id: 'canvas-mubi-n02',
+  title: 'Why "None of These"?',
+  type: 'qualitative',
+  audience: mubiUSAudience,
+  respondents: 18,
+  abstract: 'The 4K downgrade is the primary churn driver (12 mentions). Current subscribers feel they\'re losing value without compensation, triggering cancellation consideration.',
+  questions: [],
+  themes: [
+    {
+      id: 'theme-4k-loss',
+      topic: '4K Downgrade Concerns',
+      sentiment: 'negative',
+      summary: 'Subscribers currently receiving 4K feel betrayed by the downgrade to 1080p in the Essential tier, viewing it as a value reduction.',
+      quotes: [
+        { text: 'I\'m currently getting 4K and now you\'re taking it away unless I pay more.', attribution: 'Participant 2, 31' },
+        { text: 'This feels like a sneaky price increase disguised as new tiers.', attribution: 'Participant 7, 28' },
+        { text: 'I signed up for 4K streaming. Changing the deal now is shady.', attribution: 'Participant 12, 35' }
+      ]
+    },
+    {
+      id: 'theme-cancel',
+      topic: 'Already Planning to Cancel',
+      sentiment: 'negative',
+      summary: 'A segment of respondents were already considering cancellation, and the tier change accelerates that decision.',
+      quotes: [
+        { text: 'I was going to cancel anyway, this just confirms it.', attribution: 'Participant 4, 26' },
+        { text: 'I barely use it enough to justify any price.', attribution: 'Participant 9, 33' }
+      ]
+    },
+    {
+      id: 'theme-confusion',
+      topic: 'Confusion About Changes',
+      sentiment: 'neutral',
+      summary: 'Some subscribers don\'t clearly understand what they\'re gaining or losing with the new structure.',
+      quotes: [
+        { text: 'I don\'t really understand what I\'m losing vs gaining.', attribution: 'Participant 14, 29' },
+        { text: 'Why can\'t you just keep things simple?', attribution: 'Participant 16, 41' }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T11:10:00Z')
+};
+
+const mubiUSCinemaHeatmap: Report = {
+  id: 'canvas-mubi-n03',
+  title: 'Tier Preference × Expected Cinema Usage',
+  type: 'quantitative',
+  audience: mubiUSAudience,
+  respondents: 3156,
+  abstract: 'Cinema usage is the strongest predictor of Premium/Ultimate adoption. 72% of those expecting 25+ tickets/year would choose Ultimate, while 48% of non-cinema-goers prefer Essential Monthly.',
+  questions: [
+    {
+      id: 'q2-cinema-crosstab',
+      question: 'Which tier would you choose? (by expected cinema usage)',
+      respondents: 3156,
+      segments: ['0 tickets', '1-4 tickets', '5-12 tickets', '13-24 tickets', '25+ tickets'],
+      options: [
+        { label: 'Essential Monthly', percentage: 20, '0 tickets': 48, '1-4 tickets': 35, '5-12 tickets': 12, '13-24 tickets': 4, '25+ tickets': 1 },
+        { label: 'Essential Annual', percentage: 26, '0 tickets': 42, '1-4 tickets': 48, '5-12 tickets': 28, '13-24 tickets': 8, '25+ tickets': 2 },
+        { label: 'Premium', percentage: 26, '0 tickets': 8, '1-4 tickets': 14, '5-12 tickets': 42, '13-24 tickets': 28, '25+ tickets': 18 },
+        { label: 'Ultimate', percentage: 24, '0 tickets': 1, '1-4 tickets': 2, '5-12 tickets': 12, '13-24 tickets': 52, '25+ tickets': 72 },
+        { label: 'None', percentage: 4, '0 tickets': 1, '1-4 tickets': 1, '5-12 tickets': 6, '13-24 tickets': 8, '25+ tickets': 7 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T11:15:00Z')
+};
+
+const mubiUSEngagementReport: Report = {
+  id: 'canvas-mubi-n04',
+  title: 'Tier Selection by Engagement',
+  type: 'quantitative',
+  audience: mubiUSAudience,
+  respondents: 3156,
+  abstract: 'High-engagement users drive Premium adoption at 38.4%, representing the core upsell opportunity. Low-engagement users overwhelmingly prefer Essential Annual (52.4%) with minimal Premium interest (6.3%).',
+  questions: [
+    {
+      id: 'q3-engagement',
+      question: 'Which subscription tier would you choose?',
+      respondents: 3156,
+      segments: ['High Eng.', 'Med Eng.', 'Low Eng.'],
+      options: [
+        { label: 'Essential Monthly ($14.99/mo)', percentage: 30, 'High Eng.': 18.2, 'Med Eng.': 32.1, 'Low Eng.': 38.7 },
+        { label: 'Essential Annual ($119.99/yr)', percentage: 40, 'High Eng.': 24.6, 'Med Eng.': 43.8, 'Low Eng.': 52.4 },
+        { label: 'Premium ($199.99/yr)', percentage: 21, 'High Eng.': 38.4, 'Med Eng.': 18.2, 'Low Eng.': 6.3 },
+        { label: 'Ultimate ($299.99/yr)', percentage: 6, 'High Eng.': 14.2, 'Med Eng.': 3.8, 'Low Eng.': 0.5 },
+        { label: 'None of these', percentage: 3, 'High Eng.': 4.6, 'Med Eng.': 2.1, 'Low Eng.': 2.1 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T11:20:00Z')
+};
+
+export const mubiConversation2: Conversation = {
+  id: 'conv-mubi-002',
+  query: 'Which tier would US subscribers choose with the new structure?',
+  title: 'US Market Tier Migration',
+  audience: mubiUSAudience,
+  status: 'complete',
+  thinkingTime: 22.1,
+  explanation: 'Research analyzed US subscriber tier preferences across Basic/Go segments and engagement levels, with deep-dive on churn risk factors.',
+  processSteps: [
+    { id: '1', label: 'Building US audience model', status: 'complete' },
+    { id: '2', label: 'Weighting by engagement', status: 'complete' },
+    { id: '3', label: 'Recruiting 3,156 respondents', status: 'complete' },
+    { id: '4', label: 'Running migration analysis', status: 'complete' }
+  ],
+  messages: [
+    {
+      id: 'msg-002-1',
+      role: 'user',
+      content: 'Current tiers: **MUBI Basic** ($14.99/mo) and **MUBI Go** ($19.99/mo + cinema tickets).\n\nNew tiers we\'re testing:\n- **Essential** — $14.99/mo, 1080p (downgrade from current 4K)\n- **Premium** — $199.99/yr, 4K + 12 cinema credits/year\n- **Ultimate** — $299.99/yr, unlimited cinema\n\n**I want to understand which tier US subscribers would choose.**'
+    },
+    {
+      id: 'msg-002-2',
+      role: 'assistant',
+      content: 'To build the right synthetic audience, I need:\n\n1. Current Basic vs Go subscriber split?\n2. Engagement weighting (high/medium/low)?\n3. Any specific regions within the US?',
+      clarification: {
+        type: 'clarification',
+        missing_info: 'I need audience composition details to weight the synthetic panel correctly.',
+        suggestions: ['97% Basic, 3% Go', 'Even split Basic/Go', 'Use global averages']
+      }
+    },
+    {
+      id: 'msg-002-3',
+      role: 'user',
+      content: '97% Basic, 3% Go. Weight by engagement: 20% high, 50% medium, 30% low.'
+    },
+    {
+      id: 'msg-002-4',
+      role: 'assistant',
+      content: 'Here are the tier selection responses from 3,156 US subscribers:',
+      thinkingTime: 5.1,
+      canvas: mubiUSTierReport
+    },
+    {
+      id: 'msg-002-5',
+      role: 'user',
+      content: 'Why did some say "none" if Essential is basically the same as their current plan?'
+    },
+    {
+      id: 'msg-002-6',
+      role: 'assistant',
+      content: 'Here\'s a focus group with the "None" respondents:',
+      thinkingTime: 5.8,
+      canvas: mubiUSWhyNoneReport
+    },
+    {
+      id: 'msg-002-7',
+      role: 'user',
+      content: 'Can you show me how cinema attendance correlates with tier preference?'
+    },
+    {
+      id: 'msg-002-8',
+      role: 'assistant',
+      content: 'Here\'s the heatmap of tier preference by expected cinema ticket usage:',
+      thinkingTime: 2.4,
+      canvas: mubiUSCinemaHeatmap
+    },
+    {
+      id: 'msg-002-9',
+      role: 'user',
+      content: 'Break down the tier selection by engagement level.'
+    },
+    {
+      id: 'msg-002-10',
+      role: 'assistant',
+      content: 'Here\'s the breakdown by engagement:',
+      thinkingTime: 1.9,
+      canvas: mubiUSEngagementReport
+    }
+  ],
+  canvas: mubiUSEngagementReport
+};
+
+// Conversation 3: Premium Messaging Test
+const mubiABTestReport: Report = {
+  id: 'canvas-mubi-c01',
+  title: 'Premium Messaging A/B Test',
+  type: 'quantitative',
+  audience: mubiPotentialUpgradersAudience,
+  respondents: 2500,
+  abstract: 'Cinema-led messaging (Message A) outperforms quality-led (Message B) with 56% positive intent vs 47%. "Very likely" responses are 30% higher for the cinema-first approach.',
+  questions: [
+    {
+      id: 'q1-variant-a',
+      question: 'How likely are you to subscribe to MUBI Premium? (Message A: Cinema-led)',
+      respondents: 1248,
+      options: [
+        { label: 'Very likely', percentage: 24.2 },
+        { label: 'Somewhat likely', percentage: 31.8 },
+        { label: 'Neutral', percentage: 22.4 },
+        { label: 'Somewhat unlikely', percentage: 14.2 },
+        { label: 'Very unlikely', percentage: 7.4 }
+      ]
+    },
+    {
+      id: 'q1-variant-b',
+      question: 'How likely are you to subscribe to MUBI Premium? (Message B: Quality-led)',
+      respondents: 1252,
+      options: [
+        { label: 'Very likely', percentage: 18.6 },
+        { label: 'Somewhat likely', percentage: 28.4 },
+        { label: 'Neutral', percentage: 26.8 },
+        { label: 'Somewhat unlikely', percentage: 16.2 },
+        { label: 'Very unlikely', percentage: 10.0 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T14:00:00Z')
+};
+
+const mubiCinemaAppealReport: Report = {
+  id: 'canvas-mubi-c02',
+  title: 'Message Appeal × Cinema Attendance',
+  type: 'quantitative',
+  audience: mubiPotentialUpgradersAudience,
+  respondents: 2500,
+  abstract: 'Cinema-led messaging (A) dramatically outperforms with regular cinema-goers: 42% "very appealing" vs 24% for quality-led. Non-cinema-goers show preference for quality messaging (18% vs 12%).',
+  questions: [
+    {
+      id: 'q2-appeal-crosstab',
+      question: 'How appealing is this offer? (by cinema attendance)',
+      respondents: 2500,
+      segments: ['Non-cinema-goers', 'Occasional (1-4x/yr)', 'Regular (monthly+)'],
+      options: [
+        { label: 'Msg A: Very appealing', percentage: 27, 'Non-cinema-goers': 12, 'Occasional (1-4x/yr)': 28, 'Regular (monthly+)': 42 },
+        { label: 'Msg A: Somewhat appealing', percentage: 30, 'Non-cinema-goers': 24, 'Occasional (1-4x/yr)': 34, 'Regular (monthly+)': 31 },
+        { label: 'Msg B: Very appealing', percentage: 21, 'Non-cinema-goers': 18, 'Occasional (1-4x/yr)': 22, 'Regular (monthly+)': 24 },
+        { label: 'Msg B: Somewhat appealing', percentage: 29, 'Non-cinema-goers': 28, 'Occasional (1-4x/yr)': 30, 'Regular (monthly+)': 28 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T14:10:00Z')
+};
+
+const mubiWhyMessageAReport: Report = {
+  id: 'canvas-mubi-c03',
+  title: 'Why Message A Resonates',
+  type: 'qualitative',
+  audience: mubiPotentialUpgradersAudience,
+  respondents: 18,
+  abstract: 'Concrete value proposition drives preference (12 mentions). The cinema ticket is tangible and immediately understood, while 4K/Dolby Atmos feels like generic streaming marketing.',
+  questions: [],
+  themes: [
+    {
+      id: 'theme-concrete',
+      topic: 'Concrete Value',
+      sentiment: 'positive',
+      summary: 'Participants gravitate toward the cinema ticket because it represents a clear, quantifiable benefit they can immediately understand.',
+      quotes: [
+        { text: 'Free cinema ticket is something I can immediately understand the value of.', attribution: 'Participant 3, 29' },
+        { text: 'I know exactly what I\'m getting — a ticket every week.', attribution: 'Participant 8, 34' },
+        { text: 'I can do the math: 4 tickets a month is like $60 value. That makes sense.', attribution: 'Participant 14, 31' }
+      ]
+    },
+    {
+      id: 'theme-unique',
+      topic: 'Lead with the Unique Benefit',
+      sentiment: 'positive',
+      summary: 'The cinema ticket differentiates MUBI from other streaming services, while 4K feels like table stakes.',
+      quotes: [
+        { text: 'Every streaming service has 4K now, the cinema tickets are what makes this different.', attribution: 'Participant 5, 27' },
+        { text: 'The ticket thing is what caught my attention first.', attribution: 'Participant 11, 32' }
+      ]
+    },
+    {
+      id: 'theme-language',
+      topic: 'Simpler Language',
+      sentiment: 'positive',
+      summary: 'Message A uses straightforward language while Message B sounds like generic marketing copy.',
+      quotes: [
+        { text: 'The other one sounds like marketing speak.', attribution: 'Participant 2, 28' },
+        { text: 'Message A just tells me what I get without the fluff.', attribution: 'Participant 16, 36' }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T14:20:00Z')
+};
+
+const mubiThreeWayReport: Report = {
+  id: 'canvas-mubi-c04',
+  title: 'Three-Way Message Comparison',
+  type: 'quantitative',
+  audience: mubiPotentialUpgradersAudience,
+  respondents: 2500,
+  abstract: 'Combined message (C) outperforms both originals with 61.6% positive intent. Leading with cinema then adding quality credentials yields the highest "very likely" response at 28.4%.',
+  questions: [
+    {
+      id: 'q3-three-way',
+      question: 'How likely are you to subscribe based on this message?',
+      respondents: 2500,
+      segments: ['Msg A (Cinema)', 'Msg B (Quality)', 'Msg C (Combined)'],
+      options: [
+        { label: 'Very likely', percentage: 24, 'Msg A (Cinema)': 24.2, 'Msg B (Quality)': 18.6, 'Msg C (Combined)': 28.4 },
+        { label: 'Somewhat likely', percentage: 31, 'Msg A (Cinema)': 31.8, 'Msg B (Quality)': 28.4, 'Msg C (Combined)': 33.2 },
+        { label: 'Neutral', percentage: 23, 'Msg A (Cinema)': 22.4, 'Msg B (Quality)': 26.8, 'Msg C (Combined)': 20.1 },
+        { label: 'Somewhat unlikely', percentage: 14, 'Msg A (Cinema)': 14.2, 'Msg B (Quality)': 16.2, 'Msg C (Combined)': 12.4 },
+        { label: 'Very unlikely', percentage: 8, 'Msg A (Cinema)': 7.4, 'Msg B (Quality)': 10.0, 'Msg C (Combined)': 5.9 }
+      ]
+    }
+  ],
+  createdAt: new Date('2026-01-12T14:30:00Z')
+};
+
+export const mubiConversation3: Conversation = {
+  id: 'conv-mubi-003',
+  query: 'Which messaging resonates better for Premium tier positioning?',
+  title: 'Premium Messaging Test',
+  audience: mubiPotentialUpgradersAudience,
+  status: 'complete',
+  thinkingTime: 24.6,
+  explanation: 'A/B tested cinema-led vs quality-led messaging for Premium tier, with focus group deep-dive on preference drivers.',
+  processSteps: [
+    { id: '1', label: 'Designing A/B test', status: 'complete' },
+    { id: '2', label: 'Randomizing 2,500 respondents', status: 'complete' },
+    { id: '3', label: 'Running message exposure', status: 'complete' },
+    { id: '4', label: 'Analyzing preference patterns', status: 'complete' }
+  ],
+  messages: [
+    {
+      id: 'msg-003-1',
+      role: 'user',
+      content: 'We\'re testing two different ways to position MUBI Premium. Want to understand which messaging resonates better.\n\n**Message A (Cinema-led):** "Get a free cinema ticket every week. Plus 4K streaming, offline downloads, and early access to MUBI releases."\n\n**Message B (Quality-led):** "Experience cinema the way directors intended. 4K with Dolby Atmos, plus weekly cinema tickets and exclusive early access."'
+    },
+    {
+      id: 'msg-003-2',
+      role: 'assistant',
+      content: 'I\'ll test both messages with your target audience. I\'ll measure:\n\n1. **Appeal** — How appealing is this offer?\n2. **Clarity** — How clear is the value proposition?\n3. **Purchase Intent** — How likely to subscribe?\n\nShall I run this as an A/B test?'
+    },
+    {
+      id: 'msg-003-3',
+      role: 'user',
+      content: 'Yes please. Split test them with potential upgraders.'
+    },
+    {
+      id: 'msg-003-4',
+      role: 'assistant',
+      content: 'Here are the A/B test results:',
+      thinkingTime: 6.4,
+      canvas: mubiABTestReport
+    },
+    {
+      id: 'msg-003-5',
+      role: 'user',
+      content: 'Interesting! Can you break down the results by whether they currently go to the cinema?'
+    },
+    {
+      id: 'msg-003-6',
+      role: 'assistant',
+      content: 'Here\'s how cinema-goers vs non-cinema-goers responded:',
+      thinkingTime: 2.1,
+      canvas: mubiCinemaAppealReport
+    },
+    {
+      id: 'msg-003-7',
+      role: 'user',
+      content: 'Can we run a focus group to understand what\'s driving the preference for Message A?'
+    },
+    {
+      id: 'msg-003-8',
+      role: 'assistant',
+      content: 'Here are the focus group insights from respondents who preferred Message A:',
+      thinkingTime: 5.6,
+      canvas: mubiWhyMessageAReport
+    },
+    {
+      id: 'msg-003-9',
+      role: 'user',
+      content: 'Let\'s test a third variant that combines both approaches: "Get a free cinema ticket every week — experience films the way directors intended, in 4K with Dolby Atmos."'
+    },
+    {
+      id: 'msg-003-10',
+      role: 'assistant',
+      content: 'Here\'s how the new variant performed against the original two:',
+      thinkingTime: 4.8,
+      canvas: mubiThreeWayReport
+    }
+  ],
+  canvas: mubiThreeWayReport
+};
+
+// All MUBI conversations grouped together
+export const mubiConversations: Conversation[] = [
+  mubiConversation1,
+  mubiConversation2,
+  mubiConversation3
+];
+
+// MUBI recent questions
+export const mubiRecentQuestions = [
+  { id: 'rq-mubi-1', text: 'How would our existing basic subscribers react to new subscription tiers?', timestamp: '2026-01-12' },
+  { id: 'rq-mubi-2', text: 'Which tier would US subscribers choose with the new structure?', timestamp: '2026-01-12' },
+  { id: 'rq-mubi-3', text: 'Which messaging resonates better for Premium tier positioning?', timestamp: '2026-01-12' }
 ];

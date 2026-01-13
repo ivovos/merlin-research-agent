@@ -2,17 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { mockAudiences } from '../data/mockData';
-import type { Audience } from '@/types';
+import type { Audience, SelectedSegments } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface QueryInputProps {
-  onSubmit: (query: string) => void;
+  onSubmit: (query: string, segments?: SelectedSegments) => void;
   isExpanded?: boolean;
   placeholder?: string;
   className?: string;
   compact?: boolean;
   availableAudiences?: Audience[];
   onCreateAudience?: (name: string) => Audience;
+  /** Selected segments to show in the input */
+  selectedSegments?: SelectedSegments;
+  /** Callback to clear segment selection */
+  onClearSegments?: () => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -38,8 +42,11 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   className = "",
   compact = false,
   availableAudiences = mockAudiences,
-  onCreateAudience
+  onCreateAudience,
+  selectedSegments,
+  onClearSegments,
 }) => {
+  const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
   const [showAudiencePicker, setShowAudiencePicker] = useState(false);
   const [showMethodPicker, setShowMethodPicker] = useState(false);
@@ -151,8 +158,12 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (query.trim()) {
-      onSubmit(query);
+      onSubmit(query, hasSegmentSelection ? selectedSegments : undefined);
       setQuery('');
+      // Clear segments after submitting
+      if (hasSegmentSelection && onClearSegments) {
+        onClearSegments();
+      }
     }
   };
 
@@ -395,17 +406,33 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
       {compact ? (
         // Compact Single-Height Layout
-        <div className="relative bg-background rounded-full border border-input shadow-none px-3 py-2 transition-all focus-within:border-primary flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
-            <Plus className="w-5 h-5" />
-          </Button>
+        <div className="relative bg-background rounded-full border border-input shadow-none px-3 py-2 transition-all focus-within:border-primary flex items-center gap-2">
+          {/* Segment pill - shows when segments are selected */}
+          {hasSegmentSelection ? (
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-full text-xs flex-shrink-0">
+              <Users className="w-3.5 h-3.5" />
+              <span className="font-semibold">{selectedSegments!.totalRespondents.toLocaleString()}</span>
+              <button
+                type="button"
+                onClick={onClearSegments}
+                className="hover:text-primary/70 transition-colors ml-0.5"
+                title="Remove segment from query"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
+              <Plus className="w-5 h-5" />
+            </Button>
+          )}
 
           <textarea
             ref={textareaRef}
             value={query}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            placeholder={placeholderText}
+            placeholder={hasSegmentSelection ? "Ask this segment a question..." : placeholderText}
             onFocus={() => setIsAnimating(false)}
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
