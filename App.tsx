@@ -10,7 +10,7 @@ import { generateResearchWithAgent, isQualitativeQuery, generateConversationTitl
 import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments } from '@/types'
 import {
   mockAccounts,
-  wonderhoodAccount,
+  mubiAccount,
   initialProcessSteps,
   initialQualitativeSteps,
 } from '@/data/mockData'
@@ -26,7 +26,7 @@ type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
 const App: React.FC = () => {
   // Account state
-  const [currentAccount, setCurrentAccount] = useState<Account>(wonderhoodAccount)
+  const [currentAccount, setCurrentAccount] = useState<Account>(mubiAccount)
 
   // Navigation state
   const [activeView, setActiveView] = useState<ActiveView>('conversation')
@@ -40,7 +40,7 @@ const App: React.FC = () => {
     startNewConversation,
   } = useConversation()
 
-  const { history, addToHistory } = useHistory()
+  const { history, addToHistory } = useHistory(currentAccount.id)
   const { audiences, createAudience } = useAudiences()
   const {
     selectedSegments,
@@ -182,10 +182,14 @@ const App: React.FC = () => {
   }, [conversation.canvas, setConversation, clearSegments])
 
   // Handle follow-up questions
-  const handleFollowUp = useCallback(async (query: string) => {
+  const handleFollowUp = useCallback(async (query: string, segments?: SelectedSegments) => {
     // Save current conversation to history
     if (conversation.query) {
       addToHistory(conversation)
+    }
+    // If segments are provided, include them in context (for future use)
+    if (segments && segments.segments.length > 0) {
+      console.log('Follow-up with segment selection:', segments)
     }
     await startSimulation(query)
   }, [conversation, addToHistory, startSimulation])

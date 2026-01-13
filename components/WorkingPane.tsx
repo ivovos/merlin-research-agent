@@ -9,7 +9,7 @@ interface WorkingPaneProps {
   conversation: Conversation;
   onSelectCanvas: (canvas?: Canvas) => void;
   onExpandCanvas?: (canvas: Canvas) => void;
-  onFollowUp: (query: string) => void;
+  onFollowUp: (query: string, segments?: SelectedSegments) => void;
   onClarificationClick?: (suggestion: string) => void;
   availableAudiences?: any[];
   onCreateAudience?: any;
@@ -19,7 +19,6 @@ interface WorkingPaneProps {
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
   onClearSegments?: () => void;
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
-  onAskSegment?: (query: string, segments: SelectedSegments) => void;
 }
 
 export const WorkingPane: React.FC<WorkingPaneProps> = ({
@@ -34,7 +33,6 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onBarSelect,
   onClearSegments,
   onRemoveSegment,
-  onAskSegment,
 }) => {
   // Auto-scroll logic
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -113,7 +111,6 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                               onBarSelect={onBarSelect}
                               onClearSegments={onClearSegments}
                               onRemoveSegment={onRemoveSegment}
-                              onAskSegment={onAskSegment}
                               className="w-full max-w-3xl"
                             />
                           </div>
@@ -151,6 +148,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
           compact={true}
           availableAudiences={availableAudiences}
           onCreateAudience={onCreateAudience}
+          selectedSegments={selectedSegments}
+          onClearSegments={onClearSegments}
         />
       </div>
     </div>
