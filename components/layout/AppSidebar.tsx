@@ -91,14 +91,17 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       {/* Header with Account Switcher */}
-      <SidebarHeader className="h-14 flex-row items-center justify-between border-b px-4">
+      <SidebarHeader className={cn(
+        "h-14 flex-row items-center border-b",
+        isCollapsed ? "justify-center px-2" : "justify-between px-4"
+      )}>
         {currentAccount && onAccountChange ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
                   "flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-sidebar-accent",
-                  isCollapsed && "justify-center"
+                  isCollapsed && "justify-center p-0"
                 )}
               >
                 <MonoIcon
