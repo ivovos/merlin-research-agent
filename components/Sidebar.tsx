@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { MonoIcon } from './MonoIcon';
-import type { Account } from '@/types';
+import type { Account, ResearchProject } from '@/types';
 import { mockAccounts } from '../data/mockData';
 
 interface SidebarProps {
@@ -23,7 +23,10 @@ interface SidebarProps {
   selectedProject?: string | null;
   onProjectSelect?: (projectId: string) => void;
   onAudiencesClick?: () => void;
-  activeView?: 'conversation' | 'audiences' | 'audienceDetail';
+  activeView?: 'conversation' | 'audiences' | 'audienceDetail' | 'project';
+  // Research project props
+  selectedResearchProject?: ResearchProject | null;
+  onResearchProjectSelect?: (project: ResearchProject) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -38,7 +41,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedProject,
   onProjectSelect: _onProjectSelect,
   onAudiencesClick,
-  activeView = 'conversation'
+  activeView = 'conversation',
+  selectedResearchProject,
+  onResearchProjectSelect
 }) => {
   const [accounts] = useState(mockAccounts);
   const [isProjectsOpen, setIsProjectsOpen] = useState(true);
@@ -118,8 +123,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Audiences</span>}
           </Button>
 
-          {/* Projects navigation (collapsible) */}
-          {!isCollapsed && currentAccount?.projects && currentAccount.projects.length > 0 && (
+          {/* Research Projects navigation (collapsible) */}
+          {!isCollapsed && currentAccount?.researchProjects && currentAccount.researchProjects.length > 0 && (
             <Collapsible
               open={isProjectsOpen}
               onOpenChange={setIsProjectsOpen}
@@ -141,18 +146,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-1 pl-2">
-                {currentAccount.projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-                  >
-                    {currentAccount.id !== 'canva' && (
-                      <MonoIcon text={project.icon} src={project.logo} size="sm" />
-                    )}
-                    <span>{project.name}</span>
+              <CollapsibleContent className="space-y-1">
+                {currentAccount.researchProjects
+                  .filter(p => p.status === 'active')
+                  .map((project) => {
+                    const isActive = selectedResearchProject?.id === project.id && activeView === 'project';
+                    return (
+                      <button
+                        key={project.id}
+                        onClick={() => onResearchProjectSelect?.(project)}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: project.color || '#888' }}
+                        />
+                        <span className="truncate">{project.name}</span>
+                      </button>
+                    );
+                  })}
+                {currentAccount.researchProjects.filter(p => p.status === 'completed').length > 0 && (
+                  <div className="px-3 py-1 text-xs text-muted-foreground/60 uppercase tracking-wide mt-2">
+                    Completed
                   </div>
-                ))}
+                )}
+                {currentAccount.researchProjects
+                  .filter(p => p.status === 'completed')
+                  .map((project) => {
+                    const isActive = selectedResearchProject?.id === project.id && activeView === 'project';
+                    return (
+                      <button
+                        key={project.id}
+                        onClick={() => onResearchProjectSelect?.(project)}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors text-left opacity-60",
+                          isActive
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: project.color || '#888' }}
+                        />
+                        <span className="truncate">{project.name}</span>
+                      </button>
+                    );
+                  })}
               </CollapsibleContent>
             </Collapsible>
           )}

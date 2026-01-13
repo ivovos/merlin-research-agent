@@ -32,6 +32,8 @@ export interface Canvas {
   audience: Audience;
   respondents: number;
   abstract: string;
+  keyInsight?: string; // Short highlight of the key finding
+  followUpSuggestion?: string; // Agent's suggestion for what to explore next
   questions: QuestionResult[];
   themes?: QualitativeTheme[];
   createdAt: Date;

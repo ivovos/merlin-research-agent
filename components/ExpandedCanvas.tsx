@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { Canvas, QualitativeTheme, SelectedSegment, SelectedSegments } from '@/types';
+import type { Canvas, QualitativeTheme, SelectedSegments } from '@/types';
 import { QuestionCard } from './QuestionCard';
 import {
   X,
-  Send,
   Copy,
   Download,
   Share2,
   RefreshCw,
   FileText,
-  Sparkles,
   Users,
   Plus,
   Minimize2,
@@ -17,11 +15,11 @@ import {
   MoreHorizontal,
   UserPlus,
   GitCompare,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
@@ -42,11 +40,9 @@ interface ExpandedCanvasProps {
   canvas: Canvas;
   onClose: () => void;
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
-  onCanvasPrompt?: (prompt: string, segments?: SelectedSegments) => void;
   selectedSegments: SelectedSegments;
   /** Check if selection belongs to this canvas */
   isSelectionForThisCanvas?: boolean;
-  onBarSelect: (segment: SelectedSegment, canvasId: string) => void;
   onClearSegments: () => void;
   onRemoveSegment: (questionId: string, answerLabel: string) => void;
 }
@@ -55,23 +51,13 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   canvas,
   onClose,
   onEditQuestion,
-  onCanvasPrompt,
   selectedSegments,
   isSelectionForThisCanvas = false,
-  onBarSelect,
   onClearSegments,
   onRemoveSegment,
 }) => {
-  const [inputValue, setInputValue] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [version, setVersion] = useState(canvas.version || 1);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [version] = useState(canvas.version || 1);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
 
   // Handle escape key
   useEffect(() => {
@@ -86,27 +72,6 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments.segments.length > 0;
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if ((!inputValue.trim() && !hasSelection) || isProcessing) return;
-
-    setIsProcessing(true);
-
-    if (onCanvasPrompt) {
-      await onCanvasPrompt(inputValue, hasSelection ? selectedSegments : undefined);
-    }
-
-    setInputValue('');
-    setIsProcessing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
 
   const handleCopy = () => {
     const text = `${canvas.title}\n\n${canvas.abstract}\n\n${
@@ -129,7 +94,7 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-foreground">{canvas.title}</h2>
+                <h2 className="text-base font-medium text-foreground">{canvas.title}</h2>
                 <Badge variant="secondary" className="text-xs font-medium">
                   v{version}
                 </Badge>
@@ -347,6 +312,14 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
       {/* Main Content Area */}
       <ScrollArea className="flex-1" ref={contentRef}>
         <div className="max-w-4xl mx-auto p-8 space-y-6">
+          {/* Key Insight */}
+          {canvas.keyInsight && (
+            <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
+            </div>
+          )}
+
           {/* Content: Questions or Themes */}
           {canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0 ? (
             <div className="space-y-6">
@@ -363,8 +336,6 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                   index={i}
                   canvasId={canvas.id}
                   onEditQuestion={onEditQuestion}
-                  onBarSelect={onBarSelect}
-                  selectedSegments={isSelectionForThisCanvas ? selectedSegments : undefined}
                 />
               ))}
             </div>
@@ -376,114 +347,6 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
         </div>
       </ScrollArea>
 
-      {/* Bottom Input Area */}
-      <div className="border-t border-border bg-background p-4">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-          <div className="flex items-end gap-3">
-            <div className="flex-1 relative">
-              {/* Selected segments pills - multi-select (only show if selection is for this canvas) */}
-              {hasSelection && (
-                <div className="absolute left-3 top-3 z-10 flex flex-wrap items-center gap-2 pr-14 max-w-[calc(100%-60px)]">
-                  {/* Summary pill with total */}
-                  <Badge className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-sm">
-                    <Users className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="font-medium">New segment</span>
-                    <span className="text-primary/70">•</span>
-                    <span>{selectedSegments.totalRespondents.toLocaleString()} respondents</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent hover:text-primary/70"
-                      onClick={onClearSegments}
-                      title="Clear all selections"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                  </Badge>
-                  {/* Individual segment pills */}
-                  {selectedSegments.segments.map((seg, idx) => {
-                    // Defensive check - ensure seg has expected properties
-                    if (!seg || typeof seg.answerLabel !== 'string') {
-                      console.warn('Invalid segment object in bottom input:', seg);
-                      return null;
-                    }
-                    return (
-                      <Badge
-                        key={`${seg.questionId}-${seg.answerLabel}-${idx}`}
-                        variant="secondary"
-                        className="gap-1.5 px-2 py-1 text-xs"
-                      >
-                        <span className="truncate max-w-[120px]">{seg.answerLabel}</span>
-                        <span className="text-muted-foreground">({(seg.respondents || 0).toLocaleString()})</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0 hover:bg-transparent"
-                          onClick={() => onRemoveSegment(seg.questionId, seg.answerLabel)}
-                          title="Remove this selection"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-              <Textarea
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={hasSelection
-                  ? `Create a segment from ${selectedSegments.segments.length} selected answer${selectedSegments.segments.length > 1 ? 's' : ''}...`
-                  : "Ask to modify this canvas... (e.g., 'Add a comparison with Gen Z', 'Summarize key findings')"
-                }
-                className={cn(
-                  'w-full resize-none rounded-xl border border-border bg-background px-4 pr-12',
-                  'text-sm text-foreground placeholder:text-muted-foreground',
-                  'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
-                  'max-h-[160px]',
-                  'transition-all duration-200',
-                  hasSelection
-                    ? selectedSegments.segments.length > 2
-                      ? 'pt-24 pb-3 min-h-[120px]'
-                      : 'pt-16 pb-3 min-h-[100px]'
-                    : 'py-3 min-h-[48px]'
-                )}
-                rows={1}
-              />
-              <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                <Button
-                  type="submit"
-                  size="icon"
-                  disabled={(!inputValue.trim() && !hasSelection) || isProcessing}
-                  className={cn(
-                    'h-8 w-8 rounded-lg transition-all duration-200',
-                    (inputValue.trim() || hasSelection)
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {isProcessing ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-            <Sparkles className="w-3 h-3" />
-            <span>
-              {hasSelection
-                ? `${selectedSegments.segments.length} answer${selectedSegments.segments.length > 1 ? 's' : ''} selected — click more to add, or click again to remove`
-                : 'Press Enter to send, Shift+Enter for new line, Esc to minimize'
-              }
-            </span>
-          </div>
-        </form>
-      </div>
     </div>
   );
 };

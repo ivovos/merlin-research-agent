@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 import { MonoIcon } from "@/components/MonoIcon"
-import type { Account, Conversation } from "@/types"
+import type { Account, Conversation, ResearchProject } from "@/types"
 
 interface AppSidebarProps {
   // Account
@@ -47,7 +47,7 @@ interface AppSidebarProps {
   accounts?: Account[]
   onAccountChange?: (account: Account) => void
   // Navigation
-  activeView?: "conversation" | "audiences" | "audienceDetail"
+  activeView?: "conversation" | "audiences" | "audienceDetail" | "project"
   selectedProject?: string | null
   onProjectSelect?: (projectId: string) => void
   onAudiencesClick?: () => void
@@ -56,6 +56,9 @@ interface AppSidebarProps {
   conversation?: Conversation
   history?: Conversation[]
   onSelectHistory?: (conv: Conversation) => void
+  // Research Projects
+  selectedResearchProject?: ResearchProject | null
+  onResearchProjectSelect?: (project: ResearchProject) => void
 }
 
 export function AppSidebar({
@@ -70,6 +73,8 @@ export function AppSidebar({
   conversation,
   history = [],
   onSelectHistory,
+  selectedResearchProject,
+  onResearchProjectSelect,
 }: AppSidebarProps) {
   const { state, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
@@ -186,8 +191,8 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Projects (collapsible) */}
-              {currentAccount?.projects && currentAccount.projects.length > 0 && (
+              {/* Research Projects (collapsible) */}
+              {currentAccount?.researchProjects && currentAccount.researchProjects.length > 0 && (
                 <Collapsible
                   open={isProjectsOpen}
                   onOpenChange={setIsProjectsOpen}
@@ -207,13 +212,13 @@ export function AppSidebar({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {currentAccount.projects.map((project) => (
+                        {currentAccount.researchProjects.map((project) => (
                           <SidebarMenuSubItem key={project.id}>
                             <SidebarMenuSubButton
-                              onClick={() => onProjectSelect?.(project.id)}
-                              isActive={selectedProject === project.id}
+                              onClick={() => onResearchProjectSelect?.(project)}
+                              isActive={selectedResearchProject?.id === project.id}
                             >
-                              <span>{project.name}</span>
+                              <span className="truncate">{project.name}</span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}

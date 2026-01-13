@@ -5,6 +5,38 @@ import { QueryInput } from './QueryInput';
 import { InlineCanvas } from './InlineCanvas';
 import { ClarificationMessage } from './ClarificationMessage';
 
+// Simple markdown-like renderer for assistant messages
+function renderAssistantContent(content: string) {
+  // Split by double newlines to get paragraphs
+  const blocks = content.split(/\n\n+/);
+
+  return blocks.map((block, blockIndex) => {
+    // Check if this block is a numbered list
+    const lines = block.split('\n');
+    const isNumberedList = lines.every(line => /^\d+\.\s/.test(line.trim()) || line.trim() === '');
+
+    if (isNumberedList && lines.some(line => /^\d+\.\s/.test(line.trim()))) {
+      const listItems = lines.filter(line => /^\d+\.\s/.test(line.trim()));
+      return (
+        <ol key={blockIndex} className="list-decimal list-inside space-y-1 my-2">
+          {listItems.map((item, itemIndex) => (
+            <li key={itemIndex} className="text-foreground/90">
+              {item.replace(/^\d+\.\s*/, '')}
+            </li>
+          ))}
+        </ol>
+      );
+    }
+
+    // Regular paragraph
+    return (
+      <p key={blockIndex} className="text-foreground/90 leading-relaxed">
+        {block}
+      </p>
+    );
+  });
+}
+
 interface WorkingPaneProps {
   conversation: Conversation;
   onSelectCanvas: (canvas?: Canvas) => void;
@@ -38,9 +70,26 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
 }) => {
   // Auto-scroll logic
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const latestCanvasRef = React.useRef<HTMLDivElement>(null);
+
+  // Find the last message with a canvas
+  const lastCanvasMessage = React.useMemo(() => {
+    for (let i = conversation.messages.length - 1; i >= 0; i--) {
+      if (conversation.messages[i].canvas) {
+        return conversation.messages[i];
+      }
+    }
+    return null;
+  }, [conversation.messages]);
 
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // If there's a canvas in the latest message, scroll to its top
+    if (latestCanvasRef.current) {
+      latestCanvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Otherwise scroll to bottom for user messages/processing
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [conversation.messages, conversation.processSteps]);
 
   return (
@@ -98,25 +147,37 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                     {/* 3. Explanation & Metadata (only if no clarification) */}
                     {!msg.clarification && (
                       <div className="space-y-4">
-                        <p className="text-foreground/90 leading-relaxed text-sm">
-                          {msg.content}
-                        </p>
+                        {/* Assistant text with max-width for readability (60ch on large, 80% on small) */}
+                        <div className="max-w-[80%] lg:max-w-[60%] text-sm space-y-2">
+                          {renderAssistantContent(msg.content)}
+                        </div>
 
                         {/* 4. Inline Canvas - centered, full width within padding */}
                         {msg.canvas && (
-                          <div className="flex justify-center">
-                            <InlineCanvas
-                              canvas={msg.canvas}
-                              onExpand={() => onExpandCanvas?.(msg.canvas!)}
-                              selectedSegments={selectedSegments}
-                              isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
-                              onBarSelect={onBarSelect}
-                              onClearSegments={onClearSegments}
-                              onRemoveSegment={onRemoveSegment}
-                              onAskSegment={onAskSegment}
-                              className="w-full max-w-3xl"
-                            />
-                          </div>
+                          <>
+                            <div
+                              ref={lastCanvasMessage?.id === msg.id ? latestCanvasRef : undefined}
+                              className="flex justify-center"
+                            >
+                              <InlineCanvas
+                                canvas={msg.canvas}
+                                onExpand={() => onExpandCanvas?.(msg.canvas!)}
+                                selectedSegments={selectedSegments}
+                                isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
+                                onBarSelect={onBarSelect}
+                                onClearSegments={onClearSegments}
+                                onRemoveSegment={onRemoveSegment}
+                                onAskSegment={onAskSegment}
+                                className="w-full max-w-3xl"
+                              />
+                            </div>
+                            {/* 5. Follow-up suggestion from agent */}
+                            {msg.canvas.followUpSuggestion && (
+                              <div className="max-w-[80%] lg:max-w-[60%] text-sm text-muted-foreground">
+                                {msg.canvas.followUpSuggestion}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -145,12 +206,21 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
       {/* Sticky Bottom Input - same 100px padding */}
       <div className="flex-shrink-0 bg-background px-[100px] py-6 z-10">
         <QueryInput
-          onSubmit={onFollowUp}
+          onSubmit={(query, segments) => {
+            if (segments && segments.segments.length > 0 && onAskSegment) {
+              onAskSegment(query, segments);
+            } else {
+              onFollowUp(query);
+            }
+          }}
           placeholder="Ask another question"
           className=""
           compact={true}
           availableAudiences={availableAudiences}
           onCreateAudience={onCreateAudience}
+          selectedSegments={selectedSegments}
+          onClearSegments={onClearSegments}
+          onRemoveSegment={onRemoveSegment}
         />
       </div>
     </div>

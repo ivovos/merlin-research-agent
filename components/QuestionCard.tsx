@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { QuestionResult, SelectedSegment, SelectedSegments } from '@/types';
+import type { BrandColors } from '@/types/audience';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList, Cell } from 'recharts';
 import { EditQuestionModal } from './EditQuestionModal';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+// Default brand colors (MUBI)
+const DEFAULT_BRAND_COLORS: BrandColors = {
+  primary: '#2768E3',   // MUBI Blue
+  secondary: '#1BD571', // MUBI Green
+  tertiary: '#E32768',  // MUBI Pink
+  quaternary: '#D5711B', // MUBI Orange
+};
+
 interface QuestionCardProps {
   data: QuestionResult;
   index: number;
@@ -20,6 +29,7 @@ interface QuestionCardProps {
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
   selectedSegments?: SelectedSegments;
+  brandColors?: BrandColors;
 }
 
 // Helper to get computed CSS variable value
@@ -31,12 +41,28 @@ const getCSSVariable = (varName: string): string => {
   return value ? `hsl(${value})` : '#000000';
 };
 
-export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasId, onEditQuestion, onBarSelect, selectedSegments }) => {
+export const QuestionCard: React.FC<QuestionCardProps> = ({
+  data,
+  index,
+  canvasId,
+  onEditQuestion,
+  onBarSelect,
+  selectedSegments,
+  brandColors = DEFAULT_BRAND_COLORS,
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Get computed colors for Recharts
-  const primaryColor = useMemo(() => getCSSVariable('--primary'), []);
   const mutedForegroundColor = useMemo(() => getCSSVariable('--muted-foreground'), []);
+
+  // Use brand colors for segments
+  const segmentColors = useMemo(() => [
+    brandColors.primary,
+    brandColors.secondary,
+    brandColors.tertiary || '#E32768',
+    brandColors.quaternary || '#D5711B',
+  ], [brandColors]);
 
   // Check if a specific bar is selected
   const isBarSelected = (label: string) => {
@@ -101,8 +127,38 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasI
     });
   }, [data.options]);
 
-  // Fallback colors for multi-segment charts
-  const segmentColors = ['#3b82f6', '#9CA3AF', '#D1D5DB', '#F59E0B', '#10B981'];
+  // For multi-segment comparison: restructure data so each segment becomes a separate row
+  // This enables vertical stacking: Label -> Segment1 bar, Segment2 bar (stacked vertically)
+  const verticalSegmentData = useMemo(() => {
+    if (!data.segments || data.segments.length === 0) return null;
+
+    // Check if options have segment data
+    if (sortedData.length === 0 || sortedData[0][data.segments[0]] === undefined) return null;
+
+    // Transform: for each option, create a row for each segment
+    const result: Array<{
+      label: string;
+      segment: string;
+      segmentIndex: number;
+      value: number;
+      isFirst: boolean; // Is this the first segment for this option (for label display)
+    }> = [];
+
+    sortedData.forEach((option) => {
+      data.segments!.forEach((seg, segIdx) => {
+        result.push({
+          label: option.label,
+          segment: seg,
+          segmentIndex: segIdx,
+          value: parsePercentage(option[seg]),
+          isFirst: segIdx === 0,
+        });
+      });
+    });
+
+    return result;
+  }, [sortedData, data.segments]);
+
 
   return (
     <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm animate-in slide-in-from-bottom-2 border border-border">
@@ -145,97 +201,206 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasI
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm">No data available</p>
           </div>
-        ) : (
+        ) : verticalSegmentData ? (
+          // Multi-segment vertical comparison chart
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               layout="vertical"
-              data={sortedData}
+              data={verticalSegmentData}
               margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
-              barSize={data.segments && data.segments.length > 0 ? 18 : 32}
-              barGap={4}
+              barSize={16}
+              barGap={2}
+              onMouseLeave={() => setHoveredIndex(null)}
             >
-              <XAxis 
-                type="number" 
-                hide 
+              <XAxis
+                type="number"
+                hide
                 domain={[0, 100]}
               />
               <YAxis
                 dataKey="label"
                 type="category"
                 width={180}
-                tick={{ fill: mutedForegroundColor, fontSize: 14 }}
+                tick={({ x, y, payload, index: tickIndex }) => {
+                  // Only show label on the first segment row for each option
+                  const item = verticalSegmentData[tickIndex];
+                  if (!item?.isFirst) return null;
+                  const isHovered = hoveredIndex !== null && verticalSegmentData[hoveredIndex]?.label === payload.value;
+                  const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      dy={data.segments!.length > 1 ? 4 : 0}
+                      textAnchor="end"
+                      fill={mutedForegroundColor}
+                      fontSize={14}
+                      opacity={opacity}
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
                 interval={0}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 cursor={{ fill: 'transparent' }}
+                isAnimationActive={false}
+                offset={100}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
+                    const item = payload[0].payload;
                     return (
-                      <div className="bg-popover border border-border p-3 rounded shadow-lg text-sm space-y-1">
-                        <p className="font-semibold text-popover-foreground mb-1">{payload[0].payload.label}</p>
-                        {payload.map((entry: any, i: number) => (
-                          <p key={i} className="flex justify-between gap-4" style={{ color: entry.color }}>
-                            <span>{entry.name}:</span>
-                            <span>{entry.value}%</span>
-                          </p>
-                        ))}
+                      <div
+                        className="bg-popover border border-border p-3 rounded shadow-lg text-sm"
+                      >
+                        <p className="font-semibold text-popover-foreground mb-1">{item.label}</p>
+                        <p className="flex justify-between gap-4" style={{ color: segmentColors[item.segmentIndex] }}>
+                          <span>{item.segment}:</span>
+                          <span>{item.value}%</span>
+                        </p>
                       </div>
                     );
                   }
                   return null;
                 }}
               />
-              {data.segments && data.segments.length > 0 && sortedData.length > 0 && sortedData[0][data.segments[0]] !== undefined ? (
-                // Multi-segment rendering - only if options have segment data
-                data.segments.map((seg, i) => (
-                  <Bar
-                    key={seg}
-                    dataKey={seg}
-                    name={seg}
-                    fill={i === 0 ? primaryColor : segmentColors[i % segmentColors.length]}
-                    radius={[0, 4, 4, 0]}
-                    onClick={(entry) => handleBarClick(entry)}
-                    cursor={onBarSelect ? 'pointer' : undefined}
-                  >
-                    <LabelList
-                      dataKey={seg}
-                      position="right"
-                      formatter={(val: any) => `${val}%`}
-                      style={{ fill: mutedForegroundColor, fontSize: '14px' }}
+              <Bar
+                dataKey="value"
+                radius={[0, 4, 4, 0]}
+                onClick={(entry) => handleBarClick({ ...entry, percentage: entry.value })}
+                cursor={onBarSelect ? 'pointer' : undefined}
+                onMouseEnter={(_, idx) => setHoveredIndex(idx)}
+              >
+                {verticalSegmentData.map((entry, i) => {
+                  const isHovered = hoveredIndex === i;
+                  const opacity = hoveredIndex === null ? 0.9 : (isHovered ? 1 : 0.3);
+                  return (
+                    <Cell
+                      key={`cell-${i}`}
+                      fill={segmentColors[entry.segmentIndex % segmentColors.length]}
+                      fillOpacity={opacity}
                     />
-                  </Bar>
-                ))
-              ) : (
-                // Default single bar with selection support
-                <Bar
-                  dataKey="percentage"
-                  fill={primaryColor}
-                  fillOpacity={0.9}
-                  radius={[4, 4, 4, 4]}
-                  onClick={(entry) => handleBarClick(entry)}
-                  cursor={onBarSelect ? 'pointer' : undefined}
-                >
-                  {sortedData.map((entry, i) => {
-                    const selected = isBarSelected(entry.label);
-                    const opacity = hasAnySelection ? (selected ? 1 : 0.3) : 0.9;
+                  );
+                })}
+                <LabelList
+                  dataKey="value"
+                  position="insideRight"
+                  formatter={(val: any) => `${val}%`}
+                  style={{ fill: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          // Default single bar chart (no segments)
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              layout="vertical"
+              data={sortedData}
+              margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
+              barSize={32}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <XAxis
+                type="number"
+                hide
+                domain={[0, 100]}
+              />
+              <YAxis
+                dataKey="label"
+                type="category"
+                width={180}
+                tick={({ x, y, payload, index: tickIndex }) => {
+                  const isHovered = hoveredIndex === tickIndex;
+                  const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      textAnchor="end"
+                      fill={mutedForegroundColor}
+                      fontSize={14}
+                      opacity={opacity}
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+                interval={0}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip
+                cursor={{ fill: 'transparent' }}
+                isAnimationActive={false}
+                offset={100}
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
                     return (
-                      <Cell
-                        key={`cell-${i}`}
-                        fill={primaryColor}
-                        fillOpacity={opacity}
-                      />
+                      <div
+                        className="bg-popover border border-border p-3 rounded shadow-lg text-sm"
+                      >
+                        <p className="font-semibold text-popover-foreground mb-1">{payload[0].payload.label}</p>
+                        <p className="flex justify-between gap-4">
+                          <span>Value:</span>
+                          <span>{payload[0].value}%</span>
+                        </p>
+                      </div>
                     );
-                  })}
-                  <LabelList
-                    dataKey="percentage"
-                    position="right"
-                    formatter={(val: any) => `${val}%`}
-                    style={{ fill: mutedForegroundColor, fontSize: '14px' }}
-                  />
-                </Bar>
-              )}
+                  }
+                  return null;
+                }}
+              />
+              <Bar
+                dataKey="percentage"
+                fill={segmentColors[0]}
+                fillOpacity={0.9}
+                radius={[4, 4, 4, 4]}
+                onClick={(entry) => handleBarClick(entry)}
+                cursor={onBarSelect ? 'pointer' : undefined}
+                onMouseEnter={(_, idx) => setHoveredIndex(idx)}
+              >
+                {sortedData.map((entry, i) => {
+                  const selected = isBarSelected(entry.label);
+                  const isHovered = hoveredIndex === i;
+                  const opacity = hoveredIndex === null
+                    ? (hasAnySelection ? (selected ? 1 : 0.3) : 0.9)
+                    : (isHovered ? 1 : 0.3);
+                  return (
+                    <Cell
+                      key={`cell-${i}`}
+                      fill={segmentColors[0]}
+                      fillOpacity={opacity}
+                    />
+                  );
+                })}
+                <LabelList
+                  dataKey="percentage"
+                  position="right"
+                  formatter={(val: any) => `${val}%`}
+                  style={{ fill: mutedForegroundColor, fontSize: '14px', fontWeight: 'bold' }}
+                  content={({ x, y, value, index: labelIndex }) => {
+                    const isHovered = hoveredIndex === labelIndex;
+                    const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
+                    return (
+                      <text
+                        x={Number(x) + 5}
+                        y={Number(y)}
+                        dy={4}
+                        fill={mutedForegroundColor}
+                        fontSize={14}
+                        fontWeight="bold"
+                        opacity={opacity}
+                      >
+                        {value}%
+                      </text>
+                    );
+                  }}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -249,7 +414,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ data, index, canvasI
               <div
                 className="w-3 h-3 rounded-sm"
                 style={{
-                  backgroundColor: i === 0 ? primaryColor : segmentColors[i % segmentColors.length]
+                  backgroundColor: segmentColors[i % segmentColors.length]
                 }}
               />
               {seg}

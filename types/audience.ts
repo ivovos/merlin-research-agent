@@ -21,6 +21,7 @@ export interface AudienceDetails extends Audience {
   segments: Segment[];
   updatedAt: string;
   source: string;
+  sourceLabel?: string; // Human-readable source label (e.g., "MUBI Customer Data", "Electric Twin Panel")
   projectId?: string;
   description?: string;
 }
@@ -34,6 +35,41 @@ export interface Project {
   audiences: AudienceDetails[];
 }
 
+// Brand colors for chart theming
+export interface BrandColors {
+  primary: string;
+  secondary: string;
+  tertiary?: string;
+  quaternary?: string;
+}
+
+// Uploaded brief/document for research projects
+export interface UploadedBrief {
+  id: string;
+  name: string;
+  type: 'pdf' | 'docx' | 'txt' | 'md' | 'url';
+  uploadedAt: string;
+  summary?: string;
+  url?: string;
+}
+
+// Research Project - a workspace that groups conversations, canvases, and briefs
+export interface ResearchProject {
+  id: string;
+  name: string;
+  description?: string;
+  icon: string;
+  color?: string;
+  createdAt: string;
+  updatedAt: string;
+  audienceIds: string[];
+  conversationIds: string[];
+  canvasIds: string[];
+  briefs?: UploadedBrief[];
+  status: 'active' | 'archived' | 'completed';
+  tags?: string[];
+}
+
 // Account (brand or agency)
 export interface Account {
   id: string;
@@ -41,6 +77,8 @@ export interface Account {
   type: 'brand' | 'agency';
   icon: string;
   logo?: string;
+  brandColors?: BrandColors; // Brand-specific colors for charts
   projects?: Project[];
   audiences?: AudienceDetails[]; // For brand accounts without projects
+  researchProjects?: ResearchProject[]; // Research workspaces
 }

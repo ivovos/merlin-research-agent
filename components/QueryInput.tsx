@@ -1,18 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
-import type { Audience } from '@/types';
+import type { Audience, SelectedSegments } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface QueryInputProps {
-  onSubmit: (query: string) => void;
+  onSubmit: (query: string, segments?: SelectedSegments) => void;
   isExpanded?: boolean;
   placeholder?: string;
   className?: string;
   compact?: boolean;
   availableAudiences?: Audience[];
   onCreateAudience?: (name: string) => Audience;
+  /** Selected segments from chart interactions */
+  selectedSegments?: SelectedSegments;
+  /** Clear all selected segments */
+  onClearSegments?: () => void;
+  /** Remove a specific segment */
+  onRemoveSegment?: (questionId: string, answerLabel: string) => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -38,8 +45,12 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   className = "",
   compact = false,
   availableAudiences = mockAudiences,
-  onCreateAudience
+  onCreateAudience,
+  selectedSegments,
+  onClearSegments,
+  onRemoveSegment,
 }) => {
+  const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
   const [showAudiencePicker, setShowAudiencePicker] = useState(false);
   const [showMethodPicker, setShowMethodPicker] = useState(false);
@@ -150,8 +161,8 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (query.trim()) {
-      onSubmit(query);
+    if (query.trim() || hasSegmentSelection) {
+      onSubmit(query, hasSegmentSelection ? selectedSegments : undefined);
       setQuery('');
     }
   };
@@ -277,22 +288,56 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-            {filteredAudiences.map(audience => (
-              <button
-                key={audience.id}
-                onClick={() => selectAudience(audience)}
-                className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
-              >
-                <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
-                  {audience.icon}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{audience.name}</p>
-                  <p className="text-xs text-muted-foreground">@{audience.id}</p>
-                </div>
-              </button>
-            ))}
+          <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+            {filteredAudiences.map(audience => {
+              // Get source badge label based on sourceLabel or source
+              const sourceLabel = (audience as any).sourceLabel || (audience as any).source;
+              const getBadgeStyle = () => {
+                const source = (audience as any).source || '';
+                if (source.includes('_1p') || source === 'mubi_1p' || source === 'canva_1p' || source === 'wonderhood_1p') {
+                  return 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+                }
+                if (source === 'electric_twin') {
+                  return 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300';
+                }
+                if (source === 'electric_twin_attention') {
+                  return 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+                }
+                return 'bg-muted text-muted-foreground';
+              };
+              const getBadgeText = () => {
+                const source = (audience as any).source || '';
+                if (source === 'mubi_1p') return '1P';
+                if (source === 'canva_1p') return '1P';
+                if (source === 'wonderhood_1p') return '1P';
+                if (source === 'electric_twin') return 'ET';
+                if (source === 'electric_twin_attention') return 'ET';
+                return '';
+              };
+
+              return (
+                <button
+                  key={audience.id}
+                  onClick={() => selectAudience(audience)}
+                  className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg text-left transition-colors group"
+                >
+                  <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center text-xs font-serif font-bold group-hover:scale-110 transition-transform">
+                    {audience.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">{audience.name}</p>
+                      {getBadgeText() && (
+                        <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded", getBadgeStyle())}>
+                          {getBadgeText()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">@{audience.id}</p>
+                  </div>
+                </button>
+              );
+            })}
 
             {/* Create New Option */}
             {filteredAudiences.length === 0 && audienceSearch.trim() && onCreateAudience && (
@@ -392,59 +437,90 @@ export const QueryInput: React.FC<QueryInputProps> = ({
       )}
 
       {compact ? (
-        // Compact Single-Height Layout
-        <div className="relative bg-background rounded-full border border-input shadow-none px-3 py-2 transition-all focus-within:border-primary flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
-            <Plus className="w-5 h-5" />
-          </Button>
+        // Compact Single-Height Layout (with optional segment selection)
+        <div className={cn(
+          "relative bg-background border border-input shadow-none transition-all rounded-full px-3 py-2"
+        )}>
+          <div className="flex items-center gap-3">
+            {/* Segment pill - shown inline when segments selected */}
+            {hasSegmentSelection ? (
+              <Badge className="gap-2 px-3 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-sm flex-shrink-0">
+                <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="font-medium truncate max-w-[200px]">
+                  {/* Generate concise segment name from selected answers */}
+                  {selectedSegments!.segments.length === 1
+                    ? selectedSegments!.segments[0].answerLabel
+                    : selectedSegments!.segments.length === 2
+                      ? `${selectedSegments!.segments[0].answerLabel} + ${selectedSegments!.segments[1].answerLabel}`
+                      : `${selectedSegments!.segments[0].answerLabel} +${selectedSegments!.segments.length - 1} more`
+                  }
+                </span>
+                <span className="text-primary/70">•</span>
+                <span className="flex-shrink-0">{selectedSegments!.totalRespondents.toLocaleString()}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 ml-0.5 hover:bg-transparent hover:text-primary/70 flex-shrink-0"
+                  onClick={onClearSegments}
+                  title="Clear segment"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </Badge>
+            ) : (
+              <Button variant="ghost" size="icon" className="text-muted-foreground flex-shrink-0 h-8 w-8 hover:bg-background">
+                <Plus className="w-5 h-5" />
+              </Button>
+            )}
 
-          <textarea
-            ref={textareaRef}
-            value={query}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholderText}
-            onFocus={() => setIsAnimating(false)}
-            onBlur={() => !query && setIsAnimating(true)}
-            rows={1}
-            className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
-            style={{ height: '40px', lineHeight: '24px' }}
-          />
+            <textarea
+              ref={textareaRef}
+              value={query}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder={hasSegmentSelection ? "Ask about this segment..." : placeholderText}
+              onFocus={() => setIsAnimating(false)}
+              onBlur={() => !query && setIsAnimating(true)}
+              rows={1}
+              className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
+              style={{ height: '40px', lineHeight: '24px' }}
+            />
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div ref={audienceContainerRef}>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div ref={audienceContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowAudiencePicker(!showAudiencePicker);
+                    setShowMethodPicker(false);
+                    setAudienceSearch('');
+                  }}
+                  className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                  title="Audience"
+                >
+                  <Users className="w-5 h-5" />
+                </button>
+              </div>
+              <div ref={methodContainerRef}>
+                <button
+                  onClick={() => {
+                    setShowMethodPicker(!showMethodPicker);
+                    setShowAudiencePicker(false);
+                  }}
+                  className="p-2 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
+                  title="Methods"
+                >
+                  /
+                </button>
+              </div>
+
               <button
-                onClick={() => {
-                  setShowAudiencePicker(!showAudiencePicker);
-                  setShowMethodPicker(false);
-                  setAudienceSearch('');
-                }}
-                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-                title="Audience"
+                className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+                onClick={() => handleSubmit()}
+                disabled={!query.trim() && !hasSegmentSelection}
               >
-                <Users className="w-5 h-5" />
+                <ArrowUp className="w-5 h-5" />
               </button>
             </div>
-            <div ref={methodContainerRef}>
-              <button
-                onClick={() => {
-                  setShowMethodPicker(!showMethodPicker);
-                  setShowAudiencePicker(false);
-                }}
-                className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
-                title="Methods"
-              >
-                /
-              </button>
-            </div>
-
-            <button
-              className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
-              onClick={() => handleSubmit()}
-              disabled={!query.trim()}
-            >
-              <ArrowUp className="w-5 h-5" />
-            </button>
           </div>
         </div>
       ) : (
@@ -506,7 +582,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors font-mono font-bold text-lg"
+                  className="h-9 w-9 rounded-md bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg"
                   title="Methods"
                 >
                   /

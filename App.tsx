@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { AppSidebar, MainHeader } from '@/components/layout/AppSidebar'
 import {
   SidebarInset,
@@ -10,9 +10,11 @@ import { generateResearchWithAgent, isQualitativeQuery, generateConversationTitl
 import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments } from '@/types'
 import {
   mockAccounts,
+  mubiAccount,
   wonderhoodAccount,
   initialProcessSteps,
   initialQualitativeSteps,
+  getAllAudiences,
 } from '@/data/mockData'
 
 // Import feature components
@@ -25,8 +27,8 @@ import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
 const App: React.FC = () => {
-  // Account state
-  const [currentAccount, setCurrentAccount] = useState<Account>(wonderhoodAccount)
+  // Account state - default to MUBI
+  const [currentAccount, setCurrentAccount] = useState<Account>(mubiAccount)
 
   // Navigation state
   const [activeView, setActiveView] = useState<ActiveView>('conversation')
@@ -54,6 +56,11 @@ const App: React.FC = () => {
 
   // Expanded canvas state - when set, replaces WorkingPane with ExpandedCanvas
   const [expandedCanvas, setExpandedCanvas] = useState<Canvas | null>(null)
+
+  // Get all audiences for the account (includes Electric Twin generic audiences)
+  const combinedAudiences = useMemo(() => {
+    return getAllAudiences(currentAccount)
+  }, [currentAccount])
 
   // Start research simulation
   const startSimulation = useCallback(async (query: string) => {
@@ -304,10 +311,8 @@ const App: React.FC = () => {
                 canvas={expandedCanvas}
                 onClose={handleCloseExpandedCanvas}
                 onEditQuestion={handleEditQuestion}
-                onCanvasPrompt={handleCanvasPrompt}
                 selectedSegments={selectedSegments}
                 isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
-                onBarSelect={selectSegment}
                 onClearSegments={clearSegments}
                 onRemoveSegment={removeSegment}
               />
@@ -333,7 +338,7 @@ const App: React.FC = () => {
                   <QueryInput
                     onSubmit={startSimulation}
                     isExpanded={false}
-                    availableAudiences={audiences}
+                    availableAudiences={combinedAudiences}
                     onCreateAudience={createAudience}
                   />
                 </div>
@@ -344,7 +349,7 @@ const App: React.FC = () => {
                 onSelectCanvas={handleExpandCanvas}
                 onExpandCanvas={handleExpandCanvas}
                 onFollowUp={handleFollowUp}
-                availableAudiences={audiences}
+                availableAudiences={combinedAudiences}
                 onCreateAudience={createAudience}
                 selectedSegments={selectedSegments}
                 selectionCanvasId={selectionCanvasId}
