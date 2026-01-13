@@ -44,8 +44,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {/* Main content area with 100px padding on sides */}
-        <div className="px-[100px] py-6 space-y-8">
+        {/* Main content area with 100px padding on sides and bottom padding for floating input */}
+        <div className="px-[100px] py-6 pb-24 space-y-8">
 
           {/* Query History */}
           <div className="space-y-8">
@@ -139,18 +139,20 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
         </div>
       </div>
 
-      {/* Sticky Bottom Input - same 100px padding */}
-      <div className="flex-shrink-0 bg-background px-[100px] py-6 z-10">
-        <QueryInput
-          onSubmit={onFollowUp}
-          placeholder="Ask another question"
-          className=""
-          compact={true}
-          availableAudiences={availableAudiences}
-          onCreateAudience={onCreateAudience}
-          selectedSegments={selectedSegments}
-          onClearSegments={onClearSegments}
-        />
+      {/* Floating Bottom Input */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 z-10 pointer-events-none">
+        <div className="max-w-2xl mx-auto w-full pointer-events-auto">
+          <QueryInput
+            onSubmit={onFollowUp}
+            placeholder="Ask another question"
+            className=""
+            compact={true}
+            availableAudiences={availableAudiences}
+            onCreateAudience={onCreateAudience}
+            selectedSegments={selectedSegments}
+            onClearSegments={onClearSegments}
+          />
+        </div>
       </div>
     </div>
   );
