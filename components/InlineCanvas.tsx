@@ -17,6 +17,7 @@ import {
   Eye,
   UserPlus,
   GitCompare,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,6 +48,8 @@ interface InlineCanvasProps {
   onClearSegments?: () => void;
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
   onAskSegment?: (query: string, segments: SelectedSegments) => void;
+  /** Callback when editing a question */
+  onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   /** Brand colors for chart theming */
   brandColors?: BrandColors;
 }
@@ -61,6 +64,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
   onClearSegments,
   onRemoveSegment,
   onAskSegment,
+  onEditQuestion,
 }) => {
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments && selectedSegments.segments.length > 0;
@@ -301,6 +305,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
                   canvasId={canvas.id}
                   selectedSegments={isSelectionForThisCanvas ? selectedSegments : undefined}
                   onBarSelect={onBarSelect}
+                  onEditQuestion={onEditQuestion}
                 />
               ))}
             </div>
@@ -323,6 +328,7 @@ const MiniQuestionCard: React.FC<{
   canvasId: string;
   selectedSegments?: SelectedSegments;
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
+  onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   brandColors?: BrandColors;
 }> = ({
   data,
@@ -330,6 +336,7 @@ const MiniQuestionCard: React.FC<{
   canvasId,
   selectedSegments,
   onBarSelect,
+  onEditQuestion,
   brandColors = DEFAULT_BRAND_COLORS,
 }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
@@ -419,9 +426,33 @@ const MiniQuestionCard: React.FC<{
         <span className="text-xs font-semibold text-muted-foreground">
           Q{index + 1}
         </span>
-        <span className="text-xs text-muted-foreground">
-          {data.respondents} responses
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {data.respondents} responses
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+                <MoreHorizontal className="w-3.5 h-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEditQuestion?.(data.id, data.question, data.segments || [])}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit question
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => console.log('Re-run question', data.id)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Re-run question
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => console.log('Add audience', data.id)}>
+                <Users className="w-4 h-4 mr-2" />
+                Add another audience
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <h4 className="text-sm font-medium text-foreground mb-4 line-clamp-2">
         {data.question}
