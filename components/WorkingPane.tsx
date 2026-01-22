@@ -52,6 +52,8 @@ interface WorkingPaneProps {
   onClearSegments?: () => void;
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
   onAskSegment?: (query: string, segments: SelectedSegments) => void;
+  /** Callback when messaging-testing method is selected */
+  onMessageTestingClick?: () => void;
 }
 
 export const WorkingPane: React.FC<WorkingPaneProps> = ({
@@ -67,6 +69,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onClearSegments,
   onRemoveSegment,
   onAskSegment,
+  onMessageTestingClick,
 }) => {
   // Auto-scroll logic
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -221,6 +224,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
           selectedSegments={selectedSegments}
           onClearSegments={onClearSegments}
           onRemoveSegment={onRemoveSegment}
+          onMessageTestingClick={onMessageTestingClick}
         />
       </div>
     </div>
