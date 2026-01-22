@@ -209,8 +209,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   };
 
   const selectMethod = (methodId: string) => {
+    console.log('selectMethod called with:', methodId, 'onMessageTestingClick:', !!onMessageTestingClick);
     // Handle messaging-testing specially - open modal instead of inserting text
     if (methodId === 'messaging-testing' && onMessageTestingClick) {
+      console.log('Opening message testing modal...');
       let newQuery = query;
       if (newQuery.endsWith('/')) {
         newQuery = newQuery.slice(0, -1);

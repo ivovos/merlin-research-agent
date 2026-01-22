@@ -279,6 +279,7 @@ const App: React.FC = () => {
 
   // Message Testing modal handlers
   const handleMessageTestingClick = useCallback(() => {
+    console.log('handleMessageTestingClick called!')
     setShowMessageTestingModal(true)
   }, [])
 
