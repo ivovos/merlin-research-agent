@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { EditQuestionModal } from './EditQuestionModal';
 
 // Default brand colors (MUBI)
 const DEFAULT_BRAND_COLORS: BrandColors = {
@@ -341,6 +342,7 @@ const MiniQuestionCard: React.FC<{
 }) => {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = React.useState<{ x: number; y: number } | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Helper to parse percentage values (handles "37.2%" strings)
@@ -437,7 +439,7 @@ const MiniQuestionCard: React.FC<{
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEditQuestion?.(data.id, data.question, data.segments || [])}>
+              <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Edit question
               </DropdownMenuItem>
@@ -618,6 +620,14 @@ const MiniQuestionCard: React.FC<{
           )}
         </div>
       )}
+
+      <EditQuestionModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        initialQuestion={data.question}
+        initialSegments={data.segments}
+        onSave={(q, s) => onEditQuestion?.(data.id, q, s)}
+      />
     </div>
   );
 };
