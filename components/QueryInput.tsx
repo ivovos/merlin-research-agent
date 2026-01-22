@@ -437,7 +437,6 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    alert('Button clicked: ' + method.id);
                     selectMethod(method.id);
                     setMethodSearch('');
                   }}
