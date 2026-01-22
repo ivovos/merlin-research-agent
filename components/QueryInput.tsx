@@ -510,30 +510,28 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               <div ref={audienceContainerRef}>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => {
                     setShowAudiencePicker(!showAudiencePicker);
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground rounded-full h-9 w-9"
                 >
                   <Users className="w-4 h-4" />
-                  Audience
                 </Button>
               </div>
               <div ref={methodContainerRef}>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => {
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground rounded-full h-9 w-9"
                 >
                   <SquarePen className="w-4 h-4" />
-                  Methods
                 </Button>
               </div>
 
@@ -595,7 +593,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground rounded-full"
                 >
                   <Users className="w-4 h-4" />
                   Audience
@@ -610,7 +608,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground rounded-full"
                 >
                   <SquarePen className="w-4 h-4" />
                   Methods
