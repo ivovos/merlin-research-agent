@@ -3,7 +3,7 @@ import type { Canvas, QualitativeTheme, SelectedSegments, Conversation } from '@
 import { QuestionCard } from './QuestionCard';
 import {
   X,
-  Share2,
+  Share,
   FileText,
   Users,
   Eye,
@@ -26,12 +26,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -98,24 +92,18 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
       {/* Sticky Header Container */}
       <div className="sticky top-0 z-20 flex-shrink-0">
         {/* Header */}
-        <div className="flex items-center px-4 py-3 border-b border-border bg-background">
+        <div className="flex items-center h-14 px-4 border-b border-border bg-background">
           {/* Left: Back button */}
           <div className="flex-shrink-0">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={onClose}
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Back (Esc)</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={onClose}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
           </div>
 
           {/* Center: Title */}
@@ -128,21 +116,15 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 
           {/* Right: Share button */}
           <div className="flex-shrink-0">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={() => console.log('Share')}
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Share</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => console.log('Share')}
+            >
+              <Share className="w-4 h-4" />
+              Share
+            </Button>
           </div>
         </div>
 

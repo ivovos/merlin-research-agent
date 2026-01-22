@@ -317,89 +317,93 @@ const App: React.FC = () => {
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Main content area */}
         <main className="flex flex-1 flex-col overflow-hidden">
-          <MainHeader
-            title={
-              activeView === 'audiences'
-                ? 'Audiences'
-                : activeView === 'audienceDetail' && selectedAudience
-                ? selectedAudience.name
-                : activeView === 'conversation' && conversation.title
-                ? conversation.title
-                : undefined
-            }
-          >
-            {/* View Canvas button - only show when there are canvases and not already expanded */}
-            {activeView === 'conversation' && hasCanvases && !expandedCanvas && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-auto gap-1.5 h-7 px-2.5 text-xs"
-                onClick={() => handleExpandCanvas(conversationCanvases[0])}
+          {/* Expanded Canvas - replaces entire content including header */}
+          {expandedCanvas ? (
+            <ExpandedCanvas
+              canvas={expandedCanvas}
+              conversation={conversation}
+              onClose={handleCloseExpandedCanvas}
+              onEditQuestion={handleEditQuestion}
+              selectedSegments={selectedSegments}
+              isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
+              onClearSegments={clearSegments}
+              onRemoveSegment={removeSegment}
+            />
+          ) : (
+            <>
+              <MainHeader
+                title={
+                  activeView === 'audiences'
+                    ? 'Audiences'
+                    : activeView === 'audienceDetail' && selectedAudience
+                    ? selectedAudience.name
+                    : activeView === 'conversation' && conversation.title
+                    ? conversation.title
+                    : undefined
+                }
               >
-                <Layers className="w-3.5 h-3.5" />
-                View Canvas
-              </Button>
-            )}
-          </MainHeader>
+                {/* View Canvas button - only show when there are canvases */}
+                {activeView === 'conversation' && hasCanvases && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto gap-1.5 h-7 px-2.5 text-xs"
+                    onClick={() => handleExpandCanvas(conversationCanvases[0])}
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    View Canvas
+                  </Button>
+                )}
+              </MainHeader>
 
-          <div className="flex-1 overflow-hidden">
-            {/* Expanded Canvas - replaces main content when active, shows ALL evidence */}
-            {expandedCanvas ? (
-              <ExpandedCanvas
-                canvas={expandedCanvas}
-                conversation={conversation}
-                onClose={handleCloseExpandedCanvas}
-                onEditQuestion={handleEditQuestion}
-                selectedSegments={selectedSegments}
-                isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
-                onClearSegments={clearSegments}
-                onRemoveSegment={removeSegment}
-              />
-            ) : activeView === 'audiences' ? (
-              <AudiencesList
-                account={currentAccount}
-                selectedProject={selectedProject}
-                onSelectAudience={handleSelectAudience}
-              />
-            ) : activeView === 'audienceDetail' && selectedAudience ? (
-              <AudienceDetail
-                audience={selectedAudience}
-                account={currentAccount}
-                onBack={handleBackToAudiences}
-                onAskQuestion={handleAskAudienceQuestion}
-              />
-            ) : conversation.status === 'idle' ? (
-              <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8">
-                <h1 className="text-4xl font-display font-extrabold tracking-tight text-center">
-                  Ask them anything
-                </h1>
-                <div className="w-full max-w-2xl mx-auto">
-                  <QueryInput
-                    onSubmit={startSimulation}
-                    isExpanded={false}
+              <div className="flex-1 overflow-hidden">
+                {activeView === 'audiences' ? (
+                  <AudiencesList
+                    account={currentAccount}
+                    selectedProject={selectedProject}
+                    onSelectAudience={handleSelectAudience}
+                  />
+                ) : activeView === 'audienceDetail' && selectedAudience ? (
+                  <AudienceDetail
+                    audience={selectedAudience}
+                    account={currentAccount}
+                    onBack={handleBackToAudiences}
+                    onAskQuestion={handleAskAudienceQuestion}
+                  />
+                ) : conversation.status === 'idle' ? (
+                  <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8">
+                    <h1 className="text-4xl font-display font-extrabold tracking-tight text-center">
+                      Ask them anything
+                    </h1>
+                    <div className="w-full max-w-2xl mx-auto">
+                      <QueryInput
+                        onSubmit={startSimulation}
+                        isExpanded={false}
+                        availableAudiences={combinedAudiences}
+                        onCreateAudience={createAudience}
+                        onMessageTestingClick={handleMessageTestingClick}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <WorkingPane
+                    conversation={conversation}
+                    onSelectCanvas={handleExpandCanvas}
+                    onExpandCanvas={handleExpandCanvas}
+                    onFollowUp={handleFollowUp}
                     availableAudiences={combinedAudiences}
                     onCreateAudience={createAudience}
+                    selectedSegments={selectedSegments}
+                    selectionCanvasId={selectionCanvasId}
+                    onBarSelect={selectSegment}
+                    onClearSegments={clearSegments}
+                    onRemoveSegment={removeSegment}
                     onMessageTestingClick={handleMessageTestingClick}
                   />
-                </div>
+                )}
               </div>
-            ) : (
-              <WorkingPane
-                conversation={conversation}
-                onSelectCanvas={handleExpandCanvas}
-                onExpandCanvas={handleExpandCanvas}
-                onFollowUp={handleFollowUp}
-                availableAudiences={combinedAudiences}
-                onCreateAudience={createAudience}
-                selectedSegments={selectedSegments}
-                selectionCanvasId={selectionCanvasId}
-                onBarSelect={selectSegment}
-                onClearSegments={clearSegments}
-                onRemoveSegment={removeSegment}
-                onMessageTestingClick={handleMessageTestingClick}
-              />
-            )}
-          </div>
+            </>
+          )}
         </main>
       </SidebarInset>
 
