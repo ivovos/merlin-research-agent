@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import type { Canvas, QuestionResult, QualitativeTheme, SelectedSegment, SelectedSegments } from '@/types';
 import type { BrandColors } from '@/types/audience';
 import {
@@ -14,7 +14,6 @@ import {
   MoreHorizontal,
   X,
   Users,
-  Send,
   Eye,
   UserPlus,
   GitCompare,
@@ -65,8 +64,6 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
 }) => {
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments && selectedSegments.segments.length > 0;
-  const [inputValue, setInputValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCopy = () => {
     const text = `${canvas.title}\n\n${canvas.abstract}`;
@@ -83,21 +80,6 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
 
   const handleRefresh = () => {
     console.log('Refresh canvas');
-  };
-
-  const handleSubmitQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputValue.trim() && hasSelection && onAskSegment) {
-      onAskSegment(inputValue.trim(), selectedSegments!);
-      setInputValue('');
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmitQuestion(e);
-    }
   };
 
   return (
@@ -330,72 +312,6 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
         </div>
       </div>
 
-      {/* Footer - Input with segment pill when selected, otherwise simple footer */}
-      <div className="px-4 py-3 border-t border-border bg-background">
-        {hasSelection ? (
-          <form onSubmit={handleSubmitQuestion} className="flex items-center gap-2">
-            {/* Input with segment pill */}
-            <div className="flex-1 relative">
-              <div className="flex items-center gap-2 w-full rounded-lg border border-border bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary">
-                {/* Segment pill */}
-                <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full text-xs flex-shrink-0">
-                  <Users className="w-3 h-3" />
-                  <span className="font-medium">{selectedSegments!.totalRespondents.toLocaleString()}</span>
-                  <button
-                    type="button"
-                    onClick={onClearSegments}
-                    className="hover:text-primary/70 transition-colors"
-                    title="Remove segment from query"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-
-                {/* Input field */}
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask this segment a question..."
-                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
-                />
-              </div>
-            </div>
-
-            {/* Submit button */}
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!inputValue.trim()}
-              className={cn(
-                'h-9 w-9 rounded-lg transition-all duration-200 flex-shrink-0',
-                inputValue.trim()
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
-        ) : (
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              Click bars to select audience, expand for full controls
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 text-xs"
-              onClick={onExpand}
-            >
-              <Sparkles className="w-3 h-3" />
-              Open Canvas
-            </Button>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
