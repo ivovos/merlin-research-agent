@@ -209,9 +209,11 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   };
 
   const selectMethod = (methodId: string) => {
+    alert('selectMethod called with: ' + methodId);
     console.log('selectMethod called with:', methodId, 'onMessageTestingClick:', !!onMessageTestingClick);
     // Handle messaging-testing specially - open modal instead of inserting text
     if (methodId === 'messaging-testing' && onMessageTestingClick) {
+      alert('Opening message testing modal!');
       console.log('Opening message testing modal...');
       let newQuery = query;
       if (newQuery.endsWith('/')) {
@@ -434,7 +436,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               return (
                 <button
                   key={method.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Button clicked: ' + method.id);
                     selectMethod(method.id);
                     setMethodSearch('');
                   }}
