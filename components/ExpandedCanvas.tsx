@@ -3,14 +3,9 @@ import type { Canvas, QualitativeTheme, SelectedSegments, Conversation } from '@
 import { QuestionCard } from './QuestionCard';
 import {
   X,
-  Copy,
-  Download,
   Share2,
-  RefreshCw,
   FileText,
   Users,
-  Plus,
-  Minimize2,
   Eye,
   MoreHorizontal,
   UserPlus,
@@ -18,6 +13,7 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -97,113 +93,41 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments.segments.length > 0;
 
-  const handleCopy = () => {
-    // Copy all canvases content
-    const text = allCanvases.map(c =>
-      `${c.title}\n\n${c.abstract}\n\n${
-        c.type === 'qualitative' && c.themes
-          ? c.themes.map(t => `${t.topic}: ${t.summary}`).join('\n\n')
-          : c.questions.map(q => `${q.question}`).join('\n\n')
-      }`
-    ).join('\n\n---\n\n');
-    navigator.clipboard.writeText(text);
-  };
-
-  // Calculate total respondents across all canvases
-  const totalRespondents = useMemo(() => {
-    return allCanvases.reduce((sum, c) => sum + (c.respondents || 0), 0);
-  }, [allCanvases]);
-
-  // Calculate total questions across all canvases
-  const totalQuestions = useMemo(() => {
-    return allCanvases.reduce((sum, c) => sum + (c.questions?.length || 0), 0);
-  }, [allCanvases]);
-
   return (
     <div className="flex flex-col h-full w-full bg-muted">
       {/* Sticky Header Container */}
       <div className="sticky top-0 z-20 flex-shrink-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-background">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-medium text-foreground">
-                  {allCanvases.length > 1 ? 'All Evidence' : canvas.title}
-                </h2>
-                <Badge variant="secondary" className="text-xs font-medium">
-                  {allCanvases.length} {allCanvases.length === 1 ? 'canvas' : 'canvases'}
-                </Badge>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {totalQuestions} questions · {totalRespondents.toLocaleString()} responses
-              </span>
-            </div>
-
-            {/* Add audience to compare button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 h-7 text-xs"
-              onClick={() => console.log('Add audience to compare')}
-            >
-              <Plus className="w-3 h-3" />
-              Compare
-            </Button>
+        <div className="flex items-center px-4 py-3 border-b border-border bg-background">
+          {/* Left: Back button */}
+          <div className="flex-shrink-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={onClose}
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Back (Esc)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={() => console.log('Refresh')}
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Regenerate</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {/* Center: Title */}
+          <div className="flex-1 flex items-center justify-center gap-2">
+            <span className="text-sm text-muted-foreground">Canvas:</span>
+            <h2 className="text-base font-medium text-foreground">
+              {allCanvases.length > 1 ? 'All Evidence' : canvas.title}
+            </h2>
+          </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={handleCopy}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Copy</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={() => console.log('Download')}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Download</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
+          {/* Right: Share button */}
+          <div className="flex-shrink-0">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -217,24 +141,6 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Share</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <div className="w-px h-6 bg-border mx-2" />
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                    onClick={onClose}
-                  >
-                    <Minimize2 className="w-5 h-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Minimize (Esc)</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
