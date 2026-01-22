@@ -23,6 +23,7 @@ import { QueryInput } from '@/components/QueryInput'
 import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
+import { MessageTestingModal } from '@/components/MessageTestingModal'
 
 type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
@@ -56,6 +57,9 @@ const App: React.FC = () => {
 
   // Expanded canvas state - when set, replaces WorkingPane with ExpandedCanvas
   const [expandedCanvas, setExpandedCanvas] = useState<Canvas | null>(null)
+
+  // Message Testing modal state
+  const [showMessageTestingModal, setShowMessageTestingModal] = useState(false)
 
   // Get all audiences for the account (includes Electric Twin generic audiences)
   const combinedAudiences = useMemo(() => {
@@ -273,6 +277,15 @@ const App: React.FC = () => {
     startSimulation(query)
   }, [startSimulation])
 
+  // Message Testing modal handlers
+  const handleMessageTestingClick = useCallback(() => {
+    setShowMessageTestingModal(true)
+  }, [])
+
+  const handleMessageTestingClose = useCallback(() => {
+    setShowMessageTestingModal(false)
+  }, [])
+
   // Render
   return (
     <SidebarProvider>
@@ -340,6 +353,7 @@ const App: React.FC = () => {
                     isExpanded={false}
                     availableAudiences={combinedAudiences}
                     onCreateAudience={createAudience}
+                    onMessageTestingClick={handleMessageTestingClick}
                   />
                 </div>
               </div>
@@ -356,11 +370,29 @@ const App: React.FC = () => {
                 onBarSelect={selectSegment}
                 onClearSegments={clearSegments}
                 onRemoveSegment={removeSegment}
+                onMessageTestingClick={handleMessageTestingClick}
               />
             )}
           </div>
         </main>
       </SidebarInset>
+
+      {/* Message Testing Modal */}
+      <MessageTestingModal
+        isOpen={showMessageTestingModal}
+        onClose={handleMessageTestingClose}
+        onBack={handleMessageTestingClose}
+        audiences={combinedAudiences}
+        onCreateAudience={() => {
+          // Close modal and potentially open audience creation flow
+          setShowMessageTestingModal(false)
+        }}
+        onContinue={(data) => {
+          console.log('Message test data:', data)
+          // Handle the form submission - could start a simulation or save test config
+          setShowMessageTestingModal(false)
+        }}
+      />
     </SidebarProvider>
   )
 }

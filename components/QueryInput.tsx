@@ -20,6 +20,8 @@ interface QueryInputProps {
   onClearSegments?: () => void;
   /** Remove a specific segment */
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
+  /** Callback when messaging-testing method is selected */
+  onMessageTestingClick?: () => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -49,6 +51,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   selectedSegments,
   onClearSegments,
   onRemoveSegment,
+  onMessageTestingClick,
 }) => {
   const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
@@ -206,6 +209,19 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   };
 
   const selectMethod = (methodId: string) => {
+    // Handle messaging-testing specially - open modal instead of inserting text
+    if (methodId === 'messaging-testing' && onMessageTestingClick) {
+      let newQuery = query;
+      if (newQuery.endsWith('/')) {
+        newQuery = newQuery.slice(0, -1);
+      }
+      setQuery(newQuery);
+      setShowMethodPicker(false);
+      setMethodSearch('');
+      onMessageTestingClick();
+      return;
+    }
+
     let newQuery = query;
     if (newQuery.endsWith('/')) {
       newQuery = newQuery.slice(0, -1);
