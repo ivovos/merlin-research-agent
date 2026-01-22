@@ -83,13 +83,18 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   }, [conversation.messages]);
 
   React.useEffect(() => {
-    // If there's a canvas in the latest message, scroll to its top
-    if (latestCanvasRef.current) {
-      latestCanvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      // Otherwise scroll to bottom for user messages/processing
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Small delay to allow DOM to update after render
+    const timeoutId = setTimeout(() => {
+      // If there's a canvas in the latest message, scroll to its top
+      if (latestCanvasRef.current) {
+        latestCanvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // Otherwise scroll to bottom for user messages/processing
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [conversation.messages, conversation.processSteps]);
 
   return (
