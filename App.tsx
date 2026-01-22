@@ -345,7 +345,7 @@ const App: React.FC = () => {
               />
             ) : conversation.status === 'idle' ? (
               <div className="flex flex-col items-center justify-center h-full w-full space-y-8 px-4 py-8">
-                <h1 className="text-4xl font-semibold tracking-tight text-center">
+                <h1 className="text-4xl font-display font-extrabold tracking-tight text-center">
                   Ask them anything
                 </h1>
                 <div className="w-full max-w-2xl mx-auto">
