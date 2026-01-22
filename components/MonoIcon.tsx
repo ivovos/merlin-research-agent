@@ -5,13 +5,14 @@ interface MonoIconProps {
   text?: string;
   src?: string;
   alt?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'base';
   className?: string;
 }
 
 export const MonoIcon: React.FC<MonoIconProps> = ({ text, src, alt, size = 'md', className }) => {
   const sizeClasses = {
     sm: 'w-5 h-5 text-[9px]',
+    base: 'w-6 h-6 text-[10px]', // 24px
     md: 'w-8 h-8 text-[11px]',
     lg: 'w-10 h-10 text-xs',
   };
