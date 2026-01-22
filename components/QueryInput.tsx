@@ -472,7 +472,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         <div
           ref={inputContainerRef}
           className={cn(
-            "relative bg-background border border-input shadow-none transition-all rounded-full px-3 py-2"
+            "relative bg-background border border-input shadow-lg transition-all rounded-full px-3 py-2"
           )}
         >
           <div className="flex items-center gap-3">

@@ -206,13 +206,14 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
             </div>
           )}
 
-          {/* Scroll Anchor */}
-          <div ref={messagesEndRef} className="h-4" />
+          {/* Scroll Anchor - extra padding for floating input */}
+          <div ref={messagesEndRef} className="h-24" />
         </div>
       </div>
 
-      {/* Sticky Bottom Input - same 100px padding */}
-      <div className="flex-shrink-0 bg-background px-[100px] py-6 z-10">
+      {/* Floating Bottom Input - absolutely positioned */}
+      <div className="absolute bottom-0 left-0 right-0 px-[100px] py-6 z-10 pointer-events-none">
+        <div className="pointer-events-auto">
         <QueryInput
           onSubmit={(query, segments) => {
             if (segments && segments.segments.length > 0 && onAskSegment) {
@@ -231,6 +232,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
           onRemoveSegment={onRemoveSegment}
           onMessageTestingClick={onMessageTestingClick}
         />
+        </div>
       </div>
     </div>
   );
