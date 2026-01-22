@@ -92,8 +92,8 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       {/* Header with Account Switcher */}
       <SidebarHeader className={cn(
-        "h-14 flex-row items-center justify-start border-b",
-        isCollapsed ? "px-2" : "pl-2 pr-4"
+        "h-14 flex-row items-center border-b",
+        isCollapsed ? "justify-center px-2" : "justify-start pl-2 pr-4"
       )}>
         {currentAccount && onAccountChange ? (
           <DropdownMenu>
@@ -101,7 +101,7 @@ export function AppSidebar({
               <button
                 className={cn(
                   "flex items-center gap-3 rounded-lg transition-colors hover:bg-sidebar-accent",
-                  isCollapsed ? "justify-center pl-1 pr-1 py-0" : "p-1"
+                  isCollapsed ? "justify-center p-0" : "p-1"
                 )}
               >
                 <MonoIcon
