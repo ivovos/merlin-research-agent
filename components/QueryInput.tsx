@@ -434,7 +434,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               return (
                 <button
                   key={method.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Button clicked: ' + method.id);
                     selectMethod(method.id);
                     setMethodSearch('');
                   }}
