@@ -47,27 +47,59 @@ function generateShortTitle(question: string): string {
   // Capitalize first letter
   title = title.charAt(0).toUpperCase() + title.slice(1);
 
-  // Truncate if too long
-  if (title.length > 40) {
-    title = title.substring(0, 37) + '...';
-  }
-
   return title;
 }
 
-// Generate executive summary from canvas data
-function generateExecutiveSummary(canvas: Canvas, allCanvases: Canvas[]): string {
-  // Use canvas abstract if available
-  if (canvas.abstract) return canvas.abstract;
+// Generate executive summary from all canvas data
+function generateExecutiveSummary(allCanvases: Canvas[]): string {
+  // Collect all abstracts from canvases
+  const abstracts = allCanvases
+    .map(c => c.abstract)
+    .filter((a): a is string => !!a);
 
-  // Use key insight if available
-  if (canvas.keyInsight) return canvas.keyInsight;
+  // If we have abstracts, combine the unique ones
+  if (abstracts.length > 0) {
+    // Use the most recent/comprehensive abstract, or combine if they're different
+    const uniqueAbstracts = [...new Set(abstracts)];
+    if (uniqueAbstracts.length === 1) {
+      return uniqueAbstracts[0];
+    }
+    // If multiple different abstracts, use the last one (most recent)
+    return abstracts[abstracts.length - 1];
+  }
 
-  // Generate a basic summary
+  // Collect key insights as fallback
+  const keyInsights = allCanvases
+    .map(c => c.keyInsight)
+    .filter((k): k is string => !!k);
+
+  if (keyInsights.length > 0) {
+    return keyInsights[keyInsights.length - 1];
+  }
+
+  // Generate a basic summary from all canvases
   const totalQuestions = allCanvases.reduce((sum, c) => sum + (c.questions?.length || 0), 0);
   const totalRespondents = allCanvases.reduce((sum, c) => sum + (c.respondents || 0), 0);
 
   return `This analysis covers ${totalQuestions} key questions across ${totalRespondents.toLocaleString()} respondents, providing insights into audience preferences and behaviors.`;
+}
+
+// Generate canvas title from all canvases
+function generateCanvasTitle(conversation: Conversation | undefined, allCanvases: Canvas[]): string {
+  // Prefer conversation title if available
+  if (conversation?.title) return conversation.title;
+
+  // Collect all canvas titles
+  const titles = allCanvases
+    .map(c => c.title)
+    .filter((t): t is string => !!t);
+
+  if (titles.length > 0) {
+    // Use the first title as it's usually the main topic
+    return titles[0];
+  }
+
+  return 'Audience Exploration';
 }
 
 // Evidence item structure for ToC
@@ -146,9 +178,9 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
     return Array.from(audienceMap.values());
   }, [allCanvases]);
 
-  // Generate title and summary
-  const canvasTitle = conversation?.title || canvas.title || 'Audience Exploration';
-  const executiveSummary = generateExecutiveSummary(canvas, allCanvases);
+  // Generate title and summary from ALL canvases in the conversation
+  const canvasTitle = generateCanvasTitle(conversation, allCanvases);
+  const executiveSummary = generateExecutiveSummary(allCanvases);
 
   // Handle escape key
   useEffect(() => {
@@ -338,22 +370,22 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
       {/* Main Content with Three Columns */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left spacer for symmetry */}
-        <div className="hidden xl:block w-48 flex-shrink-0" />
+        <div className="hidden lg:block w-24 flex-shrink-0" />
 
         {/* Main scrollable content */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto"
         >
-          <div className="max-w-4xl mx-auto px-8 py-10">
+          <div className="max-w-4xl lg:max-w-3xl mx-auto px-6 py-6">
             {/* Title Section */}
-            <h1 className="text-2xl font-bold text-foreground mb-6">
+            <h1 className="text-lg font-semibold text-foreground mb-4">
               {canvasTitle}
             </h1>
 
             {/* Audience Badge */}
             {audiences.length > 0 && (
-              <div className="flex items-center gap-2 mb-8">
+              <div className="flex items-center gap-2 mb-6">
                 <span className="text-sm text-muted-foreground">Audience</span>
                 {audiences.map((audience, i) => (
                   <Badge key={i} variant="secondary" className="gap-2 px-3 py-1.5">
@@ -365,8 +397,8 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             )}
 
             {/* Executive Summary */}
-            <div className="mb-10">
-              <h2 className="text-base font-semibold text-foreground mb-3">
+            <div className="mb-6">
+              <h2 className="text-sm font-semibold text-foreground mb-2">
                 Executive Summary
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed max-w-[600px]">
@@ -375,34 +407,36 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             </div>
 
             {/* Key Data Points Header */}
-            <h2 className="text-base font-semibold text-foreground mb-8">
+            <h2 className="text-sm font-semibold text-foreground mb-6">
               Key data points
             </h2>
 
             {/* Evidence Cards with Left-aligned Section Titles */}
-            <div className="space-y-12">
-              {evidenceItems.map((item) => (
+            <div className="space-y-10">
+              {evidenceItems.map((item, idx) => (
                 <div
                   key={item.id}
                   ref={(el) => setItemRef(item.id, el)}
-                  className="scroll-mt-32"
+                  className={cn(
+                    "scroll-mt-32 flex gap-6 pb-10",
+                    idx < evidenceItems.length - 1 && "border-b border-border"
+                  )}
                 >
-                  {/* Section Title - Left aligned */}
-                  <div className="flex items-start gap-6 mb-4">
-                    <div className="w-48 flex-shrink-0 pt-1">
-                      <span className="text-sm text-muted-foreground">
-                        {item.index}.0&nbsp;&nbsp;{item.shortTitle}
-                      </span>
-                    </div>
+                  {/* Section Title - Left column */}
+                  <div className="w-44 flex-shrink-0 pt-1">
+                    <span className="text-sm text-muted-foreground leading-snug">
+                      {item.index}.0&nbsp;&nbsp;{item.shortTitle}
+                    </span>
                   </div>
 
-                  {/* Evidence Card - Full width */}
-                  <div className="pl-0 xl:pl-0">
+                  {/* Evidence Card - Right column */}
+                  <div className="flex-1 min-w-0">
                     <QuestionCard
                       data={item.data}
                       index={item.index - 1}
                       canvasId={item.canvasId}
                       onEditQuestion={onEditQuestion}
+                      compact
                     />
                   </div>
                 </div>
@@ -418,9 +452,9 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
         </div>
 
         {/* Right Floating Table of Contents */}
-        <div className="hidden xl:block w-56 flex-shrink-0">
-          <div className="sticky top-6 pt-10 pr-6">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+        <div className="hidden lg:block w-72 flex-shrink-0 pr-24">
+          <div className="sticky top-[200px] mt-[calc(50vh-150px)]">
+            <h3 className="text-xs font-semibold text-foreground mb-3">
               Table of contents
             </h3>
             <nav className="space-y-0.5">
@@ -429,7 +463,7 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                   key={item.id}
                   onClick={() => scrollToItem(item.id)}
                   className={cn(
-                    "block w-full text-left text-sm py-1.5 transition-colors",
+                    "block w-full text-left text-xs py-1 transition-colors",
                     activeItemId === item.id
                       ? "text-foreground font-medium"
                       : "text-muted-foreground hover:text-foreground"

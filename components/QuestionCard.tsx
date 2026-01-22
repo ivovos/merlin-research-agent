@@ -4,7 +4,7 @@ import type { BrandColors } from '@/types/audience';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList, Cell } from 'recharts';
 import { EditQuestionModal } from './EditQuestionModal';
 import { cn } from '@/lib/utils';
-import { MoreHorizontal, Pencil, RefreshCw, Users } from 'lucide-react';
+import { MoreHorizontal, Pencil, RefreshCw, Share, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,6 +30,8 @@ interface QuestionCardProps {
   onBarSelect?: (segment: SelectedSegment, canvasId: string) => void;
   selectedSegments?: SelectedSegments;
   brandColors?: BrandColors;
+  /** Compact mode removes border/shadow for expanded canvas view */
+  compact?: boolean;
 }
 
 // Helper to get computed CSS variable value
@@ -49,6 +51,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onBarSelect,
   selectedSegments,
   brandColors = DEFAULT_BRAND_COLORS,
+  compact = false,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -161,27 +164,36 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
 
   return (
-    <div className="bg-card rounded-2xl p-6 mb-6 shadow-sm animate-in slide-in-from-bottom-2 border border-border">
-      <div className="flex justify-between items-start mb-4">
-        <h4 className="text-sm font-semibold text-muted-foreground">Question {index + 1}</h4>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{data.respondents} respondents</span>
-          {/* Action dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit question
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Re-run question')}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Re-run question
-              </DropdownMenuItem>
+    <div className={cn(
+      "bg-card rounded-2xl p-6 mb-6 animate-in slide-in-from-bottom-2",
+      !compact && "shadow-sm border border-border"
+    )}>
+      {!compact && (
+        <div className="flex justify-between items-start mb-4">
+          <h4 className="text-sm font-semibold text-muted-foreground">Question {index + 1}</h4>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{data.respondents} respondents</span>
+            {/* Action dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => console.log('Share question', data.id)}>
+                  <Share className="w-4 h-4 mr-2" />
+                  Share this
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit question
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => console.log('Re-run question')}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Re-run question
+                </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => console.log('Add audience')}>
                 <Users className="w-4 h-4 mr-2" />
@@ -189,14 +201,54 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
-      </div>
+      )}
 
-      <h3 className="text-lg font-bold text-foreground mb-6 leading-tight">
-        {data.question}
-      </h3>
+      {compact ? (
+        // Compact layout: Question with 3-dot menu, respondents below
+        <div className="mb-4">
+          <div className="flex items-start gap-2">
+            <h3 className="text-lg font-bold text-foreground leading-tight flex-1">
+              {data.question}
+            </h3>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0 -mt-1">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => console.log('Share question', data.id)}>
+                  <Share className="w-4 h-4 mr-2" />
+                  Share this
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit question
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => console.log('Re-run question')}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Re-run question
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => console.log('Add audience')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Add another audience
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <span className="text-sm text-muted-foreground mt-2 block">{data.respondents} respondents</span>
+        </div>
+      ) : (
+        <h3 className="text-lg font-bold text-foreground mb-6 leading-tight">
+          {data.question}
+        </h3>
+      )}
 
-      <div className="h-[250px] w-full">
+      <div className="h-[250px] w-full [&_svg]:outline-none [&_svg]:focus:outline-none [&_.recharts-wrapper]:outline-none">
         {sortedData.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm">No data available</p>
@@ -208,7 +260,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               layout="vertical"
               data={verticalSegmentData}
               margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
-              barSize={16}
+              barSize={12}
               barGap={2}
               onMouseLeave={() => setHoveredIndex(null)}
             >
@@ -301,7 +353,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               layout="vertical"
               data={sortedData}
               margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
-              barSize={32}
+              barSize={24}
               onMouseLeave={() => setHoveredIndex(null)}
             >
               <XAxis

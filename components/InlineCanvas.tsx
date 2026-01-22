@@ -340,10 +340,7 @@ const MiniQuestionCard: React.FC<{
   onEditQuestion,
   brandColors = DEFAULT_BRAND_COLORS,
 }) => {
-  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
-  const [tooltipPosition, setTooltipPosition] = React.useState<{ x: number; y: number } | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Helper to parse percentage values (handles "37.2%" strings)
   const parsePercentage = (value: unknown): number => {
@@ -404,26 +401,8 @@ const MiniQuestionCard: React.FC<{
     }, canvasId);
   };
 
-  const handleMouseEnter = (idx: number, event: React.MouseEvent<HTMLDivElement>) => {
-    setHoveredIndex(idx);
-    if (containerRef.current) {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const targetRect = event.currentTarget.getBoundingClientRect();
-      // Position tooltip 100px above the bar
-      setTooltipPosition({
-        x: targetRect.left - containerRect.left + targetRect.width / 2,
-        y: targetRect.top - containerRect.top - 100,
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredIndex(null);
-    setTooltipPosition(null);
-  };
-
   return (
-    <div ref={containerRef} className="bg-background border border-border rounded-lg p-5 min-h-[220px] relative">
+    <div className="bg-background border border-border rounded-lg p-5 min-h-[220px] relative">
       <div className="flex justify-between items-start mb-3">
         <span className="text-xs font-semibold text-muted-foreground">
           Q{index + 1}
@@ -461,12 +440,10 @@ const MiniQuestionCard: React.FC<{
       </h4>
 
       {/* Horizontal bars - support both single and multi-segment */}
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         {sortedOptions.slice(0, 4).map((option, i) => {
           const selected = isBarSelected(option.label);
-          const isHovered = hoveredIndex === i;
-          const baseOpacity = hasAnySelection ? (selected ? 1 : 0.3) : 1;
-          const opacity = hoveredIndex === null ? baseOpacity : (isHovered ? 1 : 0.3);
+          const opacity = hasAnySelection ? (selected ? 1 : 0.3) : 1;
           const hasSegments = data.segments && data.segments.length > 0 && option[data.segments[0]] !== undefined;
 
           // Use brand colors for segments
@@ -486,8 +463,6 @@ const MiniQuestionCard: React.FC<{
                 onBarSelect && "hover:bg-muted/50"
               )}
               onClick={() => handleBarClick(option)}
-              onMouseEnter={(e) => handleMouseEnter(i, e)}
-              onMouseLeave={handleMouseLeave}
             >
               {hasSegments ? (
                 // Multi-segment bars VERTICALLY stacked
@@ -581,45 +556,6 @@ const MiniQuestionCard: React.FC<{
           </div>
         )}
       </div>
-
-      {/* Tooltip */}
-      {hoveredIndex !== null && tooltipPosition && sortedOptions[hoveredIndex] && (
-        <div
-          className="absolute z-50 bg-popover border border-border p-3 rounded shadow-lg text-sm pointer-events-none"
-          style={{
-            left: tooltipPosition.x,
-            top: tooltipPosition.y,
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <p className="font-semibold text-popover-foreground mb-1">{sortedOptions[hoveredIndex].label}</p>
-          {data.segments && data.segments.length > 0 && sortedOptions[hoveredIndex][data.segments[0]] !== undefined ? (
-            // Multi-segment tooltip
-            <div className="space-y-1">
-              {data.segments.map((seg, segIdx) => {
-                const segmentColors = [
-                  brandColors.primary,
-                  brandColors.secondary,
-                  brandColors.tertiary || '#E32768',
-                  brandColors.quaternary || '#D5711B',
-                ];
-                return (
-                  <p key={seg} className="flex justify-between gap-4" style={{ color: segmentColors[segIdx % segmentColors.length] }}>
-                    <span>{seg}:</span>
-                    <span>{parsePercentage(sortedOptions[hoveredIndex][seg])}%</span>
-                  </p>
-                );
-              })}
-            </div>
-          ) : (
-            // Single value tooltip
-            <p className="flex justify-between gap-4">
-              <span>Value:</span>
-              <span>{sortedOptions[hoveredIndex].percentage}%</span>
-            </p>
-          )}
-        </div>
-      )}
 
       <EditQuestionModal
         isOpen={isEditModalOpen}
