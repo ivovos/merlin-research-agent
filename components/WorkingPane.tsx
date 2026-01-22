@@ -71,34 +71,15 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onAskSegment,
   onMessageTestingClick,
 }) => {
-  // Auto-scroll logic
+  // Auto-scroll to bottom when new messages arrive
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const latestCanvasRef = React.useRef<HTMLDivElement>(null);
-
-  // Find the last message with a canvas
-  const lastCanvasMessage = React.useMemo(() => {
-    for (let i = conversation.messages.length - 1; i >= 0; i--) {
-      if (conversation.messages[i].canvas) {
-        return conversation.messages[i];
-      }
-    }
-    return null;
-  }, [conversation.messages]);
 
   React.useEffect(() => {
-    // Small delay to allow DOM to update after render
     const timeoutId = setTimeout(() => {
-      // If there's a canvas in the latest message, scroll to its top
-      if (latestCanvasRef.current) {
-        latestCanvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        // Otherwise scroll to bottom for user messages/processing
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
-
     return () => clearTimeout(timeoutId);
-  }, [conversation.messages, conversation.processSteps]);
+  }, [conversation.messages]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
@@ -163,10 +144,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                         {/* 4. Inline Canvas - centered, full width within padding */}
                         {msg.canvas && (
                           <>
-                            <div
-                              ref={lastCanvasMessage?.id === msg.id ? latestCanvasRef : undefined}
-                              className="flex justify-center"
-                            >
+                            <div className="flex justify-center">
                               <InlineCanvas
                                 canvas={msg.canvas}
                                 onExpand={() => onExpandCanvas?.(msg.canvas!)}
