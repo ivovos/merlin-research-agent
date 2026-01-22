@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame } from 'lucide-react';
+import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame, SquarePen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
@@ -488,29 +488,33 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
             <div className="flex items-center gap-2 flex-shrink-0">
               <div ref={audienceContainerRef}>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setShowAudiencePicker(!showAudiencePicker);
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-                  title="Audience"
+                  className="text-muted-foreground"
                 >
-                  <Users className="w-5 h-5" />
-                </button>
+                  <Users className="w-4 h-4" />
+                  Audience
+                </Button>
               </div>
               <div ref={methodContainerRef}>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="p-2 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg w-9 h-9 flex items-center justify-center"
-                  title="Methods"
+                  className="text-muted-foreground"
                 >
-                  /
-                </button>
+                  <SquarePen className="w-4 h-4" />
+                  Methods
+                </Button>
               </div>
 
               <button
@@ -563,30 +567,34 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               </Button>
 
               <div ref={audienceContainerRef}>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setShowAudiencePicker(!showAudiencePicker);
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
-                  title="Audience"
+                  className="text-muted-foreground"
                 >
-                  <Users className="w-5 h-5" />
-                </button>
+                  <Users className="w-4 h-4" />
+                  Audience
+                </Button>
               </div>
 
               <div ref={methodContainerRef}>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="h-9 w-9 rounded-md bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-colors font-mono font-bold text-lg"
-                  title="Methods"
+                  className="text-muted-foreground"
                 >
-                  /
-                </button>
+                  <SquarePen className="w-4 h-4" />
+                  Methods
+                </Button>
               </div>
             </div>
 
