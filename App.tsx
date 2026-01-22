@@ -333,10 +333,10 @@ const App: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="ml-auto gap-2"
+                className="ml-auto gap-1.5 h-7 px-2.5 text-xs"
                 onClick={() => handleExpandCanvas(conversationCanvases[0])}
               >
-                <Layers className="w-4 h-4" />
+                <Layers className="w-3.5 h-3.5" />
                 View Canvas
               </Button>
             )}
