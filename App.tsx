@@ -24,6 +24,8 @@ import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
+import { Button } from '@/components/ui/button'
+import { Layers } from 'lucide-react'
 
 type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
@@ -65,6 +67,15 @@ const App: React.FC = () => {
   const combinedAudiences = useMemo(() => {
     return getAllAudiences(currentAccount)
   }, [currentAccount])
+
+  // Check if conversation has any canvases (for "View Canvas" button)
+  const conversationCanvases = useMemo(() => {
+    return conversation.messages
+      .filter((msg) => msg.role === 'assistant' && msg.canvas)
+      .map((msg) => msg.canvas as Canvas)
+  }, [conversation.messages])
+
+  const hasCanvases = conversationCanvases.length > 0
 
   // Start research simulation
   const startSimulation = useCallback(async (query: string) => {
@@ -316,7 +327,20 @@ const App: React.FC = () => {
                 ? conversation.title
                 : undefined
             }
-          />
+          >
+            {/* View Canvas button - only show when there are canvases and not already expanded */}
+            {activeView === 'conversation' && hasCanvases && !expandedCanvas && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto gap-2"
+                onClick={() => handleExpandCanvas(conversationCanvases[0])}
+              >
+                <Layers className="w-4 h-4" />
+                View Canvas
+              </Button>
+            )}
+          </MainHeader>
 
           <div className="flex-1 overflow-hidden">
             {/* Expanded Canvas - replaces main content when active, shows ALL evidence */}
