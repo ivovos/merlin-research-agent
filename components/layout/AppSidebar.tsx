@@ -91,20 +91,23 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       {/* Header with Account Switcher */}
-      <SidebarHeader className="h-14 flex-row items-center justify-between border-b px-4">
+      <SidebarHeader className={cn(
+        "h-14 flex-row items-center border-b",
+        isCollapsed ? "justify-center px-2" : "justify-start pl-2 pr-4"
+      )}>
         {currentAccount && onAccountChange ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "flex items-center gap-3 rounded-lg p-1 transition-colors hover:bg-sidebar-accent",
-                  isCollapsed && "justify-center"
+                  "flex items-center gap-3 rounded-lg transition-colors hover:bg-sidebar-accent",
+                  isCollapsed ? "justify-center p-0" : "p-1"
                 )}
               >
                 <MonoIcon
                   text={currentAccount.icon}
                   src={currentAccount.logo}
-                  size="md"
+                  size="base"
                   className="rounded-md"
                 />
                 {!isCollapsed && (
@@ -150,11 +153,14 @@ export function AppSidebar({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className={cn(
+            "flex items-center gap-2",
+            isCollapsed ? "justify-center pl-1 pr-1" : "pl-1"
+          )}>
             <MonoIcon
               src="/assets/ElectricTwin-Logo-Black.png"
               alt="Electric Twin"
-              size="sm"
+              size="base"
             />
             {!isCollapsed && (
               <span className="text-sm font-semibold">Electric Twin</span>
