@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -228,7 +229,8 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   return (
     <div className="flex flex-col h-full w-full bg-background">
       {/* Header Bar */}
-      <div className="flex items-center h-14 px-4 border-b border-border bg-background flex-shrink-0">
+      <div className="flex items-center h-14 px-4 border-b border-border bg-background flex-shrink-0 gap-2">
+        <SidebarTrigger className="-ml-1" />
         <div className="flex-shrink-0">
           <Button
             variant="ghost"
