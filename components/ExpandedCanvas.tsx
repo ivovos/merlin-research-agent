@@ -415,22 +415,22 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           </div>
         </div>
 
-        {/* Right Sidebar - Table of Contents */}
-        <div className="hidden xl:block w-64 flex-shrink-0 border-l border-border">
-          <div className="sticky top-0 p-6">
+        {/* Right Floating Table of Contents */}
+        <div className="hidden xl:block w-56 flex-shrink-0">
+          <div className="sticky top-6 pt-10 pr-6">
             <h3 className="text-sm font-semibold text-foreground mb-4">
               Table of contents
             </h3>
-            <nav className="space-y-1">
+            <nav className="space-y-0.5">
               {evidenceItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToItem(item.id)}
                   className={cn(
-                    "block w-full text-left text-sm py-1.5 px-2 rounded transition-colors",
+                    "block w-full text-left text-sm py-1.5 transition-colors",
                     activeItemId === item.id
-                      ? "text-foreground bg-muted font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {item.index}.0 {item.shortTitle}
