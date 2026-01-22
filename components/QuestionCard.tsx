@@ -381,24 +381,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   dataKey="percentage"
                   position="right"
                   formatter={(val: any) => `${val}%`}
+                  offset={12}
                   style={{ fill: mutedForegroundColor, fontSize: '14px', fontWeight: 'bold' }}
-                  content={({ x, y, value, index: labelIndex }) => {
-                    const isHovered = hoveredIndex === labelIndex;
-                    const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
-                    return (
-                      <text
-                        x={Number(x) + 5}
-                        y={Number(y)}
-                        dy={4}
-                        fill={mutedForegroundColor}
-                        fontSize={14}
-                        fontWeight="bold"
-                        opacity={opacity}
-                      >
-                        {value}%
-                      </text>
-                    );
-                  }}
                 />
               </Bar>
             </BarChart>

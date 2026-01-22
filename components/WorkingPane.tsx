@@ -52,6 +52,8 @@ interface WorkingPaneProps {
   onClearSegments?: () => void;
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
   onAskSegment?: (query: string, segments: SelectedSegments) => void;
+  /** Callback when editing a question in a canvas */
+  onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   /** Callback when messaging-testing method is selected */
   onMessageTestingClick?: () => void;
 }
@@ -69,6 +71,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onClearSegments,
   onRemoveSegment,
   onAskSegment,
+  onEditQuestion,
   onMessageTestingClick,
 }) => {
   // Auto-scroll to bottom when new messages arrive
@@ -154,6 +157,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                                 onClearSegments={onClearSegments}
                                 onRemoveSegment={onRemoveSegment}
                                 onAskSegment={onAskSegment}
+                                onEditQuestion={onEditQuestion}
                                 className="w-full max-w-3xl"
                               />
                             </div>
