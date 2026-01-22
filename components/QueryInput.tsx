@@ -70,6 +70,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const methodPickerRef = useRef<HTMLDivElement>(null);
   const audienceContainerRef = useRef<HTMLDivElement>(null);
   const methodContainerRef = useRef<HTMLDivElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const [showPickerAbove, setShowPickerAbove] = useState(false);
 
@@ -268,15 +269,20 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         <div
           ref={audiencePickerRef}
           className={cn(
-            "fixed w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
-            showPickerAbove ? "animate-in slide-in-from-top-2" : "animate-in slide-in-from-bottom-2"
+            "fixed bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
+            "animate-in slide-in-from-bottom-2"
           )}
           style={
-            audienceContainerRef.current ? {
+            (compact && inputContainerRef.current) ? {
+              bottom: `${window.innerHeight - inputContainerRef.current.getBoundingClientRect().top + 8}px`,
+              left: `${inputContainerRef.current.getBoundingClientRect().left}px`,
+              width: `${inputContainerRef.current.getBoundingClientRect().width}px`
+            } : audienceContainerRef.current ? {
               [showPickerAbove ? 'bottom' : 'top']: showPickerAbove
                 ? `${window.innerHeight - audienceContainerRef.current.getBoundingClientRect().top + 8}px`
                 : `${audienceContainerRef.current.getBoundingClientRect().bottom + 8}px`,
-              left: `${audienceContainerRef.current.getBoundingClientRect().left}px`
+              left: `${audienceContainerRef.current.getBoundingClientRect().left}px`,
+              width: '288px'
             } : {}
           }
         >
@@ -387,15 +393,20 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         <div
           ref={methodPickerRef}
           className={cn(
-            "fixed w-72 bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
-            showPickerAbove ? "animate-in slide-in-from-top-2" : "animate-in slide-in-from-bottom-2"
+            "fixed bg-popover rounded-xl border border-border shadow-xl overflow-hidden z-[100] flex flex-col font-sans",
+            "animate-in slide-in-from-bottom-2"
           )}
           style={
-            methodContainerRef.current ? {
+            (compact && inputContainerRef.current) ? {
+              bottom: `${window.innerHeight - inputContainerRef.current.getBoundingClientRect().top + 8}px`,
+              left: `${inputContainerRef.current.getBoundingClientRect().left}px`,
+              width: `${inputContainerRef.current.getBoundingClientRect().width}px`
+            } : methodContainerRef.current ? {
               [showPickerAbove ? 'bottom' : 'top']: showPickerAbove
                 ? `${window.innerHeight - methodContainerRef.current.getBoundingClientRect().top + 8}px`
                 : `${methodContainerRef.current.getBoundingClientRect().bottom + 8}px`,
-              left: `${methodContainerRef.current.getBoundingClientRect().left}px`
+              left: `${methodContainerRef.current.getBoundingClientRect().left}px`,
+              width: '288px'
             } : {}
           }
         >
@@ -458,9 +469,12 @@ export const QueryInput: React.FC<QueryInputProps> = ({
 
       {compact ? (
         // Compact Single-Height Layout (with optional segment selection)
-        <div className={cn(
-          "relative bg-background border border-input shadow-none transition-all rounded-full px-3 py-2"
-        )}>
+        <div
+          ref={inputContainerRef}
+          className={cn(
+            "relative bg-background border border-input shadow-none transition-all rounded-full px-3 py-2"
+          )}
+        >
           <div className="flex items-center gap-3">
             {/* Segment pill - shown inline when segments selected */}
             {hasSegmentSelection ? (
