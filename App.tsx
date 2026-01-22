@@ -319,10 +319,11 @@ const App: React.FC = () => {
           />
 
           <div className="flex-1 overflow-hidden">
-            {/* Expanded Canvas - replaces main content when active */}
+            {/* Expanded Canvas - replaces main content when active, shows ALL evidence */}
             {expandedCanvas ? (
               <ExpandedCanvas
                 canvas={expandedCanvas}
+                conversation={conversation}
                 onClose={handleCloseExpandedCanvas}
                 onEditQuestion={handleEditQuestion}
                 selectedSegments={selectedSegments}

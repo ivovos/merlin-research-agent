@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { Canvas, QualitativeTheme, SelectedSegments } from '@/types';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import type { Canvas, QualitativeTheme, SelectedSegments, Conversation } from '@/types';
 import { QuestionCard } from './QuestionCard';
 import {
   X,
@@ -16,6 +16,8 @@ import {
   UserPlus,
   GitCompare,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,10 +36,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 
 interface ExpandedCanvasProps {
   canvas: Canvas;
+  /** Optional conversation to show ALL canvases from messages */
+  conversation?: Conversation;
   onClose: () => void;
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   selectedSegments: SelectedSegments;
@@ -49,6 +58,7 @@ interface ExpandedCanvasProps {
 
 export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   canvas,
+  conversation,
   onClose,
   onEditQuestion,
   selectedSegments,
@@ -56,8 +66,22 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   onClearSegments,
   onRemoveSegment,
 }) => {
-  const [version] = useState(canvas.version || 1);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Extract ALL canvases from conversation messages
+  const allCanvases = useMemo(() => {
+    if (!conversation) return [canvas];
+
+    const canvases: Canvas[] = [];
+    conversation.messages.forEach((msg) => {
+      if (msg.role === 'assistant' && msg.canvas) {
+        canvases.push(msg.canvas);
+      }
+    });
+
+    // If no canvases found in messages, fall back to the passed canvas
+    return canvases.length > 0 ? canvases : [canvas];
+  }, [conversation, canvas]);
 
   // Handle escape key
   useEffect(() => {
@@ -74,13 +98,26 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
   const hasSelection = isSelectionForThisCanvas && selectedSegments.segments.length > 0;
 
   const handleCopy = () => {
-    const text = `${canvas.title}\n\n${canvas.abstract}\n\n${
-      canvas.type === 'qualitative' && canvas.themes
-        ? canvas.themes.map(t => `${t.topic}: ${t.summary}`).join('\n\n')
-        : canvas.questions.map(q => `${q.question}`).join('\n\n')
-    }`;
+    // Copy all canvases content
+    const text = allCanvases.map(c =>
+      `${c.title}\n\n${c.abstract}\n\n${
+        c.type === 'qualitative' && c.themes
+          ? c.themes.map(t => `${t.topic}: ${t.summary}`).join('\n\n')
+          : c.questions.map(q => `${q.question}`).join('\n\n')
+      }`
+    ).join('\n\n---\n\n');
     navigator.clipboard.writeText(text);
   };
+
+  // Calculate total respondents across all canvases
+  const totalRespondents = useMemo(() => {
+    return allCanvases.reduce((sum, c) => sum + (c.respondents || 0), 0);
+  }, [allCanvases]);
+
+  // Calculate total questions across all canvases
+  const totalQuestions = useMemo(() => {
+    return allCanvases.reduce((sum, c) => sum + (c.questions?.length || 0), 0);
+  }, [allCanvases]);
 
   return (
     <div className="flex flex-col h-full w-full bg-muted">
@@ -94,23 +131,17 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-medium text-foreground">{canvas.title}</h2>
+                <h2 className="text-base font-medium text-foreground">
+                  {allCanvases.length > 1 ? 'All Evidence' : canvas.title}
+                </h2>
                 <Badge variant="secondary" className="text-xs font-medium">
-                  v{version}
+                  {allCanvases.length} {allCanvases.length === 1 ? 'canvas' : 'canvases'}
                 </Badge>
               </div>
               <span className="text-sm text-muted-foreground">
-                {canvas.respondents} respondents
+                {totalQuestions} questions · {totalRespondents.toLocaleString()} responses
               </span>
             </div>
-
-            {/* Audience badge */}
-            <Badge variant="outline" className="gap-2 px-2 py-1">
-              <div className="w-4 h-4 bg-foreground text-background flex items-center justify-center rounded text-[10px] font-serif font-bold">
-                {canvas.audience.icon}
-              </div>
-              <span className="text-xs font-medium">{canvas.audience.name}</span>
-            </Badge>
 
             {/* Add audience to compare button */}
             <Button
@@ -311,43 +342,165 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 
       {/* Main Content Area */}
       <ScrollArea className="flex-1" ref={contentRef}>
-        <div className="max-w-4xl mx-auto p-8 space-y-6">
-          {/* Key Insight */}
-          {canvas.keyInsight && (
-            <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-              <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
-            </div>
-          )}
+        <div className="max-w-4xl mx-auto p-8 space-y-8">
+          {/* Render ALL canvases */}
+          {allCanvases.map((canvasItem, canvasIndex) => (
+            <CanvasSection
+              key={canvasItem.id}
+              canvas={canvasItem}
+              index={canvasIndex}
+              isOnly={allCanvases.length === 1}
+              onEditQuestion={onEditQuestion}
+            />
+          ))}
 
-          {/* Content: Questions or Themes */}
-          {canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0 ? (
-            <div className="space-y-6">
-              {canvas.themes.map((theme) => (
-                <FullThemeCard key={theme.id} theme={theme} />
-              ))}
-            </div>
-          ) : canvas.questions && canvas.questions.length > 0 ? (
-            <div className="space-y-6">
-              {canvas.questions.map((q, i) => (
-                <QuestionCard
-                  key={q.id}
-                  data={q}
-                  index={i}
-                  canvasId={canvas.id}
-                  onEditQuestion={onEditQuestion}
-                />
-              ))}
-            </div>
-          ) : (
+          {allCanvases.length === 0 && (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
-              No data available
+              No evidence available
             </div>
           )}
         </div>
       </ScrollArea>
 
     </div>
+  );
+};
+
+// Canvas Section - collapsible container for each canvas
+interface CanvasSectionProps {
+  canvas: Canvas;
+  index: number;
+  isOnly: boolean;
+  onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
+}
+
+const CanvasSection: React.FC<CanvasSectionProps> = ({
+  canvas,
+  index,
+  isOnly,
+  onEditQuestion,
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  // If it's the only canvas, render without collapsible wrapper
+  if (isOnly) {
+    return (
+      <div className="space-y-6">
+        {/* Key Insight */}
+        {canvas.keyInsight && (
+          <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
+          </div>
+        )}
+
+        {/* Content: Questions or Themes */}
+        {canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0 ? (
+          <div className="space-y-6">
+            {canvas.themes.map((theme) => (
+              <FullThemeCard key={theme.id} theme={theme} />
+            ))}
+          </div>
+        ) : canvas.questions && canvas.questions.length > 0 ? (
+          <div className="space-y-6">
+            {canvas.questions.map((q, i) => (
+              <QuestionCard
+                key={q.id}
+                data={q}
+                index={i}
+                canvasId={canvas.id}
+                onEditQuestion={onEditQuestion}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            No data available
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Multiple canvases - render with collapsible header
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="overflow-hidden">
+        {/* Canvas Header */}
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between p-4 bg-background hover:bg-muted/50 transition-colors border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-semibold text-foreground">{canvas.title}</h3>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{canvas.questions?.length || 0} questions</span>
+                  <span>·</span>
+                  <span>{canvas.respondents?.toLocaleString()} responses</span>
+                  {canvas.audience && (
+                    <>
+                      <span>·</span>
+                      <Badge variant="outline" className="h-5 text-[10px] px-1.5">
+                        {canvas.audience.name}
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                #{index + 1}
+              </Badge>
+              {isOpen ? (
+                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              )}
+            </div>
+          </button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="p-6 space-y-6 bg-muted/30">
+            {/* Key Insight */}
+            {canvas.keyInsight && (
+              <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-foreground/90 leading-relaxed">{canvas.keyInsight}</p>
+              </div>
+            )}
+
+            {/* Content: Questions or Themes */}
+            {canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0 ? (
+              <div className="space-y-6">
+                {canvas.themes.map((theme) => (
+                  <FullThemeCard key={theme.id} theme={theme} />
+                ))}
+              </div>
+            ) : canvas.questions && canvas.questions.length > 0 ? (
+              <div className="space-y-6">
+                {canvas.questions.map((q, i) => (
+                  <QuestionCard
+                    key={q.id}
+                    data={q}
+                    index={i}
+                    canvasId={canvas.id}
+                    onEditQuestion={onEditQuestion}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                No data available
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 };
 
