@@ -1126,27 +1126,74 @@ function generateQuantitativeFallback(query: string): ResearchResult {
   }
 }
 
+// Helper to extract a simple title from query text
+function extractSimpleTitle(query: string): string {
+  // Remove @ mentions and / commands, clean up
+  const cleaned = query
+    .replace(/@[\w-]+/g, '')
+    .replace(/\/[\w-]+/g, '')
+    .trim()
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0).slice(0, 5)
+  if (words.length === 0) {
+    return 'Research Query'
+  }
+  return words.join(' ') + (cleaned.split(/\s+/).length > 5 ? '...' : '')
+}
+
+// Check if a response looks like an error message rather than a title
+function isErrorResponse(text: string): boolean {
+  const errorPatterns = [
+    /^I('m| am) sorry/i,
+    /^I cannot/i,
+    /^I can't/i,
+    /^I don't/i,
+    /^I didn't/i,
+    /^Unfortunately/i,
+    /^Could you/i,
+    /^Please /i,
+    /^I need more/i,
+  ]
+  return errorPatterns.some(pattern => pattern.test(text.trim()))
+}
+
 // Generate a concise title for a conversation query
 export async function generateConversationTitle(query: string): Promise<string> {
   console.log('[Merlin] Generating title for query...')
+
+  // If query is empty or very short, use fallback
+  if (!query || query.trim().length < 3) {
+    return extractSimpleTitle(query || 'Research Query')
+  }
+
   try {
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
-      max_tokens: 50,
-      system: 'Generate a concise 3-5 word title summarizing the research query. Output only the title, no quotes or punctuation. Be descriptive but brief.',
-      messages: [{ role: 'user', content: query }],
+      max_tokens: 30,
+      system: `You are a title generator. Given a research query, output ONLY a 3-5 word title.
+Rules:
+- Output ONLY the title text, nothing else
+- No quotes, punctuation, or explanations
+- If the query is unclear, still generate a descriptive title based on key words
+- Never apologize or ask questions
+- Never start with "I"`,
+      messages: [{ role: 'user', content: `Generate title for: ${query}` }],
     })
 
     if (response.content && response.content[0]?.type === 'text') {
       const title = response.content[0].text.trim()
       console.log('[Merlin] Generated title:', title)
+
+      // Validate: check if it looks like an error response
+      if (isErrorResponse(title) || title.length > 60) {
+        console.log('[Merlin] Title looks like error, using fallback')
+        return extractSimpleTitle(query)
+      }
+
       return title
     }
     throw new Error('Invalid response')
   } catch (error) {
     console.error('[Merlin] Title generation failed:', error)
-    // Fallback: create a simple title from the query
-    const words = query.split(' ').slice(0, 4)
-    return words.join(' ') + (query.split(' ').length > 4 ? '...' : '')
+    return extractSimpleTitle(query)
   }
 }

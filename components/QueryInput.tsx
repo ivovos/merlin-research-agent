@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame, SquarePen } from 'lucide-react';
+import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame, SquareSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
@@ -545,7 +545,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   }}
                   className="text-muted-foreground rounded-full h-9 w-9"
                 >
-                  <SquarePen className="w-4 h-4" />
+                  <SquareSlash className="w-4 h-4" />
                 </Button>
               </div>
 
@@ -561,17 +561,17 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         </div>
       ) : (
         // Expanded Multi-line Layout (Updated Design)
-        <div className="relative bg-background rounded-xl border border-input shadow-none p-4 transition-all focus-within:border-primary">
+        <div className="relative bg-background rounded-[20px] border border-border shadow-sm p-5 transition-all">
 
           {/* Backdrop for syntax highlighting - EXACTLY matching textarea styles */}
           <div
             aria-hidden="true"
-            className="absolute top-4 left-4 right-4 text-base leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
-            style={{ minHeight: '40px' }}
+            className="absolute top-5 left-5 right-5 text-xl leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
+            style={{ minHeight: '28px' }}
           >
             {query.split(/([@\/][\w-]+)/g).map((part, i) => {
               if (part.startsWith('@') || part.startsWith('/')) {
-                return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
+                return <span key={i} className="text-muted-foreground">{part}</span>;
               }
               return <span key={i}>{part}</span>;
             })}
@@ -588,14 +588,14 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
             spellCheck={false}
-            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[40px] text-base placeholder:text-muted-foreground text-transparent caret-foreground text-left"
+            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[28px] text-xl placeholder:text-muted-foreground text-transparent caret-foreground text-left"
             style={{ lineHeight: '1.4' }}
           />
 
-          <div className="flex items-end justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted h-10 w-10 rounded-full">
-                <Plus className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="text-foreground hover:bg-transparent h-10 w-10">
+                <Plus className="w-4 h-4" />
               </Button>
 
               <div ref={audienceContainerRef}>
@@ -607,7 +607,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(false);
                     setAudienceSearch('');
                   }}
-                  className="text-muted-foreground rounded-full"
+                  className="text-foreground rounded-full h-9 gap-2 px-3"
                 >
                   <Users className="w-4 h-4" />
                   Audience
@@ -622,9 +622,9 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                     setShowMethodPicker(!showMethodPicker);
                     setShowAudiencePicker(false);
                   }}
-                  className="text-muted-foreground rounded-full"
+                  className="text-foreground rounded-full h-9 gap-2 px-3"
                 >
-                  <SquarePen className="w-4 h-4" />
+                  <SquareSlash className="w-4 h-4" />
                   Methods
                 </Button>
               </div>
@@ -633,9 +633,9 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             <button
               onClick={() => handleSubmit()}
               disabled={!query.trim()}
-              className="h-10 w-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-10 w-10 bg-primary text-primary-foreground rounded-xl flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              <ArrowUp className="w-5 h-5" />
+              <ArrowUp className="w-4 h-4" />
             </button>
           </div>
         </div>
