@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, TrendingUp, Flame, SquareSlash } from 'lucide-react';
+import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, SquareSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
 import type { Audience, SelectedSegments } from '@/types';
 import { cn } from '@/lib/utils';
+import { MethodSheet } from './MethodSheet';
 
 interface QueryInputProps {
   onSubmit: (query: string, segments?: SelectedSegments) => void;
@@ -22,6 +23,8 @@ interface QueryInputProps {
   onRemoveSegment?: (questionId: string, answerLabel: string) => void;
   /** Callback when messaging-testing method is selected */
   onMessageTestingClick?: () => void;
+  /** Callback when a method is submitted from the sheet */
+  onMethodSubmit?: (methodId: string, variantId: string | null, data: Record<string, unknown>) => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -33,11 +36,10 @@ const PLACEHOLDER_EXAMPLES = [
 ];
 
 const RESEARCH_METHODS = [
+  { id: 'explore-audience', label: 'Explore Audience', description: 'Understand who they are', icon: Users },
   { id: 'survey', label: 'Survey', description: 'Broad quantitative data', icon: ClipboardList },
   { id: 'focus-group', label: 'Focus Group', description: 'Deep qualitative insights', icon: Users },
-  { id: 'messaging-testing', label: 'Messaging Testing', description: 'Test copy and value props', icon: MessageSquare },
-  { id: 'plot', label: 'Plot', description: 'Visual mapping of data', icon: TrendingUp },
-  { id: 'heatmap', label: 'Heatmap', description: 'Intensity distribution', icon: Flame },
+  { id: 'message-testing', label: 'Message Testing', description: 'Test copy and value props', icon: MessageSquare },
 ];
 
 export const QueryInput: React.FC<QueryInputProps> = ({
@@ -52,6 +54,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   onClearSegments,
   onRemoveSegment,
   onMessageTestingClick,
+  onMethodSubmit,
 }) => {
   const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
@@ -59,6 +62,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const [showMethodPicker, setShowMethodPicker] = useState(false);
   const [audienceSearch, setAudienceSearch] = useState('');
   const [methodSearch, setMethodSearch] = useState('');
+
+  // Method Sheet state
+  const [showMethodSheet, setShowMethodSheet] = useState(false);
+  const [selectedMethodId, setSelectedMethodId] = useState<string | undefined>(undefined);
 
   // Animation state
   const [placeholderText, setPlaceholderText] = useState('');
@@ -210,28 +217,27 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   };
 
   const selectMethod = (methodId: string) => {
-    console.log('selectMethod called with:', methodId, 'onMessageTestingClick:', !!onMessageTestingClick);
-    // Handle messaging-testing specially - open modal instead of inserting text
-    if (methodId === 'messaging-testing' && onMessageTestingClick) {
-      console.log('Opening message testing modal...');
-      let newQuery = query;
-      if (newQuery.endsWith('/')) {
-        newQuery = newQuery.slice(0, -1);
-      }
-      setQuery(newQuery);
-      setShowMethodPicker(false);
-      setMethodSearch('');
-      onMessageTestingClick();
-      return;
-    }
+    // Map old method IDs to new ones
+    const methodIdMap: Record<string, string> = {
+      'messaging-testing': 'message-testing',
+      'plot': 'explore-audience',
+      'heatmap': 'explore-audience',
+    };
 
+    const mappedMethodId = methodIdMap[methodId] || methodId;
+
+    // Clean up query
     let newQuery = query;
     if (newQuery.endsWith('/')) {
       newQuery = newQuery.slice(0, -1);
     }
-    setQuery(newQuery + `/${methodId} `);
+    setQuery(newQuery);
     setShowMethodPicker(false);
-    textareaRef.current?.focus();
+    setMethodSearch('');
+
+    // Open the method sheet
+    setSelectedMethodId(mappedMethodId);
+    setShowMethodSheet(true);
   };
 
   const handleCreateNew = () => {
@@ -640,6 +646,23 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           </div>
         </div>
       )}
+
+      {/* Method Sheet */}
+      <MethodSheet
+        isOpen={showMethodSheet}
+        onClose={() => {
+          setShowMethodSheet(false);
+          setSelectedMethodId(undefined);
+        }}
+        initialMethodId={selectedMethodId}
+        onSubmit={(methodId, variantId, data) => {
+          if (onMethodSubmit) {
+            onMethodSubmit(methodId, variantId, data);
+          }
+          setShowMethodSheet(false);
+          setSelectedMethodId(undefined);
+        }}
+      />
     </div>
   );
 };
