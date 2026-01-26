@@ -1,5 +1,5 @@
 import type { Audience } from './audience';
-import type { Canvas } from './canvas';
+import type { Canvas, StudyPlan } from './canvas';
 import type { ClarificationRequest } from './agentResponse';
 
 export interface ProcessStep {
@@ -16,6 +16,8 @@ export interface Message {
   content: string;
   processSteps?: ProcessStep[];
   canvas?: Canvas;
+  studyPlan?: StudyPlan; // For planning messages (before results)
+  studyPlanEditable?: boolean; // Whether the study plan pill shows Edit button
   thinkingTime?: number;
   clarification?: ClarificationRequest; // Agent needs more info
 }

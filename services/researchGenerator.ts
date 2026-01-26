@@ -1,7 +1,72 @@
 import { anthropic } from './api'
-import type { Canvas, ClarificationRequest, AgentResult } from '@/types'
+import type { Canvas, ClarificationRequest, AgentResult, StudyPlan } from '@/types'
 import { researchTools, type ResearchToolName } from './tools'
 import { AGENT_SYSTEM_PROMPT, getAgentPromptWithContext } from './agentPrompt'
+
+// Map tool names to method IDs and names for study plan
+const toolToMethodMapping: Record<string, { methodId: string; methodName: string; variantId?: string; variantName?: string }> = {
+  'run_survey': { methodId: 'survey', methodName: 'Survey' },
+  'run_focus_group': { methodId: 'focus-group', methodName: 'Focus Group' },
+  'run_comparison': { methodId: 'survey', methodName: 'Survey', variantId: 'comparison', variantName: 'Comparison' },
+  'run_heatmap': { methodId: 'explore-audience', methodName: 'Explore Audience', variantId: 'heatmap', variantName: 'Heatmap' },
+  'run_sentiment_analysis': { methodId: 'explore-audience', methodName: 'Explore Audience', variantId: 'sentiment', variantName: 'Sentiment Analysis' },
+  'run_message_testing': { methodId: 'message-testing', methodName: 'Message Testing' },
+}
+
+/**
+ * Generate a short, concise title for the study plan
+ * e.g., "Mubi Retention Drivers" or "Gen Z Climate Concerns"
+ */
+function generateStudyTitle(toolInput: Record<string, unknown>, methodName: string): string {
+  const audience = (toolInput.audience as string) || 'Audience'
+  const question = (toolInput.research_question as string) || ''
+
+  // Extract key topic from research question (take first few meaningful words)
+  const topicWords = question
+    .replace(/\?/g, '')
+    .replace(/^(what|how|why|do|does|are|is|can|could|would|should)\s+/i, '')
+    .replace(/^(they|people|users|customers)\s+(think|feel|want|like|prefer|believe)\s+(about\s+)?/i, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !['the', 'and', 'for', 'with', 'about'].includes(w.toLowerCase()))
+    .slice(0, 3)
+    .join(' ')
+
+  // Clean up audience name (remove @ prefix if present)
+  const cleanAudience = audience.replace(/^@/, '').split('-').map(w =>
+    w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' ')
+
+  // Create a concise title
+  if (topicWords) {
+    // Capitalize first letter of topic
+    const capitalizedTopic = topicWords.charAt(0).toUpperCase() + topicWords.slice(1)
+    return `${cleanAudience} ${capitalizedTopic}`
+  }
+
+  return `${cleanAudience} ${methodName}`
+}
+
+/**
+ * Create a study plan from tool execution context
+ */
+function createStudyPlan(toolName: string, toolInput: Record<string, unknown>): StudyPlan {
+  const mapping = toolToMethodMapping[toolName] || { methodId: 'survey', methodName: 'Survey' }
+  const title = generateStudyTitle(toolInput, mapping.methodName)
+
+  return {
+    title,
+    methodId: mapping.methodId,
+    methodName: mapping.methodName,
+    variantId: mapping.variantId || null,
+    variantName: mapping.variantName,
+    formData: {
+      audience: toolInput.audience,
+      researchQuestion: toolInput.research_question,
+      segments: toolInput.segments,
+      ...toolInput
+    }
+  }
+}
 
 /**
  * Parse a percentage value that might be a number or a string like "37.2%"
@@ -124,7 +189,7 @@ const surveyResultSchema = {
       items: {
         type: 'object',
         properties: {
-          question: { type: 'string' },
+          question: { type: 'string', description: 'Concise 3-7 word header like "Primary purchase drivers" (NOT verbose survey questions)' },
           options: {
             type: 'array',
             items: {
@@ -158,7 +223,7 @@ const focusGroupResultSchema = {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          topic: { type: 'string', description: 'Evocative 2-4 word theme name' },
+          topic: { type: 'string', description: 'Standalone 2-4 word section header like "The Trust Factor" (NOT truncated or verbose)' },
           sentiment: { type: 'string', enum: ['positive', 'negative', 'neutral', 'mixed'] },
           summary: { type: 'string', description: 'One compelling sentence capturing the insight' },
           quotes: {
@@ -253,6 +318,155 @@ function getProcessStepsForTool(toolName: string): string[] {
     default:
       return SURVEY_PROCESS_STEPS
   }
+}
+
+/**
+ * Tool selection result for two-phase execution
+ */
+export interface ToolSelectionResult {
+  toolName: string;
+  toolInput: Record<string, unknown>;
+  studyPlan: StudyPlan;
+  processSteps: string[];
+}
+
+/**
+ * Phase 1: Select the research tool and create study plan
+ * Returns the study plan before executing research
+ */
+export async function selectResearchTool(
+  userQuery: string,
+  currentCanvas: Canvas | null = null
+): Promise<{ type: 'clarification'; clarification: ClarificationRequest } | { type: 'tool'; selection: ToolSelectionResult }> {
+  console.log(`[Merlin Agent] Phase 1 - Selecting tool for: "${userQuery}"`)
+
+  try {
+    const systemPrompt = currentCanvas
+      ? getAgentPromptWithContext(currentCanvas.title, currentCanvas.type)
+      : AGENT_SYSTEM_PROMPT
+
+    const toolSelectionResponse = await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userQuery }],
+      tools: researchTools,
+    })
+
+    const toolCalls = toolSelectionResponse.content.filter(block => block.type === 'tool_use')
+
+    if (toolCalls.length === 0) {
+      // Fallback to survey
+      const studyPlan = createStudyPlan('run_survey', { audience: 'General Population', research_question: userQuery })
+      return {
+        type: 'tool',
+        selection: {
+          toolName: 'run_survey',
+          toolInput: { audience: 'General Population', research_question: userQuery },
+          studyPlan,
+          processSteps: getProcessStepsForTool('run_survey')
+        }
+      }
+    }
+
+    const firstToolCall = toolCalls[0]
+    if (firstToolCall.type !== 'tool_use') {
+      throw new Error('Unexpected tool call type')
+    }
+
+    const toolName = firstToolCall.name as ResearchToolName
+    const toolInput = firstToolCall.input as Record<string, unknown>
+
+    // Handle clarification request
+    if (toolName === 'ask_clarification') {
+      return {
+        type: 'clarification',
+        clarification: {
+          type: 'clarification',
+          missing_info: (toolInput.missing_info as string) || 'More information needed',
+          reason: toolInput.reason as string | undefined,
+          suggestions: (toolInput.suggestions as string[]) || []
+        }
+      }
+    }
+
+    const studyPlan = createStudyPlan(toolName, {
+      ...toolInput,
+      research_question: (toolInput.research_question as string) || userQuery,
+      audience: (toolInput.audience as string) || 'General Population'
+    })
+
+    return {
+      type: 'tool',
+      selection: {
+        toolName,
+        toolInput,
+        studyPlan,
+        processSteps: getProcessStepsForTool(toolName)
+      }
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Tool selection error:', error)
+    // Fallback to survey
+    const studyPlan = createStudyPlan('run_survey', { audience: 'General Population', research_question: userQuery })
+    return {
+      type: 'tool',
+      selection: {
+        toolName: 'run_survey',
+        toolInput: { audience: 'General Population', research_question: userQuery },
+        studyPlan,
+        processSteps: getProcessStepsForTool('run_survey')
+      }
+    }
+  }
+}
+
+/**
+ * Phase 2: Execute the selected research tool
+ */
+export async function executeSelectedTool(
+  selection: ToolSelectionResult,
+  userQuery: string
+): Promise<AgentResult> {
+  console.log(`[Merlin Agent] Phase 2 - Executing tool: ${selection.toolName}`)
+
+  try {
+    const canvas = await executeResearchTool(
+      selection.toolName as ResearchToolName,
+      selection.toolInput,
+      userQuery
+    )
+
+    if (!canvas) {
+      // Fallback
+      const fallbackResult = await executeToolAsSurvey(userQuery, 'General Population')
+      return fallbackResult
+    }
+
+    return {
+      type: 'single_canvas',
+      canvases: [canvas],
+      processSteps: selection.processSteps,
+      explanation: generateResultsIntroduction(canvas)
+    }
+  } catch (error) {
+    console.error('[Merlin Agent] Tool execution error:', error)
+    return executeToolAsSurvey(userQuery, 'General Population')
+  }
+}
+
+/**
+ * Generate an introduction for the results
+ */
+function generateResultsIntroduction(canvas: Canvas): string {
+  const audience = canvas.audience.name
+  const respondents = canvas.respondents
+
+  if (canvas.type === 'qualitative') {
+    return `Here's what ${respondents} participants from ${audience} shared. The key themes reveal some interesting patterns.`
+  }
+
+  return `Based on responses from ${respondents} people in ${audience}, here are the key findings.`
 }
 
 /**
@@ -369,6 +583,12 @@ export async function generateResearchWithAgent(
       console.log('[Merlin Agent] Detected comparison query in fallback, segments:', detectedSegments)
       // Generate comparison fallback with detected segments
       const canvas = generateFallbackComparisonCanvas('General Population', userQuery, detectedSegments)
+      // Add study plan for comparison fallback
+      canvas.studyPlan = createStudyPlan('run_comparison', {
+        audience: 'General Population',
+        research_question: userQuery,
+        segments: detectedSegments
+      })
       return {
         type: 'single_canvas',
         canvases: [canvas],
@@ -394,30 +614,56 @@ async function executeResearchTool(
   const researchQuestion = (toolInput.research_question as string) || originalQuery
   const segments = (toolInput.segments as string[] | undefined)
 
+  let canvas: Canvas | null = null
+
   switch (toolName) {
     case 'run_survey':
       // Pass segments for comparison surveys
-      return executeSurveyTool(audience, researchQuestion, segments)
+      canvas = await executeSurveyTool(audience, researchQuestion, segments)
+      break
 
     case 'run_focus_group':
-      return executeFocusGroupTool(audience, researchQuestion)
+      canvas = await executeFocusGroupTool(audience, researchQuestion)
+      break
 
     case 'run_comparison':
       // Use segments from comparison tool or default
       const comparisonSegments = segments || ['Group A', 'Group B']
-      return executeComparisonTool(comparisonSegments, researchQuestion)
+      canvas = await executeComparisonTool(comparisonSegments, researchQuestion)
+      break
 
     case 'run_heatmap':
     case 'run_sentiment_analysis':
       // For now, fall back to survey for these types
       // TODO: Implement proper heatmap and sentiment canvas types
       console.log(`[Merlin Agent] ${toolName} not fully implemented, falling back to survey`)
-      return executeSurveyTool(audience, researchQuestion)
+      canvas = await executeSurveyTool(audience, researchQuestion)
+      break
 
     default:
       console.log(`[Merlin Agent] Unknown tool: ${toolName}`)
       return null
   }
+
+  // Add study plan to canvas with generated questions synced to formData
+  if (canvas) {
+    // Convert canvas questions to form-compatible format
+    const questionsForForm = canvas.questions.map(q => ({
+      questionText: q.question,
+      questionType: 'single-choice',
+      answerOptions: q.options.map(opt => opt.label)
+    }))
+
+    canvas.studyPlan = createStudyPlan(toolName, {
+      ...toolInput,
+      research_question: researchQuestion,
+      audience,
+      // Include generated questions so they show in the edit form
+      questions: questionsForForm
+    })
+  }
+
+  return canvas
 }
 
 /**
@@ -438,6 +684,10 @@ Research Question: ${researchQuestion}
 
 Guidelines:
 - Generate 3 specific, measurable questions with clear options
+- IMPORTANT: Each question should be written as a CONCISE HEADER (3-7 words ideal)
+  - Good: "Primary purchase drivers", "Brand loyalty factors", "Weekly usage frequency"
+  - Bad: "What are the primary factors that drive your purchase decisions?"
+  - Think "section title" not "survey question"
 - Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
 - Reflect real-world trends and knowledge
 - Ensure percentages in each question sum to approximately 100%
@@ -581,6 +831,10 @@ Segments to Compare: ${segments.join(', ')}
 
 Guidelines:
 - Generate 3 specific, measurable questions that compare the segments
+- IMPORTANT: Each question should be written as a CONCISE HEADER (3-7 words ideal)
+  - Good: "Primary purchase drivers", "Brand preference split", "Weekly usage frequency"
+  - Bad: "What are the primary factors that drive your purchase decisions?"
+  - Think "section title" not "survey question"
 - For each question option, provide a percentage for EACH segment: ${segments.join(', ')}
 - Example option format: {"label": "Option A", ${segments.map(s => `"${s}": 45.2`).join(', ')}}
 - Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
@@ -740,7 +994,10 @@ Research Question: ${researchQuestion}
 
 Guidelines:
 - Generate 3-4 distinct themes that emerged from discussion
-- Each theme needs an evocative 2-4 word topic name
+- IMPORTANT: Each theme topic must be a STANDALONE HEADER (2-4 words)
+  - Good: "The Trust Factor", "Price vs Value", "Brand Loyalty Crisis"
+  - Bad: "What participants think about..." or truncated text
+  - Think "section title" that makes sense on its own
 - Match sentiment to the emotional tone (positive, negative, neutral, mixed)
 - Write one compelling sentence summary per theme
 - Include 2-3 realistic, conversational quotes per theme
@@ -897,6 +1154,11 @@ Guidelines:
  */
 async function executeToolAsSurvey(query: string, audience: string): Promise<AgentResult> {
   const canvas = await executeSurveyTool(audience, query)
+  // Add study plan for fallback surveys
+  canvas.studyPlan = createStudyPlan('run_survey', {
+    audience,
+    research_question: query
+  })
   return {
     type: 'single_canvas',
     canvases: [canvas],

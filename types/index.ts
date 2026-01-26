@@ -23,6 +23,7 @@ export type {
   QualitativeTheme,
   Canvas,
   Report, // Backwards compatibility alias
+  StudyPlan,
 } from './canvas';
 
 // Segment selection types

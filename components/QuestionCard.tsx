@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { QuestionResult, SelectedSegment, SelectedSegments } from '@/types';
 import type { BrandColors } from '@/types/audience';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LabelList, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList, Cell } from 'recharts';
 import { EditQuestionModal } from './EditQuestionModal';
 import { cn } from '@/lib/utils';
 import { MoreHorizontal, Pencil, RefreshCw, Share, Users } from 'lucide-react';
@@ -54,10 +54,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   compact = false,
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Get computed colors for Recharts
   const mutedForegroundColor = useMemo(() => getCSSVariable('--muted-foreground'), []);
+  const foregroundColor = useMemo(() => getCSSVariable('--foreground'), []);
 
   // Use brand colors for segments
   const segmentColors = useMemo(() => [
@@ -81,13 +81,15 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   // Handle bar click
   const handleBarClick = (entry: any) => {
     if (!onBarSelect || !canvasId) return;
-    const respondentCount = Math.round(((entry.percentage || 0) / 100) * data.respondents);
+    const percentage = entry.percentage || 0;
+    const baseRespondents = data.respondents || 0;
+    const respondentCount = Math.round((percentage / 100) * baseRespondents);
     onBarSelect({
       questionId: data.id,
       questionText: data.question,
       answerLabel: entry.label,
-      percentage: entry.percentage || 0,
-      respondents: respondentCount,
+      percentage,
+      respondents: isNaN(respondentCount) ? 0 : respondentCount,
     }, canvasId);
   };
   
@@ -165,7 +167,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
   return (
     <div className={cn(
-      "bg-card rounded-2xl p-6 mb-6 animate-in slide-in-from-bottom-2",
+      "bg-card rounded-2xl p-6 mb-6",
       !compact && "shadow-sm border border-border"
     )}>
       {!compact && (
@@ -248,7 +250,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </h3>
       )}
 
-      <div className="h-[250px] w-full [&_svg]:outline-none [&_svg]:focus:outline-none [&_.recharts-wrapper]:outline-none">
+      <div className="h-[250px] w-full [&_svg]:outline-none [&_svg]:focus:outline-none [&_.recharts-wrapper]:outline-none" style={{ contain: 'strict' }}>
         {sortedData.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm">No data available</p>
@@ -262,7 +264,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
               barSize={12}
               barGap={2}
-              onMouseLeave={() => setHoveredIndex(null)}
+              barCategoryGap="15%"
             >
               <XAxis
                 type="number"
@@ -277,8 +279,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   // Only show label on the first segment row for each option
                   const item = verticalSegmentData[tickIndex];
                   if (!item?.isFirst) return null;
-                  const isHovered = hoveredIndex !== null && verticalSegmentData[hoveredIndex]?.label === payload.value;
-                  const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
                   return (
                     <text
                       x={x}
@@ -287,7 +287,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                       textAnchor="end"
                       fill={mutedForegroundColor}
                       fontSize={14}
-                      opacity={opacity}
                     >
                       {payload.value}
                     </text>
@@ -297,43 +296,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip
-                cursor={{ fill: 'transparent' }}
-                isAnimationActive={false}
-                offset={100}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const item = payload[0].payload;
-                    return (
-                      <div
-                        className="bg-popover border border-border p-3 rounded shadow-lg text-sm"
-                      >
-                        <p className="font-semibold text-popover-foreground mb-1">{item.label}</p>
-                        <p className="flex justify-between gap-4" style={{ color: segmentColors[item.segmentIndex] }}>
-                          <span>{item.segment}:</span>
-                          <span>{item.value}%</span>
-                        </p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
               <Bar
                 dataKey="value"
                 radius={[0, 4, 4, 0]}
                 onClick={(entry) => handleBarClick({ ...entry, percentage: entry.value })}
                 cursor={onBarSelect ? 'pointer' : undefined}
-                onMouseEnter={(_, idx) => setHoveredIndex(idx)}
               >
                 {verticalSegmentData.map((entry, i) => {
-                  const isHovered = hoveredIndex === i;
-                  const opacity = hoveredIndex === null ? 0.9 : (isHovered ? 1 : 0.3);
                   return (
                     <Cell
                       key={`cell-${i}`}
                       fill={segmentColors[entry.segmentIndex % segmentColors.length]}
-                      fillOpacity={opacity}
+                      fillOpacity={0.9}
                     />
                   );
                 })}
@@ -354,7 +328,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               data={sortedData}
               margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
               barSize={24}
-              onMouseLeave={() => setHoveredIndex(null)}
+              barCategoryGap="15%"
             >
               <XAxis
                 type="number"
@@ -365,9 +339,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 dataKey="label"
                 type="category"
                 width={180}
-                tick={({ x, y, payload, index: tickIndex }) => {
-                  const isHovered = hoveredIndex === tickIndex;
-                  const opacity = hoveredIndex === null ? 1 : (isHovered ? 1 : 0.3);
+                tick={({ x, y, payload }) => {
                   return (
                     <text
                       x={x}
@@ -375,7 +347,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                       textAnchor="end"
                       fill={mutedForegroundColor}
                       fontSize={14}
-                      opacity={opacity}
                     >
                       {payload.value}
                     </text>
@@ -385,27 +356,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip
-                cursor={{ fill: 'transparent' }}
-                isAnimationActive={false}
-                offset={100}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div
-                        className="bg-popover border border-border p-3 rounded shadow-lg text-sm"
-                      >
-                        <p className="font-semibold text-popover-foreground mb-1">{payload[0].payload.label}</p>
-                        <p className="flex justify-between gap-4">
-                          <span>Value:</span>
-                          <span>{payload[0].value}%</span>
-                        </p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
               <Bar
                 dataKey="percentage"
                 fill={segmentColors[0]}
@@ -413,14 +363,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 radius={[4, 4, 4, 4]}
                 onClick={(entry) => handleBarClick(entry)}
                 cursor={onBarSelect ? 'pointer' : undefined}
-                onMouseEnter={(_, idx) => setHoveredIndex(idx)}
               >
                 {sortedData.map((entry, i) => {
                   const selected = isBarSelected(entry.label);
-                  const isHovered = hoveredIndex === i;
-                  const opacity = hoveredIndex === null
-                    ? (hasAnySelection ? (selected ? 1 : 0.3) : 0.9)
-                    : (isHovered ? 1 : 0.3);
+                  const opacity = hasAnySelection ? (selected ? 1 : 0.3) : 0.9;
                   return (
                     <Cell
                       key={`cell-${i}`}
@@ -434,7 +380,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   position="right"
                   formatter={(val: any) => `${val}%`}
                   offset={12}
-                  style={{ fill: mutedForegroundColor, fontSize: '14px', fontWeight: 'bold' }}
+                  style={{ fill: foregroundColor, fontSize: '14px', fontWeight: 'bold' }}
                 />
               </Bar>
             </BarChart>

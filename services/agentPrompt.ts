@@ -123,5 +123,19 @@ Consider whether this follow-up question should:
 2. Build upon the existing research context
 3. Explore a completely different angle
 
+## FOLLOW-UP METHODOLOGY GUIDANCE
+
+**"WHY" questions deserve focus groups:**
+When the user's follow-up starts with "why" or contains "why" as a key part of the question, STRONGLY PREFER run_focus_group over run_survey.
+
+Examples of "why" follow-ups that should use focus groups:
+- "Why do they feel that way?" → run_focus_group
+- "Why is that the case?" → run_focus_group
+- "But why?" → run_focus_group
+- "Why did they choose that?" → run_focus_group
+- "I wonder why..." → run_focus_group
+
+Focus groups provide the qualitative depth needed to explore motivations, emotions, and reasoning that quantitative surveys cannot capture.
+
 Choose the appropriate tool(s) based on the new question, using context from the existing canvas if relevant.`
 }

@@ -4,8 +4,11 @@ import {
   ChevronRight,
   Folder,
   MessageSquare,
+  MoreHorizontal,
+  Pencil,
   Plus,
   Settings,
+  Trash2,
   Users,
 } from "lucide-react"
 
@@ -39,6 +42,7 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 import { MonoIcon } from "@/components/MonoIcon"
+import { Input } from "@/components/ui/input"
 import type { Account, Conversation, ResearchProject } from "@/types"
 
 interface AppSidebarProps {
@@ -56,6 +60,8 @@ interface AppSidebarProps {
   conversation?: Conversation
   history?: Conversation[]
   onSelectHistory?: (conv: Conversation) => void
+  onRenameConversation?: (id: string, newTitle: string) => void
+  onDeleteConversation?: (id: string) => void
   // Research Projects
   selectedResearchProject?: ResearchProject | null
   onResearchProjectSelect?: (project: ResearchProject) => void
@@ -73,12 +79,16 @@ export function AppSidebar({
   conversation,
   history = [],
   onSelectHistory,
+  onRenameConversation,
+  onDeleteConversation,
   selectedResearchProject,
   onResearchProjectSelect,
 }: AppSidebarProps) {
   const { state, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [isProjectsOpen, setIsProjectsOpen] = React.useState(true)
+  const [editingId, setEditingId] = React.useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = React.useState("")
 
   // Combine current conversation and history into one list
   const allItems = React.useMemo(() => {
@@ -254,25 +264,84 @@ export function AppSidebar({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
-                // When expanded, show list without icons
+                // When expanded, show list with hover actions
                 allItems.map((item) => {
                   if (item.status === "idle" && item.query === "") return null
                   const isActive =
                     item.id === conversation?.id && activeView === "conversation"
+                  const isEditing = editingId === item.id
 
                   const displayTitle = item.title || item.query || "New Conversation"
+
+                  // Handle save rename
+                  const handleSaveRename = () => {
+                    if (editingTitle.trim() && onRenameConversation) {
+                      onRenameConversation(item.id, editingTitle.trim())
+                    }
+                    setEditingId(null)
+                    setEditingTitle("")
+                  }
+
                   return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => onSelectHistory?.(item)}
-                        isActive={isActive}
-                        tooltip={displayTitle}
-                        className="pl-2"
-                      >
-                        <span className="truncate">
-                          {displayTitle}
-                        </span>
-                      </SidebarMenuButton>
+                    <SidebarMenuItem key={item.id} className="group/item">
+                      {isEditing ? (
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onBlur={handleSaveRename}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveRename()
+                            if (e.key === "Escape") {
+                              setEditingId(null)
+                              setEditingTitle("")
+                            }
+                          }}
+                          autoFocus
+                          className="h-8 text-sm mx-2"
+                        />
+                      ) : (
+                        <div className="flex items-center w-full">
+                          <SidebarMenuButton
+                            onClick={() => onSelectHistory?.(item)}
+                            isActive={isActive}
+                            tooltip={displayTitle}
+                            className="pl-2 flex-1"
+                          >
+                            <span className="truncate">
+                              {displayTitle}
+                            </span>
+                          </SidebarMenuButton>
+                          {/* Hover actions */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="h-6 w-6 p-0 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity mr-1 hover:bg-muted rounded"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-32">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingId(item.id)
+                                  setEditingTitle(displayTitle)
+                                }}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onDeleteConversation?.(item.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
                     </SidebarMenuItem>
                   )
                 })
@@ -300,14 +369,67 @@ export function AppSidebar({
 export function MainHeader({
   title,
   children,
+  onTitleChange,
 }: {
   title?: string
   children?: React.ReactNode
+  onTitleChange?: (newTitle: string) => void
 }) {
+  const [isEditing, setIsEditing] = React.useState(false)
+  const [editValue, setEditValue] = React.useState(title || "")
+  const [isHovered, setIsHovered] = React.useState(false)
+
+  React.useEffect(() => {
+    setEditValue(title || "")
+  }, [title])
+
+  const handleSave = () => {
+    if (editValue.trim() && onTitleChange) {
+      onTitleChange(editValue.trim())
+    }
+    setIsEditing(false)
+  }
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
       <SidebarTrigger className="-ml-1" />
-      {title && <h1 className="text-base font-medium">{title}</h1>}
+      {title && (
+        isEditing ? (
+          <Input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSave()
+              if (e.key === "Escape") {
+                setEditValue(title)
+                setIsEditing(false)
+              }
+            }}
+            autoFocus
+            className="h-8 text-base font-medium max-w-xs"
+          />
+        ) : (
+          <div
+            className="group/title flex items-center gap-1"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <h1 className="text-base font-medium">{title}</h1>
+            {onTitleChange && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className={cn(
+                  "h-6 w-6 p-0 flex items-center justify-center hover:bg-muted rounded transition-opacity",
+                  isHovered ? "opacity-100" : "opacity-0"
+                )}
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        )
+      )}
       {children}
     </header>
   )

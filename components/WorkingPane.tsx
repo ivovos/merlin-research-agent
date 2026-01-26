@@ -1,12 +1,83 @@
 import React from 'react';
-import type { Conversation, Canvas, SelectedSegment, SelectedSegments } from '@/types';
+import type { Conversation, Canvas, SelectedSegment, SelectedSegments, StudyPlan } from '@/types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
 import { InlineCanvas } from './InlineCanvas';
 import { ClarificationMessage } from './ClarificationMessage';
+import { ClipboardList, Users, MessageSquare, BarChart3, Settings2 } from 'lucide-react';
+
+// Icon mapping for methods (same as StudyPlanPill)
+const methodIcons: Record<string, React.ElementType> = {
+  'explore-audience': BarChart3,
+  'survey': ClipboardList,
+  'focus-group': Users,
+  'message-testing': MessageSquare,
+};
+
+// Inline method link component
+interface MethodLinkProps {
+  title: string;
+  methodId: string;
+  onClick: () => void;
+}
+
+const MethodLink: React.FC<MethodLinkProps> = ({ title, methodId, onClick }) => {
+  const Icon = methodIcons[methodId] || Settings2;
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-baseline gap-1 text-foreground hover:text-primary font-semibold transition-colors cursor-pointer"
+    >
+      <Icon className="h-4 w-4 self-center relative top-[1px]" />
+      <span className="underline underline-offset-2 decoration-muted-foreground/40 hover:decoration-primary">{title}</span>
+    </button>
+  );
+};
+
+// Render inline markdown (bold, italic) with optional method link support
+function renderInlineMarkdown(
+  text: string,
+  studyPlan?: StudyPlan,
+  onMethodClick?: () => void
+): React.ReactNode[] {
+  // Split by bold markers (**text**)
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+
+      // Check if this bold text matches the study plan (with or without method prefix)
+      if (studyPlan && onMethodClick) {
+        // Direct match with title
+        const titleMatch = boldText === studyPlan.title;
+        // Match with "Focus Group: Title" format
+        const focusGroupMatch = studyPlan.methodId === 'focus-group' &&
+          boldText === `Focus Group: ${studyPlan.title}`;
+
+        if (titleMatch || focusGroupMatch) {
+          return (
+            <MethodLink
+              key={i}
+              title={boldText}
+              methodId={studyPlan.methodId}
+              onClick={onMethodClick}
+            />
+          );
+        }
+      }
+
+      return <strong key={i} className="font-semibold">{boldText}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
 
 // Simple markdown-like renderer for assistant messages
-function renderAssistantContent(content: string) {
+function renderAssistantContent(
+  content: string,
+  studyPlan?: StudyPlan,
+  onMethodClick?: () => void
+) {
   // Split by double newlines to get paragraphs
   const blocks = content.split(/\n\n+/);
 
@@ -21,17 +92,17 @@ function renderAssistantContent(content: string) {
         <ol key={blockIndex} className="list-decimal list-inside space-y-1 my-2">
           {listItems.map((item, itemIndex) => (
             <li key={itemIndex} className="text-foreground/90">
-              {item.replace(/^\d+\.\s*/, '')}
+              {renderInlineMarkdown(item.replace(/^\d+\.\s*/, ''), studyPlan, onMethodClick)}
             </li>
           ))}
         </ol>
       );
     }
 
-    // Regular paragraph
+    // Regular paragraph with inline markdown support
     return (
       <p key={blockIndex} className="text-foreground/90 leading-relaxed">
-        {block}
+        {renderInlineMarkdown(block, studyPlan, onMethodClick)}
       </p>
     );
   });
@@ -56,6 +127,10 @@ interface WorkingPaneProps {
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   /** Callback when messaging-testing method is selected */
   onMessageTestingClick?: () => void;
+  /** Callback when clicking the study plan pill to edit */
+  onEditStudyPlan?: (studyPlan: StudyPlan) => void;
+  /** Callback when editing a canvas title */
+  onCanvasTitleChange?: (canvasId: string, newTitle: string) => void;
 }
 
 export const WorkingPane: React.FC<WorkingPaneProps> = ({
@@ -73,6 +148,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onAskSegment,
   onEditQuestion,
   onMessageTestingClick,
+  onEditStudyPlan,
+  onCanvasTitleChange,
 }) => {
   // Auto-scroll to bottom when new messages arrive
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -83,6 +160,11 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
     }, 100);
     return () => clearTimeout(timeoutId);
   }, [conversation.messages]);
+
+  // Handler for "Ask another question" button - scrolls to bottom where input is
+  const handleAskAnotherQuestion = React.useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
@@ -113,11 +195,11 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
               if (msg.role === 'assistant') {
                 return (
                   <div key={msg.id} className="space-y-6 animate-in fade-in duration-500">
-                    {/* 1. Process Steps (Collapsed by default if historical) */}
+                    {/* 1. Process Steps (show progress if not all complete) */}
                     {msg.processSteps && (
                       <ProcessSteps
                         steps={msg.processSteps}
-                        isComplete={true}
+                        isComplete={msg.processSteps.every(s => s.status === 'complete')}
                         thinkingTime={msg.thinkingTime}
                       />
                     )}
@@ -136,15 +218,19 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                       />
                     )}
 
-                    {/* 3. Explanation & Metadata (only if no clarification) */}
+                    {/* 4. Explanation & Metadata (only if no clarification) */}
                     {!msg.clarification && (
                       <div className="space-y-4">
                         {/* Assistant text with max-width for readability (60ch on large, 80% on small) */}
                         <div className="max-w-[80%] lg:max-w-[60%] text-sm space-y-2">
-                          {renderAssistantContent(msg.content)}
+                          {renderAssistantContent(
+                            msg.content,
+                            msg.studyPlan,
+                            msg.studyPlan ? () => onEditStudyPlan?.(msg.studyPlan!) : undefined
+                          )}
                         </div>
 
-                        {/* 4. Inline Canvas - centered, full width within padding */}
+                        {/* 5. Inline Canvas - centered, full width within padding */}
                         {msg.canvas && (
                           <>
                             <div className="flex justify-center">
@@ -158,10 +244,19 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                                 onRemoveSegment={onRemoveSegment}
                                 onAskSegment={onAskSegment}
                                 onEditQuestion={onEditQuestion}
+                                onEditStudyPlan={onEditStudyPlan}
+                                onTitleChange={
+                                  onCanvasTitleChange
+                                    ? (newTitle) => onCanvasTitleChange(msg.canvas!.id, newTitle)
+                                    : undefined
+                                }
+                                onAskAnotherQuestion={
+                                  msg.canvas.type === 'qualitative' ? handleAskAnotherQuestion : undefined
+                                }
                                 className="w-full max-w-3xl"
                               />
                             </div>
-                            {/* 5. Follow-up suggestion from agent */}
+                            {/* 6. Follow-up suggestion from agent */}
                             {msg.canvas.followUpSuggestion && (
                               <div className="max-w-[80%] lg:max-w-[60%] text-sm text-muted-foreground">
                                 {msg.canvas.followUpSuggestion}
@@ -177,16 +272,6 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
               return null;
             })}
           </div>
-
-          {/* Current Active Processing State (Only if status is processing/not complete yet) */}
-          {conversation.status === 'processing' && (
-            <div className="space-y-4 animate-pulse">
-              <ProcessSteps
-                steps={conversation.processSteps}
-                isComplete={false}
-              />
-            </div>
-          )}
 
           {/* Scroll Anchor - extra padding for floating input */}
           <div ref={messagesEndRef} className="h-24" />

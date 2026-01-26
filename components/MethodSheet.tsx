@@ -67,8 +67,13 @@ interface MethodSheetProps {
   onClose: () => void;
   initialMethodId?: string;
   initialVariantId?: string;
+  initialFormData?: Record<string, unknown>;
+  /** Initial title for the study */
+  initialTitle?: string;
   selectedAudience?: AudienceWithDescription;
-  onSubmit?: (methodId: string, variantId: string | null, data: Record<string, unknown>) => void;
+  /** When true, indicates editing an existing study - changes button to "Re-run" */
+  isEditing?: boolean;
+  onSubmit?: (methodId: string, variantId: string | null, data: Record<string, unknown>, title: string) => void;
 }
 
 export const MethodSheet: React.FC<MethodSheetProps> = ({
@@ -76,7 +81,10 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
   onClose,
   initialMethodId,
   initialVariantId,
+  initialFormData,
+  initialTitle,
   selectedAudience,
+  isEditing = false,
   onSubmit,
 }) => {
   // Get initial variant for a method
@@ -93,7 +101,8 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     initialVariantId || getDefaultVariant(initialMethodId || 'message-testing')
   );
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>(initialFormData || {});
+  const [studyTitle, setStudyTitle] = useState<string>(initialTitle || '');
 
   // UI state
   const [methodSwitcherOpen, setMethodSwitcherOpen] = useState(false);
@@ -107,10 +116,16 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
     return getVariantConfig(currentMethod, selectedVariantId);
   }, [currentMethod, selectedVariantId]);
 
-  // Reset form when method/variant changes
+  // Reset form when method/variant changes (but keep initialFormData if same method/variant)
   useEffect(() => {
-    setFormData({});
-  }, [currentMethodId, selectedVariantId]);
+    // Don't reset if we have initialFormData for this method/variant
+    if (initialFormData && initialMethodId === currentMethodId &&
+        (initialVariantId === selectedVariantId || (!initialVariantId && !selectedVariantId))) {
+      setFormData(initialFormData);
+    } else if (!initialFormData) {
+      setFormData({});
+    }
+  }, [currentMethodId, selectedVariantId, initialFormData, initialMethodId, initialVariantId]);
 
   // Initialize with selected audience if provided
   useEffect(() => {
@@ -119,7 +134,7 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
     }
   }, [selectedAudience]);
 
-  // Update method and auto-select first variant when initialMethodId changes
+  // Update method, variant, and form data when props change (e.g., when opening to edit)
   useEffect(() => {
     if (initialMethodId) {
       setCurrentMethodId(initialMethodId);
@@ -127,7 +142,15 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
       const defaultVariant = getDefaultVariant(initialMethodId);
       setSelectedVariantId(initialVariantId || defaultVariant);
     }
-  }, [initialMethodId, initialVariantId]);
+    // Initialize form data from props
+    if (initialFormData) {
+      setFormData(initialFormData);
+    }
+    // Initialize title from props
+    if (initialTitle) {
+      setStudyTitle(initialTitle);
+    }
+  }, [initialMethodId, initialVariantId, initialFormData, initialTitle]);
 
   // Get fields to render
   const fieldsToRender = useMemo(() => {
@@ -148,10 +171,10 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
   // Handle submit
   const handleSubmit = useCallback(() => {
     if (onSubmit) {
-      onSubmit(currentMethodId, selectedVariantId, formData);
+      onSubmit(currentMethodId, selectedVariantId, formData, studyTitle);
     }
     onClose();
-  }, [currentMethodId, selectedVariantId, formData, onSubmit, onClose]);
+  }, [currentMethodId, selectedVariantId, formData, studyTitle, onSubmit, onClose]);
 
   // Get method icon
   const MethodIcon = currentMethod ? iconMap[currentMethod.icon] || MessageSquare : MessageSquare;
@@ -231,6 +254,22 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* Study title field - shown when editing */}
+          {isEditing && (
+            <div className="mb-6 space-y-2">
+              <Label htmlFor="study-title" className="text-sm font-medium">
+                Study Title
+              </Label>
+              <Input
+                id="study-title"
+                value={studyTitle}
+                onChange={(e) => setStudyTitle(e.target.value)}
+                placeholder="e.g., Mubi Retention Drivers"
+                className="text-base"
+              />
+            </div>
+          )}
+
           {/* Variant selector - compact segmented control */}
           {hasVariants && currentMethod?.entryStep && (
             <div className="mb-6">
@@ -284,7 +323,9 @@ export const MethodSheet: React.FC<MethodSheetProps> = ({
             onClick={handleSubmit}
             disabled={!isValid}
           >
-            {currentVariant?.actions?.primary?.label || currentMethod?.actions?.primary?.label || 'Submit'}
+            {isEditing
+              ? `Re-run ${currentMethod?.name || 'Study'}`
+              : currentVariant?.actions?.primary?.label || currentMethod?.actions?.primary?.label || `Run ${currentMethod?.name || 'Study'}`}
           </Button>
         </div>
       </SheetContent>
@@ -677,7 +718,7 @@ const FormField: React.FC<FormFieldProps> = ({ name, config, value, onChange }) 
                 </div>
 
                 {Object.entries(itemSchema).map(([fieldKey, fieldConfig]) => {
-                  // Only render main text fields for simplicity
+                  // Render textarea/text fields
                   if (fieldConfig.type === 'textarea' || fieldConfig.type === 'text') {
                     return (
                       <div key={fieldKey} className="space-y-2">
@@ -691,6 +732,64 @@ const FormField: React.FC<FormFieldProps> = ({ name, config, value, onChange }) 
                           }}
                           className="min-h-[80px] resize-none"
                         />
+                      </div>
+                    );
+                  }
+                  // Render option-list fields (answer options)
+                  if (fieldConfig.type === 'option-list') {
+                    const options = (item[fieldKey] as string[]) || [];
+                    return (
+                      <div key={fieldKey} className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">{fieldConfig.label}</Label>
+                        <div className="space-y-2">
+                          {options.map((opt, optIdx) => (
+                            <div key={optIdx} className="flex items-center gap-2">
+                              <Input
+                                value={opt}
+                                onChange={(e) => {
+                                  const newOptions = [...options];
+                                  newOptions[optIdx] = e.target.value;
+                                  const newItems = [...items];
+                                  newItems[idx] = { ...newItems[idx], [fieldKey]: newOptions };
+                                  onChange(newItems);
+                                }}
+                                className="h-8 text-sm"
+                                placeholder={`Option ${optIdx + 1}`}
+                              />
+                              {options.length > 2 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newOptions = options.filter((_, i) => i !== optIdx);
+                                    const newItems = [...items];
+                                    newItems[idx] = { ...newItems[idx], [fieldKey]: newOptions };
+                                    onChange(newItems);
+                                  }}
+                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive flex-shrink-0"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                          {options.length < (fieldConfig.maxItems || 10) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newOptions = [...options, ''];
+                                const newItems = [...items];
+                                newItems[idx] = { ...newItems[idx], [fieldKey]: newOptions };
+                                onChange(newItems);
+                              }}
+                              className="h-7 text-xs text-muted-foreground"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add option
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   }

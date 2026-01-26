@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { MessageSquare, Search, Plus, ChevronDown, Check } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,21 +96,21 @@ export const MessageTestingModal: React.FC<MessageTestingModalProps> = ({
   const isValid = testName.trim().length > 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader className="flex flex-row items-start gap-4">
+    <Sheet open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+      <SheetContent className="w-[60%] sm:max-w-none flex flex-col overflow-hidden">
+        <SheetHeader className="flex flex-row items-start gap-4 flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted">
             <MessageSquare className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="flex-1">
-            <DialogTitle className="text-xl">Message Testing</DialogTitle>
-            <DialogDescription>
+            <SheetTitle className="text-xl">Message Testing</SheetTitle>
+            <SheetDescription>
               Compare messages side-by-side
-            </DialogDescription>
+            </SheetDescription>
           </div>
-        </DialogHeader>
+        </SheetHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 flex-1 overflow-y-auto">
           {/* Test Name */}
           <div className="space-y-2">
             <Input
@@ -271,7 +271,7 @@ export const MessageTestingModal: React.FC<MessageTestingModalProps> = ({
             Continue
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };

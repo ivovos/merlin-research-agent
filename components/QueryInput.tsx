@@ -522,8 +522,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
               onFocus={() => setIsAnimating(false)}
               onBlur={() => !query && setIsAnimating(true)}
               rows={1}
-              className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-2 text-base placeholder:text-muted-foreground text-foreground leading-normal"
-              style={{ height: '40px', lineHeight: '24px' }}
+              className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none resize-none py-1.5 text-lg placeholder:text-muted-foreground text-foreground leading-relaxed"
             />
 
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -572,7 +571,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           {/* Backdrop for syntax highlighting - EXACTLY matching textarea styles */}
           <div
             aria-hidden="true"
-            className="absolute top-5 left-5 right-5 text-xl leading-[1.4] pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
+            className="absolute top-5 left-5 right-5 text-lg leading-relaxed pointer-events-none whitespace-pre-wrap break-words text-foreground font-sans text-left"
             style={{ minHeight: '28px' }}
           >
             {query.split(/([@\/][\w-]+)/g).map((part, i) => {
@@ -594,8 +593,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
             onBlur={() => !query && setIsAnimating(true)}
             rows={1}
             spellCheck={false}
-            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[28px] text-xl placeholder:text-muted-foreground text-transparent caret-foreground text-left"
-            style={{ lineHeight: '1.4' }}
+            className="w-full relative z-10 bg-transparent border-none focus:ring-0 focus:outline-none resize-none p-0 mb-4 max-h-40 min-h-[28px] text-lg leading-relaxed placeholder:text-muted-foreground text-transparent caret-foreground text-left"
           />
 
           <div className="flex items-center justify-between">

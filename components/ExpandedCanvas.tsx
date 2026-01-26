@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import type { Canvas, SelectedSegments, Conversation, QuestionResult } from '@/types';
+import type { Canvas, SelectedSegments, Conversation, QuestionResult, QualitativeTheme } from '@/types';
 import { QuestionCard } from './QuestionCard';
 import {
   X,
@@ -36,52 +36,53 @@ interface ExpandedCanvasProps {
   onRemoveSegment: (questionId: string, answerLabel: string) => void;
 }
 
-// Generate a short title from a question
+// Generate a short, concise title from a question
+// Converts verbose questions into headline-style phrases
+// e.g., "Of the following factors would most likely lead you to cancel your Mubi subscription"
+//    -> "Factors in cancelling subscription"
 function generateShortTitle(question: string): string {
-  // Remove question marks and common question words
   let title = question
+    // Remove question marks
     .replace(/\?/g, '')
+    // Remove leading question words
     .replace(/^(What|How|Why|When|Where|Who|Which|Do|Does|Is|Are|Can|Could|Would|Should)\s+/i, '')
-    .replace(/^(is|are|do|does|the|a|an)\s+/i, '');
+    // Remove "of the following" phrases
+    .replace(/of the following\s+/gi, '')
+    // Remove filler phrases about likelihood/probability
+    .replace(/would most likely\s+/gi, '')
+    .replace(/most likely\s+/gi, '')
+    .replace(/would make you more likely to\s+/gi, 'to ')
+    .replace(/make you more likely to\s+/gi, 'to ')
+    .replace(/are you to\s+/gi, 'of ')
+    .replace(/likely are you to\s+/gi, 'likelihood of ')
+    .replace(/likely is it that you will\s+/gi, 'likelihood of ')
+    // Remove timeframes
+    .replace(/in the next \d+ (months?|years?|weeks?|days?)/gi, '')
+    .replace(/over the next \d+ (months?|years?|weeks?|days?)/gi, '')
+    // Convert "lead you to X" to "X-ing"
+    .replace(/lead you to cancel/gi, 'cancelling')
+    .replace(/lead you to (\w+)/gi, '$1ing')
+    // Remove "your" before brand names but keep context
+    .replace(/your (\w+) subscription/gi, '$1 subscription')
+    .replace(/your (\w+) account/gi, '$1 account')
+    // Remove leading articles and filler
+    .replace(/^(the|a|an|type of|types of)\s+/gi, '')
+    // Remove "that would" phrases
+    .replace(/that would\s+/gi, 'that ')
+    // Clean up "keep your X" to "staying with X"
+    .replace(/keep your/gi, 'staying with')
+    // Simplify "new content" phrases
+    .replace(/new content would/gi, 'content to')
+    // Remove trailing "to a lower tier"
+    .replace(/to a lower tier/gi, '')
+    // Clean up double spaces
+    .replace(/\s+/g, ' ')
+    .trim();
 
   // Capitalize first letter
   title = title.charAt(0).toUpperCase() + title.slice(1);
 
   return title;
-}
-
-// Generate executive summary from all canvas data
-function generateExecutiveSummary(allCanvases: Canvas[]): string {
-  // Collect all abstracts from canvases
-  const abstracts = allCanvases
-    .map(c => c.abstract)
-    .filter((a): a is string => !!a);
-
-  // If we have abstracts, combine the unique ones
-  if (abstracts.length > 0) {
-    // Use the most recent/comprehensive abstract, or combine if they're different
-    const uniqueAbstracts = [...new Set(abstracts)];
-    if (uniqueAbstracts.length === 1) {
-      return uniqueAbstracts[0];
-    }
-    // If multiple different abstracts, use the last one (most recent)
-    return abstracts[abstracts.length - 1];
-  }
-
-  // Collect key insights as fallback
-  const keyInsights = allCanvases
-    .map(c => c.keyInsight)
-    .filter((k): k is string => !!k);
-
-  if (keyInsights.length > 0) {
-    return keyInsights[keyInsights.length - 1];
-  }
-
-  // Generate a basic summary from all canvases
-  const totalQuestions = allCanvases.reduce((sum, c) => sum + (c.questions?.length || 0), 0);
-  const totalRespondents = allCanvases.reduce((sum, c) => sum + (c.respondents || 0), 0);
-
-  return `This analysis covers ${totalQuestions} key questions across ${totalRespondents.toLocaleString()} respondents, providing insights into audience preferences and behaviors.`;
 }
 
 // Generate canvas title from all canvases
@@ -102,13 +103,14 @@ function generateCanvasTitle(conversation: Conversation | undefined, allCanvases
   return 'Audience Exploration';
 }
 
-// Evidence item structure for ToC
+// Evidence item structure for ToC - supports both questions and themes
 interface EvidenceItem {
   id: string;
   index: number;
   shortTitle: string;
-  question: string;
-  data: QuestionResult;
+  title: string; // Full title (question text or theme topic)
+  type: 'question' | 'theme';
+  data: QuestionResult | QualitativeTheme;
   canvasId: string;
 }
 
@@ -124,6 +126,7 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [isTocVisible, setIsTocVisible] = useState(false);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Extract ALL canvases from conversation messages
@@ -140,21 +143,39 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
     return canvases.length > 0 ? canvases : [canvas];
   }, [conversation, canvas]);
 
-  // Flatten all questions into evidence items
+  // Flatten all questions and themes into evidence items
   const evidenceItems = useMemo(() => {
     const items: EvidenceItem[] = [];
     let globalIndex = 0;
 
     allCanvases.forEach((c) => {
-      if (c.questions) {
+      // Add questions (quantitative)
+      if (c.questions && c.questions.length > 0) {
         c.questions.forEach((q) => {
           globalIndex++;
           items.push({
-            id: `${c.id}-${q.id}`,
+            id: `${c.id}-q-${q.id}`,
             index: globalIndex,
             shortTitle: generateShortTitle(q.question),
-            question: q.question,
+            title: q.question,
+            type: 'question',
             data: q,
+            canvasId: c.id,
+          });
+        });
+      }
+
+      // Add themes (qualitative/focus groups)
+      if (c.themes && c.themes.length > 0) {
+        c.themes.forEach((theme) => {
+          globalIndex++;
+          items.push({
+            id: `${c.id}-t-${theme.id}`,
+            index: globalIndex,
+            shortTitle: theme.topic.length > 40 ? theme.topic.slice(0, 37) + '...' : theme.topic,
+            title: theme.topic,
+            type: 'theme',
+            data: theme,
             canvasId: c.id,
           });
         });
@@ -178,9 +199,8 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
     return Array.from(audienceMap.values());
   }, [allCanvases]);
 
-  // Generate title and summary from ALL canvases in the conversation
+  // Generate title from ALL canvases in the conversation
   const canvasTitle = generateCanvasTitle(conversation, allCanvases);
-  const executiveSummary = generateExecutiveSummary(allCanvases);
 
   // Handle escape key
   useEffect(() => {
@@ -193,41 +213,55 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  // Track scroll position to highlight active ToC item
+  // Track scroll position to highlight active ToC item (throttled to prevent excessive re-renders)
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
+    let rafId: number | null = null;
+    let lastActiveItem: string | null = null;
+
     const handleScroll = () => {
-      const containerRect = container.getBoundingClientRect();
+      // Throttle using requestAnimationFrame
+      if (rafId) return;
 
-      // Find the item that's most in view
-      let closestItem: string | null = null;
-      let closestDistance = Infinity;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const containerRect = container.getBoundingClientRect();
 
-      itemRefs.current.forEach((element, id) => {
-        const rect = element.getBoundingClientRect();
-        const relativeTop = rect.top - containerRect.top;
+        // Find the item that's most in view
+        let closestItem: string | null = null;
+        let closestDistance = Infinity;
 
-        // Check if element is in view (within top 40% of container)
-        if (relativeTop >= -100 && relativeTop < containerRect.height * 0.4) {
-          const distance = Math.abs(relativeTop);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestItem = id;
+        itemRefs.current.forEach((element, id) => {
+          const rect = element.getBoundingClientRect();
+          const relativeTop = rect.top - containerRect.top;
+
+          // Check if element is in view (within top 40% of container)
+          if (relativeTop >= -100 && relativeTop < containerRect.height * 0.4) {
+            const distance = Math.abs(relativeTop);
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestItem = id;
+            }
           }
+        });
+
+        // Only update state if the active item has changed
+        if (closestItem && closestItem !== lastActiveItem) {
+          lastActiveItem = closestItem;
+          setActiveItemId(closestItem);
         }
       });
-
-      if (closestItem) {
-        setActiveItemId(closestItem);
-      }
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial check
 
-    return () => container.removeEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [evidenceItems]);
 
   // Scroll to item when clicking ToC
@@ -367,48 +401,53 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
         </div>
       )}
 
-      {/* Main Content with Three Columns */}
+      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left spacer for symmetry */}
-        <div className="hidden lg:block w-24 flex-shrink-0" />
-
         {/* Main scrollable content */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto scrollbar-hide"
         >
-          <div className="max-w-4xl lg:max-w-3xl mx-auto px-6 py-6">
+          <div className="max-w-4xl mx-auto px-6 py-6">
             {/* Title Section */}
             <h1 className="text-lg font-semibold text-foreground mb-4">
               {canvasTitle}
             </h1>
 
-            {/* Audience Badge */}
+            {/* Audience Section */}
             {audiences.length > 0 && (
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-sm text-muted-foreground">Audience</span>
-                {audiences.map((audience, i) => (
-                  <Badge key={i} variant="secondary" className="gap-2 px-3 py-1.5">
-                    <Users className="w-3.5 h-3.5" />
-                    {audience.name}
-                  </Badge>
-                ))}
+              <div className="mb-8">
+                <h2 className="text-sm font-semibold text-foreground mb-3">
+                  Audience
+                </h2>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {audiences.map((audience, i) => (
+                    <Badge key={i} variant="secondary" className="gap-2 px-3 py-1.5">
+                      <Users className="w-3.5 h-3.5" />
+                      {audience.name}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Executive Summary */}
-            <div className="mb-6">
-              <h2 className="text-sm font-semibold text-foreground mb-2">
-                Executive Summary
+            {/* Summary Section */}
+            <div className="mb-8">
+              <h2 className="text-sm font-semibold text-foreground mb-3">
+                Summary
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-[600px]">
-                {executiveSummary}
-              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => console.log('Summarise findings')}
+              >
+                Summarise findings
+              </Button>
             </div>
 
-            {/* Key Data Points Header */}
+            {/* Key Findings Section */}
             <h2 className="text-sm font-semibold text-foreground mb-6">
-              Key data points
+              Key findings
             </h2>
 
             {/* Evidence Cards with Left-aligned Section Titles */}
@@ -423,21 +462,25 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                   )}
                 >
                   {/* Section Title - Left column */}
-                  <div className="w-44 flex-shrink-0 pt-1">
-                    <span className="text-sm text-muted-foreground leading-snug">
+                  <div className="w-44 flex-shrink-0 pt-1 text-right">
+                    <span className="text-sm text-muted-foreground leading-snug block">
                       {item.index}.0&nbsp;&nbsp;{item.shortTitle}
                     </span>
                   </div>
 
                   {/* Evidence Card - Right column */}
                   <div className="flex-1 min-w-0">
-                    <QuestionCard
-                      data={item.data}
-                      index={item.index - 1}
-                      canvasId={item.canvasId}
-                      onEditQuestion={onEditQuestion}
-                      compact
-                    />
+                    {item.type === 'question' ? (
+                      <QuestionCard
+                        data={item.data as QuestionResult}
+                        index={item.index - 1}
+                        canvasId={item.canvasId}
+                        onEditQuestion={onEditQuestion}
+                        compact
+                      />
+                    ) : (
+                      <ExpandedThemeCard theme={item.data as QualitativeTheme} />
+                    )}
                   </div>
                 </div>
               ))}
@@ -451,9 +494,22 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           </div>
         </div>
 
-        {/* Right Floating Table of Contents */}
-        <div className="hidden lg:block w-72 flex-shrink-0 pr-24">
-          <div className="sticky top-[200px] mt-[calc(50vh-150px)]">
+        {/* Right edge hover trigger zone */}
+        <div
+          className="fixed right-0 top-0 bottom-0 w-8 z-40"
+          onMouseEnter={() => setIsTocVisible(true)}
+        />
+
+        {/* Sliding Table of Contents */}
+        <div
+          className={cn(
+            "fixed right-0 top-14 bottom-0 w-64 bg-background/95 backdrop-blur-sm border-l border-border z-50",
+            "transition-transform duration-300 ease-in-out",
+            isTocVisible ? "translate-x-0" : "translate-x-full"
+          )}
+          onMouseLeave={() => setIsTocVisible(false)}
+        >
+          <div className="p-6 pt-8">
             <h3 className="text-xs font-semibold text-foreground mb-3">
               Table of contents
             </h3>
@@ -476,6 +532,67 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Theme card for expanded canvas (focus group findings)
+const ExpandedThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => {
+  const [showAllQuotes, setShowAllQuotes] = useState(false);
+
+  const sentimentColors = {
+    positive: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    mixed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  };
+
+  const displayedQuotes = showAllQuotes ? theme.quotes : theme.quotes.slice(0, 2);
+
+  return (
+    <div className="bg-background border border-border rounded-lg p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <span
+          className={cn(
+            'text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full',
+            sentimentColors[theme.sentiment]
+          )}
+        >
+          {theme.sentiment}
+        </span>
+        <span className="text-sm text-muted-foreground">
+          {theme.quotes.length} participant{theme.quotes.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <h4 className="text-base font-semibold text-foreground mb-2">{theme.topic}</h4>
+      <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+        {theme.summary}
+      </p>
+
+      {/* Quotes */}
+      <div className="space-y-3 pl-4 border-l-2 border-primary/20">
+        {displayedQuotes.map((quote, qIndex) => (
+          <div key={qIndex}>
+            <p className="text-sm text-foreground italic leading-relaxed">
+              "{quote.text}"
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              — {quote.attribution}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Show more/less toggle */}
+      {theme.quotes.length > 2 && (
+        <button
+          onClick={() => setShowAllQuotes(!showAllQuotes)}
+          className="mt-3 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+        >
+          {showAllQuotes ? 'Show less' : `View all ${theme.quotes.length} responses`}
+        </button>
+      )}
     </div>
   );
 };

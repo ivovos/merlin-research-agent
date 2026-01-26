@@ -1,5 +1,15 @@
 import type { Audience } from './audience';
 
+// Study plan captures the method configuration used to generate the canvas
+export interface StudyPlan {
+  title: string; // Short, concise title for this study (e.g., "Mubi Retention Drivers")
+  methodId: string;
+  methodName: string;
+  variantId?: string | null;
+  variantName?: string;
+  formData: Record<string, unknown>;
+}
+
 export interface QuestionOption {
   label: string;
   percentage: number;
@@ -38,6 +48,7 @@ export interface Canvas {
   themes?: QualitativeTheme[];
   createdAt: Date;
   version?: number; // For canvas versioning
+  studyPlan?: StudyPlan; // Method configuration used to generate this canvas
 }
 
 // Backwards compatibility alias

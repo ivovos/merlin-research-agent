@@ -6,8 +6,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { useConversation, useHistory, useAudiences, useSegmentSelection } from '@/hooks'
-import { generateResearchWithAgent, isQualitativeQuery, generateConversationTitle } from '@/services'
-import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments } from '@/types'
+import { selectResearchTool, executeSelectedTool, isQualitativeQuery, generateConversationTitle } from '@/services'
+import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments, StudyPlan } from '@/types'
 import {
   mockAccounts,
   mubiAccount,
@@ -24,6 +24,7 @@ import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
+import { MethodSheet } from '@/components/MethodSheet'
 import { Button } from '@/components/ui/button'
 import { Layers } from 'lucide-react'
 
@@ -63,6 +64,9 @@ const App: React.FC = () => {
   // Message Testing modal state
   const [showMessageTestingModal, setShowMessageTestingModal] = useState(false)
 
+  // Study Plan editing state
+  const [editingStudyPlan, setEditingStudyPlan] = useState<StudyPlan | null>(null)
+
   // Get all audiences for the account (includes Electric Twin generic audiences)
   const combinedAudiences = useMemo(() => {
     return getAllAudiences(currentAccount)
@@ -77,130 +81,240 @@ const App: React.FC = () => {
 
   const hasCanvases = conversationCanvases.length > 0
 
-  // Start research simulation
+  // Start research simulation with multi-phase approach
   const startSimulation = useCallback(async (query: string) => {
-    const isQualitative = isQualitativeQuery(query)
-    const startingSteps = isQualitative ? (initialQualitativeSteps || []) : (initialProcessSteps || [])
     const startTime = Date.now()
 
-    // Update conversation state
-    const newMessage: Message = {
+    // ===== PHASE 1: User message + initial planning =====
+    const userMessage: Message = {
       id: `msg_${Date.now()}`,
       role: 'user',
       content: query,
     }
 
-    // Initialize with first step in-progress
-    const initialSteps = startingSteps.map((s, i) => ({
-      ...s,
-      status: i === 0 ? 'in-progress' as const : 'pending' as const,
-    }))
+    // Initial planning steps
+    const planningSteps = [
+      { id: 'plan_1', label: 'Analyzing your question', status: 'in-progress' as const },
+      { id: 'plan_2', label: 'Selecting research method', status: 'pending' as const },
+    ]
+
+    // Create initial planning message (no pill yet)
+    const planningMessageId = `msg_${Date.now()}_planning`
+    const planningMessage: Message = {
+      id: planningMessageId,
+      role: 'assistant',
+      content: '',
+      processSteps: planningSteps,
+    }
 
     setConversation((prev) => ({
       ...prev,
       query,
-      messages: [...prev.messages, newMessage],
+      messages: [...prev.messages, userMessage, planningMessage],
       status: 'processing',
-      processSteps: initialSteps,
+      processSteps: planningSteps,
     }))
 
-    // Animate through steps while API calls run
-    let currentStepIndex = 0
-    const stepInterval = setInterval(() => {
-      currentStepIndex++
-      if (currentStepIndex < startingSteps.length) {
-        setConversation((prev) => ({
-          ...prev,
-          processSteps: prev.processSteps.map((s, i) => ({
-            ...s,
-            status: i < currentStepIndex ? 'complete' as const
-              : i === currentStepIndex ? 'in-progress' as const
-              : 'pending' as const,
-          })),
-        }))
-      }
-    }, 800) // Progress every 800ms
-
-    // Generate title and research data in parallel using new agent API
-    const [title, agentResult] = await Promise.all([
+    // Get tool selection and title in parallel
+    const [title, toolSelection] = await Promise.all([
       generateConversationTitle(query),
-      generateResearchWithAgent(query, conversation.canvas),
+      selectResearchTool(query, conversation.canvas),
     ])
 
-    // Stop the step animation
-    clearInterval(stepInterval)
-
-    const thinkingTime = Math.round((Date.now() - startTime) / 1000)
     console.log('Generated title:', title)
-    console.log('Agent result:', agentResult)
-    console.log('Thinking time:', thinkingTime, 's')
+    console.log('Tool selection:', toolSelection)
 
-    // Handle clarification request from agent
-    if (agentResult.type === 'clarification' && agentResult.clarification) {
-      const clarificationMessage: Message = {
-        id: `msg_${Date.now()}_clarification`,
-        role: 'assistant',
-        content: agentResult.clarification.missing_info,
-        processSteps: [
-          { id: 'step_1', label: 'Analyzing query', status: 'complete' as const },
-          { id: 'step_2', label: 'Identifying requirements', status: 'complete' as const },
-        ],
-        clarification: agentResult.clarification,
-        thinkingTime: thinkingTime,
-      }
+    // Animate planning step 2 (selecting method)
+    const planningStep2 = [
+      { id: 'plan_1', label: 'Analyzing your question', status: 'complete' as const },
+      { id: 'plan_2', label: 'Selecting research method', status: 'in-progress' as const },
+    ]
+    setConversation((prev) => ({
+      ...prev,
+      title,
+      processSteps: planningStep2,
+      messages: prev.messages.map(msg =>
+        msg.id === planningMessageId ? { ...msg, processSteps: planningStep2 } : msg
+      ),
+    }))
 
+    // Brief delay to show step 2 animating
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    // Complete planning steps
+    const planningComplete = [
+      { id: 'plan_1', label: 'Analyzing your question', status: 'complete' as const },
+      { id: 'plan_2', label: 'Selecting research method', status: 'complete' as const },
+    ]
+    setConversation((prev) => ({
+      ...prev,
+      processSteps: planningComplete,
+      messages: prev.messages.map(msg =>
+        msg.id === planningMessageId ? { ...msg, processSteps: planningComplete } : msg
+      ),
+    }))
+
+    // Brief pause after planning completes
+    await new Promise(resolve => setTimeout(resolve, 400))
+
+    // Handle clarification request
+    if (toolSelection.type === 'clarification') {
+      const thinkingTime = Math.round((Date.now() - startTime) / 1000)
+
+      // Update planning message with clarification
       setConversation((prev) => ({
         ...prev,
-        title,
         status: 'complete',
-        explanation: agentResult.clarification!.missing_info,
+        explanation: toolSelection.clarification.missing_info,
         thinkingTime: thinkingTime,
-        processSteps: clarificationMessage.processSteps!,
-        messages: [...prev.messages, clarificationMessage],
+        messages: prev.messages.map(msg =>
+          msg.id === planningMessageId
+            ? {
+                ...msg,
+                content: toolSelection.clarification.missing_info,
+                clarification: toolSelection.clarification,
+                thinkingTime: thinkingTime,
+              }
+            : msg
+        ),
       }))
       return
     }
 
-    // Handle research results
+    // ===== PHASE 2: Study Design message =====
+    const { selection } = toolSelection
+
+    // Format display title: "Focus Group: Title" for focus groups, just "Title" for others
+    // This is used in the message content - the MethodLink will parse this and show with icon
+    const displayTitle = selection.studyPlan.methodId === 'focus-group'
+      ? `Focus Group: ${selection.studyPlan.title}`
+      : selection.studyPlan.title
+
+    // Update planning message to show study design with title link
+    setConversation((prev) => ({
+      ...prev,
+      status: 'processing',
+      messages: prev.messages.map(msg =>
+        msg.id === planningMessageId
+          ? {
+              ...msg,
+              content: `I've created **${displayTitle}** to investigate this. Now conducting the research...`,
+              studyPlan: selection.studyPlan, // Keep original studyPlan with clean title
+              studyPlanEditable: false, // No edit during execution
+            }
+          : msg
+      ),
+    }))
+
+    // Brief pause to show the survey design before starting execution
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    // ===== PHASE 3: Execution with animated steps =====
+    const executionSteps = selection.processSteps.map((label, i) => ({
+      id: `exec_${i}`,
+      label,
+      status: i === 0 ? 'in-progress' as const : 'pending' as const,
+    }))
+
+    // Update to show execution steps
+    setConversation((prev) => ({
+      ...prev,
+      processSteps: executionSteps,
+      messages: prev.messages.map(msg =>
+        msg.id === planningMessageId
+          ? { ...msg, processSteps: executionSteps }
+          : msg
+      ),
+    }))
+
+    // Animate through execution steps while API runs
+    let currentStepIndex = 0
+    const stepInterval = setInterval(() => {
+      currentStepIndex++
+      if (currentStepIndex < selection.processSteps.length) {
+        setConversation((prev) => {
+          const updatedSteps = prev.processSteps.map((s, i) => ({
+            ...s,
+            status: i < currentStepIndex ? 'complete' as const
+              : i === currentStepIndex ? 'in-progress' as const
+              : 'pending' as const,
+          }))
+
+          return {
+            ...prev,
+            processSteps: updatedSteps,
+            messages: prev.messages.map(msg =>
+              msg.id === planningMessageId
+                ? { ...msg, processSteps: updatedSteps }
+                : msg
+            ),
+          }
+        })
+      }
+    }, 800)
+
+    // Execute the research tool
+    const agentResult = await executeSelectedTool(selection, query)
+
+    // Stop animation
+    clearInterval(stepInterval)
+
+    const thinkingTime = Math.round((Date.now() - startTime) / 1000)
+    console.log('Agent result:', agentResult)
+    console.log('Thinking time:', thinkingTime, 's')
+
+    // Handle no results
     const canvas = agentResult.canvases?.[0]
     if (!canvas) {
       console.error('No canvas returned from agent')
       return
     }
 
-    // Use API-returned steps or fallback
-    const finalSteps = (agentResult.processSteps || startingSteps.map(s => s.label)).map((label, i) => ({
-      id: `step_${i}`,
-      label: typeof label === 'string' ? label : (label as any).label,
+    // ===== PHASE 4: Results =====
+    // Mark all steps complete
+    const completedSteps = selection.processSteps.map((label, i) => ({
+      id: `exec_${i}`,
+      label,
       status: 'complete' as const,
     }))
 
-    // Create assistant message with results
-    const assistantMessage: Message = {
-      id: `msg_${Date.now()}_assistant`,
+    // Create results message with canvas
+    const resultsMessage: Message = {
+      id: `msg_${Date.now()}_results`,
       role: 'assistant',
-      content: agentResult.explanation || `Research completed for ${canvas.audience.name}`,
-      processSteps: finalSteps,
+      content: agentResult.explanation || `Here are the findings from ${canvas.audience.name}.`,
       canvas: canvas,
       thinkingTime: thinkingTime,
     }
 
-    // Clear any existing segment selection when new canvas is created
+    // Clear segment selection
     clearSegments()
 
-    // Update with results
-    setConversation((prev) => ({
-      ...prev,
-      title,
-      status: 'complete',
-      explanation: agentResult.explanation || '',
-      thinkingTime: thinkingTime,
-      processSteps: finalSteps,
-      messages: [...prev.messages, assistantMessage],
-      canvas: canvas,
-    }))
+    // Update survey design message to enable edit, complete steps, and sync studyPlan with generated questions
+    setConversation((prev) => {
+      const updatedMessages = prev.messages.map(msg =>
+        msg.id === planningMessageId
+          ? {
+              ...msg,
+              processSteps: completedSteps,
+              studyPlanEditable: true,
+              thinkingTime,
+              // Sync studyPlan with the one from canvas that has generated questions
+              studyPlan: canvas.studyPlan || msg.studyPlan,
+            }
+          : msg
+      )
 
-    // Don't auto-expand canvas - show inline instead
+      return {
+        ...prev,
+        status: 'complete',
+        explanation: agentResult.explanation || '',
+        thinkingTime: thinkingTime,
+        processSteps: completedSteps,
+        messages: [...updatedMessages, resultsMessage],
+        canvas: canvas,
+      }
+    })
   }, [conversation.canvas, setConversation, clearSegments])
 
   // Handle follow-up questions
@@ -232,6 +346,42 @@ const App: React.FC = () => {
     clearSegments()
     setActiveView('conversation')
   }, [conversation, addToHistory, setConversation, clearSegments])
+
+  // Rename conversation (current or in history)
+  const handleRenameConversation = useCallback((id: string, newTitle: string) => {
+    if (conversation.id === id) {
+      setConversation(prev => ({ ...prev, title: newTitle }))
+    }
+    // Also update in history if it exists there
+    // Note: addToHistory hook would need to expose an update method
+    // For now, just update current conversation
+  }, [conversation.id, setConversation])
+
+  // Delete conversation from history
+  const handleDeleteConversation = useCallback((id: string) => {
+    // If deleting current conversation, start new
+    if (conversation.id === id) {
+      startNewConversation()
+    }
+    // Note: history hook would need to expose a delete method
+    // For now, this handles the current conversation case
+  }, [conversation.id, startNewConversation])
+
+  // Handle canvas title change
+  const handleCanvasTitleChange = useCallback((canvasId: string, newTitle: string) => {
+    setConversation(prev => ({
+      ...prev,
+      messages: prev.messages.map(msg =>
+        msg.canvas?.id === canvasId
+          ? { ...msg, canvas: { ...msg.canvas, title: newTitle } }
+          : msg
+      ),
+      // Also update conversation.canvas if it's the same
+      canvas: prev.canvas?.id === canvasId
+        ? { ...prev.canvas, title: newTitle }
+        : prev.canvas,
+    }))
+  }, [setConversation])
 
   const handleAudiencesClick = useCallback(() => {
     setActiveView('audiences')
@@ -298,6 +448,21 @@ const App: React.FC = () => {
     setShowMessageTestingModal(false)
   }, [])
 
+  // Study Plan editing handlers
+  const handleEditStudyPlan = useCallback((studyPlan: StudyPlan) => {
+    setEditingStudyPlan(studyPlan)
+  }, [])
+
+  const handleStudyPlanClose = useCallback(() => {
+    setEditingStudyPlan(null)
+  }, [])
+
+  const handleStudyPlanSubmit = useCallback((methodId: string, variantId: string | null, formData: Record<string, unknown>, title: string) => {
+    console.log('Re-run study plan:', { methodId, variantId, formData, title })
+    // TODO: Re-run the research with updated parameters
+    setEditingStudyPlan(null)
+  }, [])
+
   // Render
   return (
     <SidebarProvider>
@@ -313,6 +478,8 @@ const App: React.FC = () => {
         conversation={conversation}
         history={history}
         onSelectHistory={handleSelectHistory}
+        onRenameConversation={handleRenameConversation}
+        onDeleteConversation={handleDeleteConversation}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Main content area */}
@@ -328,6 +495,7 @@ const App: React.FC = () => {
               isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
               onClearSegments={clearSegments}
               onRemoveSegment={removeSegment}
+              onEditStudyPlan={handleEditStudyPlan}
             />
           ) : (
             <>
@@ -339,6 +507,11 @@ const App: React.FC = () => {
                     ? selectedAudience.name
                     : activeView === 'conversation' && conversation.title
                     ? conversation.title
+                    : undefined
+                }
+                onTitleChange={
+                  activeView === 'conversation' && conversation.title
+                    ? (newTitle) => handleRenameConversation(conversation.id, newTitle)
                     : undefined
                 }
               >
@@ -399,6 +572,8 @@ const App: React.FC = () => {
                     onClearSegments={clearSegments}
                     onRemoveSegment={removeSegment}
                     onMessageTestingClick={handleMessageTestingClick}
+                    onEditStudyPlan={handleEditStudyPlan}
+                    onCanvasTitleChange={handleCanvasTitleChange}
                   />
                 )}
               </div>
@@ -422,6 +597,18 @@ const App: React.FC = () => {
           // Handle the form submission - could start a simulation or save test config
           setShowMessageTestingModal(false)
         }}
+      />
+
+      {/* Study Plan Edit Sheet */}
+      <MethodSheet
+        isOpen={!!editingStudyPlan}
+        onClose={handleStudyPlanClose}
+        initialMethodId={editingStudyPlan?.methodId}
+        initialVariantId={editingStudyPlan?.variantId ?? undefined}
+        initialFormData={editingStudyPlan?.formData}
+        initialTitle={editingStudyPlan?.title}
+        isEditing={true}
+        onSubmit={handleStudyPlanSubmit}
       />
     </SidebarProvider>
   )

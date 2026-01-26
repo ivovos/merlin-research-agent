@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Canvas, QuestionResult, QualitativeTheme, SelectedSegment, SelectedSegments } from '@/types';
+import type { Canvas, QuestionResult, QualitativeTheme, SelectedSegment, SelectedSegments, StudyPlan } from '@/types';
 import type { BrandColors } from '@/types/audience';
 import {
   Maximize2,
@@ -20,6 +20,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +54,12 @@ interface InlineCanvasProps {
   onEditQuestion?: (questionId: string, newText: string, segments: string[]) => void;
   /** Brand colors for chart theming */
   brandColors?: BrandColors;
+  /** Callback when editing the study plan */
+  onEditStudyPlan?: (studyPlan: StudyPlan) => void;
+  /** Callback when editing the canvas title */
+  onTitleChange?: (newTitle: string) => void;
+  /** Callback when user wants to ask another question (for focus groups) */
+  onAskAnotherQuestion?: () => void;
 }
 
 export const InlineCanvas: React.FC<InlineCanvasProps> = ({
@@ -66,9 +73,29 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
   onRemoveSegment,
   onAskSegment,
   onEditQuestion,
+  onEditStudyPlan,
+  onTitleChange,
+  onAskAnotherQuestion,
 }) => {
   // Only show selection UI if it belongs to this canvas
   const hasSelection = isSelectionForThisCanvas && selectedSegments && selectedSegments.segments.length > 0;
+
+  // Title editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState(canvas.title);
+  const [isTitleHovered, setIsTitleHovered] = useState(false);
+
+  // Update edit value when canvas title changes
+  React.useEffect(() => {
+    setEditTitleValue(canvas.title);
+  }, [canvas.title]);
+
+  const handleTitleSave = () => {
+    if (editTitleValue.trim() && onTitleChange) {
+      onTitleChange(editTitleValue.trim());
+    }
+    setIsEditingTitle(false);
+  };
 
   const handleCopy = () => {
     const text = `${canvas.title}\n\n${canvas.abstract}`;
@@ -102,9 +129,43 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
             <FileText className="w-4 h-4 text-primary" />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-semibold text-foreground truncate">
-              {canvas.title}
-            </span>
+            {isEditingTitle ? (
+              <Input
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTitleSave();
+                  if (e.key === 'Escape') {
+                    setEditTitleValue(canvas.title);
+                    setIsEditingTitle(false);
+                  }
+                }}
+                autoFocus
+                className="h-7 text-sm font-semibold max-w-[200px]"
+              />
+            ) : (
+              <div
+                className="flex items-center gap-1 group/title"
+                onMouseEnter={() => setIsTitleHovered(true)}
+                onMouseLeave={() => setIsTitleHovered(false)}
+              >
+                <span className="text-sm font-semibold text-foreground truncate">
+                  {canvas.title}
+                </span>
+                {onTitleChange && (
+                  <button
+                    onClick={() => setIsEditingTitle(true)}
+                    className={cn(
+                      "h-5 w-5 p-0 flex items-center justify-center hover:bg-muted rounded transition-opacity flex-shrink-0",
+                      isTitleHovered ? "opacity-100" : "opacity-0"
+                    )}
+                  >
+                    <Pencil className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+            )}
             <span className="text-xs text-muted-foreground">
               {canvas.respondents} respondents
             </span>
@@ -126,6 +187,17 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
               <Plus className="w-3 h-3 text-muted-foreground" />
             </button>
           </div>
+
+          {/* Edit button for study plan */}
+          {canvas.studyPlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEditStudyPlan?.(canvas.studyPlan!)}
+            >
+              Edit
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0 ml-3">
@@ -295,6 +367,18 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
                   </span>
                 </div>
               )}
+              {/* Ask another question button for focus groups */}
+              {onAskAnotherQuestion && (
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={onAskAnotherQuestion}
+                  >
+                    Ask another question
+                  </Button>
+                </div>
+              )}
             </div>
           ) : Array.isArray(canvas.questions) && canvas.questions.length > 0 ? (
             <div className="space-y-4">
@@ -391,13 +475,15 @@ const MiniQuestionCard: React.FC<{
 
   const handleBarClick = (option: { label: string; percentage?: number }) => {
     if (!onBarSelect) return;
-    const respondentCount = Math.round(((option.percentage || 0) / 100) * data.respondents);
+    const percentage = option.percentage || 0;
+    const baseRespondents = data.respondents || 0;
+    const respondentCount = Math.round((percentage / 100) * baseRespondents);
     onBarSelect({
       questionId: data.id,
       questionText: data.question,
       answerLabel: option.label,
-      percentage: option.percentage || 0,
-      respondents: respondentCount,
+      percentage,
+      respondents: isNaN(respondentCount) ? 0 : respondentCount,
     }, canvasId);
   };
 
