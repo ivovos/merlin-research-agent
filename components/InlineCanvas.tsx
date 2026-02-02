@@ -55,7 +55,7 @@ interface InlineCanvasProps {
   /** Brand colors for chart theming */
   brandColors?: BrandColors;
   /** Callback when editing the study plan */
-  onEditStudyPlan?: (studyPlan: StudyPlan) => void;
+  onEditStudyPlan?: (studyPlan: StudyPlan, audienceId?: string) => void;
   /** Callback when editing the canvas title */
   onTitleChange?: (newTitle: string) => void;
   /** Callback when user wants to ask another question (for focus groups) */
@@ -193,7 +193,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onEditStudyPlan?.(canvas.studyPlan!)}
+              onClick={() => onEditStudyPlan?.(canvas.studyPlan!, canvas.audience?.id)}
             >
               Edit
             </Button>
@@ -521,6 +521,12 @@ const MiniQuestionCard: React.FC<{
           </DropdownMenu>
         </div>
       </div>
+      {/* Show title as insight header if different from question */}
+      {data.title && data.title !== data.question && (
+        <p className="text-xs font-semibold text-muted-foreground mb-1">
+          {data.title}
+        </p>
+      )}
       <h4 className="text-sm font-medium text-foreground mb-4 line-clamp-2">
         {data.question}
       </h4>

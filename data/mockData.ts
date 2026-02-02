@@ -1076,6 +1076,7 @@ export const mockAudience: ConversationAudience = {
 
 export const mockAudiences: ConversationAudience[] = [
   mockAudience,
+  { id: 'general-population', name: 'General Population', icon: 'G' },
   { id: 'gen-z', name: 'Gen Z', icon: 'Z' },
   { id: 'policy-makers', name: 'Policy Makers', icon: 'P' },
   { id: 'tech-enthusiasts', name: 'Tech Enthusiasts', icon: 'E' },

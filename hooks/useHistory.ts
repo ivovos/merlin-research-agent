@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo, useEffect, useRef } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import type { Conversation } from '@/types'
 import { mockHistory, mubiConversations } from '@/data/mockData'
@@ -21,11 +21,27 @@ export interface UseHistoryReturn {
   updateInHistory: (id: string, updates: Partial<Conversation>) => void
 }
 
+// Sort conversations by updatedAt (most recent first), falling back to id for stability
+function sortByRecency(conversations: Conversation[]): Conversation[] {
+  return [...conversations].sort((a, b) => {
+    const aTime = a.updatedAt || 0
+    const bTime = b.updatedAt || 0
+    return bTime - aTime // Most recent first
+  })
+}
+
 export function useHistory(accountId?: string): UseHistoryReturn {
   const [allHistory, setHistory] = useLocalStorage<Conversation[]>(
     HISTORY_KEY,
     defaultHistory
   )
+
+  // Capture initial history snapshot on mount, sorted by recency
+  // This won't change until reload
+  const initialHistoryRef = useRef<Conversation[] | null>(null)
+  if (initialHistoryRef.current === null) {
+    initialHistoryRef.current = sortByRecency(allHistory)
+  }
 
   // Check version and merge in new default conversations if needed
   useEffect(() => {
@@ -47,20 +63,25 @@ export function useHistory(accountId?: string): UseHistoryReturn {
         const mergedHistory = [...currentHistory, ...newConversations]
         localStorage.setItem(HISTORY_KEY, JSON.stringify(mergedHistory))
         setHistory(mergedHistory)
+        // Update the initial snapshot too since this happens on first load
+        initialHistoryRef.current = sortByRecency(mergedHistory)
       }
 
       localStorage.setItem(HISTORY_VERSION_KEY, CURRENT_VERSION.toString())
     }
   }, [setHistory])
 
+  // Use the initial snapshot for display - doesn't change until reload
+  const displayHistory = initialHistoryRef.current || allHistory
+
   // Filter history by account if provided
   const history = useMemo(() => {
-    if (!accountId) return allHistory
+    if (!accountId) return displayHistory
 
     // Map audience IDs to account IDs
     const mubiAudienceIds = ['mubi-basic-global', 'mubi-us-market', 'mubi-potential-upgraders']
 
-    return allHistory.filter(conv => {
+    return displayHistory.filter(conv => {
       const audienceId = conv.audience?.id
       if (accountId === 'mubi') {
         return mubiAudienceIds.includes(audienceId || '')
@@ -68,7 +89,7 @@ export function useHistory(accountId?: string): UseHistoryReturn {
       // For other accounts, show conversations that don't belong to MUBI
       return !mubiAudienceIds.includes(audienceId || '')
     })
-  }, [allHistory, accountId])
+  }, [displayHistory, accountId])
 
   const addToHistory = useCallback(
     (conversation: Conversation) => {
@@ -77,16 +98,23 @@ export function useHistory(accountId?: string): UseHistoryReturn {
         if (conversation.status === 'idle' && conversation.query === '') {
           return prev
         }
+
+        // Add timestamp for recency sorting on next load
+        const conversationWithTimestamp = {
+          ...conversation,
+          updatedAt: Date.now()
+        }
+
         // Check if already exists
         const exists = prev.some((c) => c.id === conversation.id)
         if (exists) {
-          // Update existing
+          // Update existing with new timestamp
           return prev.map((c) =>
-            c.id === conversation.id ? conversation : c
+            c.id === conversation.id ? conversationWithTimestamp : c
           )
         }
         // Add new at the beginning
-        return [conversation, ...prev]
+        return [conversationWithTimestamp, ...prev]
       })
     },
     [setHistory]
@@ -106,7 +134,7 @@ export function useHistory(accountId?: string): UseHistoryReturn {
   const updateInHistory = useCallback(
     (id: string, updates: Partial<Conversation>) => {
       setHistory((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+        prev.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c))
       )
     },
     [setHistory]

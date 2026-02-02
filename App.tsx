@@ -24,7 +24,8 @@ import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
-import { MethodSheet } from '@/components/MethodSheet'
+import { MethodSidePanel } from '@/components/MethodSidePanel'
+import { MethodFullPage } from '@/components/MethodFullPage'
 import { Button } from '@/components/ui/button'
 import { Layers } from 'lucide-react'
 
@@ -64,8 +65,11 @@ const App: React.FC = () => {
   // Message Testing modal state
   const [showMessageTestingModal, setShowMessageTestingModal] = useState(false)
 
-  // Study Plan editing state
-  const [editingStudyPlan, setEditingStudyPlan] = useState<StudyPlan | null>(null)
+  // Study Plan editing state (side panel for existing)
+  const [editingStudyPlan, setEditingStudyPlan] = useState<{ plan: StudyPlan; audienceId?: string } | null>(null)
+
+  // Method creation state (full page for new)
+  const [creatingMethod, setCreatingMethod] = useState<{ methodId?: string } | null>(null)
 
   // Get all audiences for the account (includes Electric Twin generic audiences)
   const combinedAudiences = useMemo(() => {
@@ -449,8 +453,8 @@ const App: React.FC = () => {
   }, [])
 
   // Study Plan editing handlers
-  const handleEditStudyPlan = useCallback((studyPlan: StudyPlan) => {
-    setEditingStudyPlan(studyPlan)
+  const handleEditStudyPlan = useCallback((studyPlan: StudyPlan, audienceId?: string) => {
+    setEditingStudyPlan({ plan: studyPlan, audienceId })
   }, [])
 
   const handleStudyPlanClose = useCallback(() => {
@@ -461,6 +465,21 @@ const App: React.FC = () => {
     console.log('Re-run study plan:', { methodId, variantId, formData, title })
     // TODO: Re-run the research with updated parameters
     setEditingStudyPlan(null)
+  }, [])
+
+  // Method creation handlers
+  const handleOpenMethodCreator = useCallback((methodId?: string) => {
+    setCreatingMethod({ methodId })
+  }, [])
+
+  const handleCloseMethodCreator = useCallback(() => {
+    setCreatingMethod(null)
+  }, [])
+
+  const handleMethodSubmit = useCallback((methodId: string, variantId: string | null, formData: Record<string, unknown>, title: string) => {
+    console.log('Create new method:', { methodId, variantId, formData, title })
+    // TODO: Run the research with the new method
+    setCreatingMethod(null)
   }, [])
 
   // Render
@@ -482,8 +501,18 @@ const App: React.FC = () => {
         onDeleteConversation={handleDeleteConversation}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
-        {/* Main content area */}
-        <main className="flex flex-1 flex-col overflow-hidden">
+        {/* Method Full Page - replaces entire main content when creating new */}
+        {creatingMethod ? (
+          <MethodFullPage
+            isOpen={true}
+            onClose={handleCloseMethodCreator}
+            initialMethodId={creatingMethod.methodId}
+            onSubmit={handleMethodSubmit}
+          />
+        ) : (
+        <>
+        {/* Main content area with optional side panel */}
+        <main className="flex flex-1 flex-col overflow-hidden transition-all duration-300 min-w-0">
           {/* Expanded Canvas - replaces entire content including header */}
           {expandedCanvas ? (
             <ExpandedCanvas
@@ -555,6 +584,7 @@ const App: React.FC = () => {
                         availableAudiences={combinedAudiences}
                         onCreateAudience={createAudience}
                         onMessageTestingClick={handleMessageTestingClick}
+                        onOpenMethodCreator={handleOpenMethodCreator}
                       />
                     </div>
                   </div>
@@ -574,12 +604,30 @@ const App: React.FC = () => {
                     onMessageTestingClick={handleMessageTestingClick}
                     onEditStudyPlan={handleEditStudyPlan}
                     onCanvasTitleChange={handleCanvasTitleChange}
+                    onOpenMethodCreator={handleOpenMethodCreator}
+                    isSidePanelOpen={!!editingStudyPlan}
                   />
                 )}
               </div>
             </>
           )}
         </main>
+
+        {/* Study Plan Side Panel - slides in from right, shrinks main content */}
+        <MethodSidePanel
+          isOpen={!!editingStudyPlan}
+          onClose={handleStudyPlanClose}
+          initialMethodId={editingStudyPlan?.plan.methodId}
+          initialVariantId={editingStudyPlan?.plan.variantId ?? undefined}
+          initialFormData={{
+            ...editingStudyPlan?.plan.formData,
+            audience: editingStudyPlan?.audienceId || editingStudyPlan?.plan.formData?.audience
+          }}
+          initialTitle={editingStudyPlan?.plan.title}
+          onSubmit={handleStudyPlanSubmit}
+        />
+        </>
+        )}
       </SidebarInset>
 
       {/* Message Testing Modal */}
@@ -599,17 +647,6 @@ const App: React.FC = () => {
         }}
       />
 
-      {/* Study Plan Edit Sheet */}
-      <MethodSheet
-        isOpen={!!editingStudyPlan}
-        onClose={handleStudyPlanClose}
-        initialMethodId={editingStudyPlan?.methodId}
-        initialVariantId={editingStudyPlan?.variantId ?? undefined}
-        initialFormData={editingStudyPlan?.formData}
-        initialTitle={editingStudyPlan?.title}
-        isEditing={true}
-        onSubmit={handleStudyPlanSubmit}
-      />
     </SidebarProvider>
   )
 }

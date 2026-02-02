@@ -18,7 +18,8 @@ export interface QuestionOption {
 
 export interface QuestionResult {
   id: string;
-  question: string;
+  title?: string; // Short insight header/key finding (e.g., "Overall Perception of Trump")
+  question: string; // The actual survey question asked (e.g., "What is your overall perception of Donald Trump?")
   respondents: number;
   options: QuestionOption[];
   segments?: string[]; // Optional list of segments being compared

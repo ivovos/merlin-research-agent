@@ -90,12 +90,27 @@ export function AppSidebar({
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [editingTitle, setEditingTitle] = React.useState("")
 
-  // Combine current conversation and history into one list
+  // Use history as-is, don't reorder based on current conversation
+  // This keeps the list stable during the session
   const allItems = React.useMemo(() => {
+    // If current conversation is new (not in history), we could add it
+    // But for stability, just use history directly
     if (!conversation) return history
-    return [conversation, ...history].filter(
-      (item, index, self) => index === self.findIndex((t) => t.id === item.id)
-    )
+
+    // Check if current conversation is already in history
+    const isInHistory = history.some(h => h.id === conversation.id)
+
+    if (isInHistory) {
+      // Just return history as-is, the current one will be highlighted
+      return history
+    }
+
+    // Current conversation is new - add at top only if it has content
+    if (conversation.status !== 'idle' || conversation.query) {
+      return [conversation, ...history]
+    }
+
+    return history
   }, [conversation, history])
 
   return (

@@ -5,6 +5,7 @@ import { QueryInput } from './QueryInput';
 import { InlineCanvas } from './InlineCanvas';
 import { ClarificationMessage } from './ClarificationMessage';
 import { ClipboardList, Users, MessageSquare, BarChart3, Settings2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // Icon mapping for methods (same as StudyPlanPill)
 const methodIcons: Record<string, React.ElementType> = {
@@ -128,9 +129,13 @@ interface WorkingPaneProps {
   /** Callback when messaging-testing method is selected */
   onMessageTestingClick?: () => void;
   /** Callback when clicking the study plan pill to edit */
-  onEditStudyPlan?: (studyPlan: StudyPlan) => void;
+  onEditStudyPlan?: (studyPlan: StudyPlan, audienceId?: string) => void;
   /** Callback when editing a canvas title */
   onCanvasTitleChange?: (canvasId: string, newTitle: string) => void;
+  /** Callback when opening method creator from slash command */
+  onOpenMethodCreator?: (methodId?: string) => void;
+  /** Whether the side panel is open (reduces padding) */
+  isSidePanelOpen?: boolean;
 }
 
 export const WorkingPane: React.FC<WorkingPaneProps> = ({
@@ -150,6 +155,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onMessageTestingClick,
   onEditStudyPlan,
   onCanvasTitleChange,
+  onOpenMethodCreator,
+  isSidePanelOpen = false,
 }) => {
   // Auto-scroll to bottom when new messages arrive
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -169,8 +176,11 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {/* Main content area with 100px padding on sides */}
-        <div className="px-[100px] py-6 space-y-8">
+        {/* Main content area with responsive padding */}
+        <div className={cn(
+          "py-6 space-y-8 transition-all duration-300",
+          isSidePanelOpen ? "px-6 lg:px-10" : "px-[100px]"
+        )}>
 
           {/* Query History */}
           <div className="space-y-8">
@@ -226,7 +236,10 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                           {renderAssistantContent(
                             msg.content,
                             msg.studyPlan,
-                            msg.studyPlan ? () => onEditStudyPlan?.(msg.studyPlan!) : undefined
+                            msg.studyPlan ? () => onEditStudyPlan?.(
+                              msg.studyPlan!,
+                              msg.canvas?.audience?.id || conversation.canvas?.audience?.id
+                            ) : undefined
                           )}
                         </div>
 
@@ -279,7 +292,10 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
       </div>
 
       {/* Floating Bottom Input - absolutely positioned */}
-      <div className="absolute bottom-0 left-0 right-0 px-[100px] py-6 z-10 pointer-events-none">
+      <div className={cn(
+        "absolute bottom-0 left-0 right-0 py-6 z-10 pointer-events-none transition-all duration-300",
+        isSidePanelOpen ? "px-6 lg:px-10" : "px-[100px]"
+      )}>
         <div className="pointer-events-auto">
         <QueryInput
           onSubmit={(query, segments) => {
@@ -298,6 +314,7 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
           onClearSegments={onClearSegments}
           onRemoveSegment={onRemoveSegment}
           onMessageTestingClick={onMessageTestingClick}
+          onOpenMethodCreator={onOpenMethodCreator}
         />
         </div>
       </div>

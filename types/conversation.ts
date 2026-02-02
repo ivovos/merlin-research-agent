@@ -33,4 +33,5 @@ export interface Conversation {
   explanation: string;
   canvas: Canvas | null;
   status: 'idle' | 'processing' | 'complete';
+  updatedAt?: number; // Timestamp for sorting by recency (set on create/modify)
 }

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
 import type { Audience, SelectedSegments } from '@/types';
 import { cn } from '@/lib/utils';
-import { MethodSheet } from './MethodSheet';
 
 interface QueryInputProps {
   onSubmit: (query: string, segments?: SelectedSegments) => void;
@@ -25,6 +24,8 @@ interface QueryInputProps {
   onMessageTestingClick?: () => void;
   /** Callback when a method is submitted from the sheet */
   onMethodSubmit?: (methodId: string, variantId: string | null, data: Record<string, unknown>) => void;
+  /** Callback to open the method creator full page */
+  onOpenMethodCreator?: (methodId?: string) => void;
 }
 
 const PLACEHOLDER_EXAMPLES = [
@@ -55,6 +56,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   onRemoveSegment,
   onMessageTestingClick,
   onMethodSubmit,
+  onOpenMethodCreator,
 }) => {
   const hasSegmentSelection = selectedSegments && selectedSegments.segments.length > 0;
   const [query, setQuery] = useState('');
@@ -63,9 +65,6 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   const [audienceSearch, setAudienceSearch] = useState('');
   const [methodSearch, setMethodSearch] = useState('');
 
-  // Method Sheet state
-  const [showMethodSheet, setShowMethodSheet] = useState(false);
-  const [selectedMethodId, setSelectedMethodId] = useState<string | undefined>(undefined);
 
   // Animation state
   const [placeholderText, setPlaceholderText] = useState('');
@@ -235,9 +234,10 @@ export const QueryInput: React.FC<QueryInputProps> = ({
     setShowMethodPicker(false);
     setMethodSearch('');
 
-    // Open the method sheet
-    setSelectedMethodId(mappedMethodId);
-    setShowMethodSheet(true);
+    // Open the method creator (lifted to App level)
+    if (onOpenMethodCreator) {
+      onOpenMethodCreator(mappedMethodId);
+    }
   };
 
   const handleCreateNew = () => {
@@ -645,22 +645,6 @@ export const QueryInput: React.FC<QueryInputProps> = ({
         </div>
       )}
 
-      {/* Method Sheet */}
-      <MethodSheet
-        isOpen={showMethodSheet}
-        onClose={() => {
-          setShowMethodSheet(false);
-          setSelectedMethodId(undefined);
-        }}
-        initialMethodId={selectedMethodId}
-        onSubmit={(methodId, variantId, data) => {
-          if (onMethodSubmit) {
-            onMethodSubmit(methodId, variantId, data);
-          }
-          setShowMethodSheet(false);
-          setSelectedMethodId(undefined);
-        }}
-      />
     </div>
   );
 };
