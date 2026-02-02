@@ -417,7 +417,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
           }
         >
           <div className="p-2 border-b border-border bg-background">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-2 mb-2">Methods</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-2 mb-2">Method</p>
             <div className="flex items-center gap-2 bg-background px-2 py-1.5 rounded-md border border-input">
               <Search className="w-3.5 h-3.5 text-muted-foreground" />
               <input
@@ -629,7 +629,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
                   className="text-foreground rounded-full h-9 gap-2 px-3"
                 >
                   <SquareSlash className="w-4 h-4" />
-                  Methods
+                  Method
                 </Button>
               </div>
             </div>
