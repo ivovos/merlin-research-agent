@@ -10,6 +10,7 @@ import {
   UserPlus,
   GitCompare,
   ArrowLeft,
+  List,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -126,8 +127,23 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [isTocVisible, setIsTocVisible] = useState(false);
+  const [isTocOpen, setIsTocOpen] = useState(false);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Check if screen is large enough to always show ToC (1440px for MacBook Air 14")
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1440);
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // ToC is visible if on large screen OR if manually opened on smaller screens
+  const isTocVisible = isLargeScreen || isTocOpen;
 
   // Extract ALL canvases from conversation messages
   const allCanvases = useMemo(() => {
@@ -156,8 +172,9 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           items.push({
             id: `${c.id}-q-${q.id}`,
             index: globalIndex,
-            shortTitle: generateShortTitle(q.question),
-            title: q.question,
+            // Use title if provided, otherwise generate short title from question
+            shortTitle: q.title || generateShortTitle(q.question),
+            title: q.question, // Always use the actual question for the graph title
             type: 'question',
             data: q,
             canvasId: c.id,
@@ -309,6 +326,18 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           </Button>
         </div>
         <div className="flex-1" />
+        {/* TOC toggle button - only visible on smaller screens */}
+        {!isLargeScreen && (
+          <Button
+            variant={isTocOpen ? "secondary" : "ghost"}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setIsTocOpen(!isTocOpen)}
+          >
+            <List className="w-4 h-4" />
+            Contents
+          </Button>
+        )}
         <div className="flex-shrink-0">
           <Button
             variant="outline"
@@ -408,7 +437,10 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto scrollbar-hide"
         >
-          <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className={cn(
+            "max-w-4xl mx-auto px-6 py-6 transition-all duration-300",
+            isLargeScreen && "mr-64"
+          )}>
             {/* Title Section */}
             <h1 className="text-lg font-semibold text-foreground mb-4">
               {canvasTitle}
@@ -457,12 +489,12 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                   key={item.id}
                   ref={(el) => setItemRef(item.id, el)}
                   className={cn(
-                    "scroll-mt-32 flex gap-6 pb-10",
+                    "scroll-mt-32 flex items-start gap-6 pb-10",
                     idx < evidenceItems.length - 1 && "border-b border-border"
                   )}
                 >
-                  {/* Section Title - Left column */}
-                  <div className="w-44 flex-shrink-0 pt-1 text-right">
+                  {/* Section Title - Left column, aligned to top of card question */}
+                  <div className="w-44 flex-shrink-0 text-right pt-1">
                     <span className="text-sm text-muted-foreground leading-snug block">
                       {item.index}.0&nbsp;&nbsp;{item.shortTitle}
                     </span>
@@ -476,6 +508,7 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
                         index={item.index - 1}
                         canvasId={item.canvasId}
                         onEditQuestion={onEditQuestion}
+                        questionTitle={item.title}
                         compact
                       />
                     ) : (
@@ -494,25 +527,31 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
           </div>
         </div>
 
-        {/* Right edge hover trigger zone */}
-        <div
-          className="fixed right-0 top-0 bottom-0 w-8 z-40"
-          onMouseEnter={() => setIsTocVisible(true)}
-        />
-
-        {/* Sliding Table of Contents */}
+        {/* Table of Contents - Always visible on large screens (≥1440px), toggle drawer on smaller */}
         <div
           className={cn(
             "fixed right-0 top-14 bottom-0 w-64 bg-background/95 backdrop-blur-sm border-l border-border z-50",
             "transition-transform duration-300 ease-in-out",
             isTocVisible ? "translate-x-0" : "translate-x-full"
           )}
-          onMouseLeave={() => setIsTocVisible(false)}
         >
-          <div className="p-6 pt-8">
-            <h3 className="text-xs font-semibold text-foreground mb-3">
-              Table of contents
-            </h3>
+          <div className="p-6 pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-foreground">
+                Table of contents
+              </h3>
+              {/* Close button - only visible on smaller screens when TOC is open */}
+              {!isLargeScreen && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 -mr-2"
+                  onClick={() => setIsTocOpen(false)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
             <nav className="space-y-0.5">
               {evidenceItems.map((item) => (
                 <button

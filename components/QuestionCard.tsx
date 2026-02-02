@@ -32,6 +32,8 @@ interface QuestionCardProps {
   brandColors?: BrandColors;
   /** Compact mode removes border/shadow for expanded canvas view */
   compact?: boolean;
+  /** Override question title (used in expanded canvas to ensure full question is shown) */
+  questionTitle?: string;
 }
 
 // Helper to get computed CSS variable value
@@ -52,7 +54,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   selectedSegments,
   brandColors = DEFAULT_BRAND_COLORS,
   compact = false,
+  questionTitle,
 }) => {
+  // Use questionTitle prop if provided, otherwise fall back to data.question
+  const displayQuestion = questionTitle || data.question;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Get computed colors for Recharts
@@ -141,18 +146,21 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
     if (sortedData.length === 0 || sortedData[0][data.segments[0]] === undefined) return null;
 
     // Transform: for each option, create a row for each segment
+    // Use a unique key combining label and segment index for proper Y-axis spacing
     const result: Array<{
       label: string;
+      uniqueKey: string; // Unique key for Y-axis positioning
       segment: string;
       segmentIndex: number;
       value: number;
       isFirst: boolean; // Is this the first segment for this option (for label display)
     }> = [];
 
-    sortedData.forEach((option) => {
+    sortedData.forEach((option, optionIdx) => {
       data.segments!.forEach((seg, segIdx) => {
         result.push({
           label: option.label,
+          uniqueKey: `${optionIdx}-${segIdx}`, // Unique key for each bar
           segment: seg,
           segmentIndex: segIdx,
           value: parsePercentage(option[seg]),
@@ -212,7 +220,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         <div className="mb-4">
           <div className="flex items-start gap-2">
             <h3 className="text-lg font-bold text-foreground leading-tight flex-1">
-              {data.question}
+              {displayQuestion}
             </h3>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -246,25 +254,26 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
       ) : (
         <h3 className="text-lg font-bold text-foreground mb-6 leading-tight">
-          {data.question}
+          {displayQuestion}
         </h3>
       )}
 
-      <div className="h-[250px] w-full [&_svg]:outline-none [&_svg]:focus:outline-none [&_.recharts-wrapper]:outline-none" style={{ contain: 'strict' }}>
+      <div className="w-full [&_svg]:outline-none [&_svg]:focus:outline-none [&_.recharts-wrapper]:outline-none">
         {sortedData.length === 0 ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             <p className="text-sm">No data available</p>
           </div>
         ) : verticalSegmentData ? (
           // Multi-segment vertical comparison chart
-          <ResponsiveContainer width="100%" height="100%">
+          // Calculate height: each option needs space for all its segment bars
+          <ResponsiveContainer width="100%" height={Math.max(250, sortedData.length * (data.segments?.length || 1) * 20 + 40)}>
             <BarChart
               layout="vertical"
               data={verticalSegmentData}
-              margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: 60, left: 10, bottom: 0 }}
               barSize={12}
               barGap={2}
-              barCategoryGap="15%"
+              barCategoryGap="20%"
             >
               <XAxis
                 type="number"
@@ -272,23 +281,54 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 domain={[0, 100]}
               />
               <YAxis
-                dataKey="label"
+                dataKey="uniqueKey"
                 type="category"
-                width={180}
+                width={260}
                 tick={({ x, y, payload, index: tickIndex }) => {
                   // Only show label on the first segment row for each option
                   const item = verticalSegmentData[tickIndex];
                   if (!item?.isFirst) return null;
+
+                  const label = item.label;
+                  const maxCharsPerLine = 40;
+
+                  // Split label into lines if too long
+                  const words = label.split(' ');
+                  const lines: string[] = [];
+                  let currentLine = '';
+
+                  words.forEach((word) => {
+                    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
+                      currentLine = (currentLine + ' ' + word).trim();
+                    } else {
+                      if (currentLine) lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  });
+                  if (currentLine) lines.push(currentLine);
+
+                  // Position label in the middle of the segment group
+                  const segmentCount = data.segments!.length;
+                  const segmentGroupOffset = ((segmentCount - 1) / 2) * 20; // Approximate bar height + gap
+
                   return (
                     <text
                       x={x}
-                      y={y}
-                      dy={data.segments!.length > 1 ? 4 : 0}
+                      y={y + segmentGroupOffset}
                       textAnchor="end"
                       fill={mutedForegroundColor}
                       fontSize={14}
+                      dominantBaseline="middle"
                     >
-                      {payload.value}
+                      {lines.map((line, i) => (
+                        <tspan
+                          key={i}
+                          x={x}
+                          dy={i === 0 ? 0 : 16}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
                     </text>
                   );
                 }}
@@ -313,20 +353,21 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 })}
                 <LabelList
                   dataKey="value"
-                  position="insideRight"
+                  position="right"
                   formatter={(val: any) => `${val}%`}
-                  style={{ fill: '#ffffff', fontSize: '11px', fontWeight: 'bold' }}
+                  offset={12}
+                  style={{ fill: foregroundColor, fontSize: '14px', fontWeight: 600 }}
                 />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         ) : (
           // Default single bar chart (no segments)
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart
               layout="vertical"
               data={sortedData}
-              margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: 60, left: 10, bottom: 0 }}
               barSize={24}
               barCategoryGap="15%"
             >
@@ -338,8 +379,30 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               <YAxis
                 dataKey="label"
                 type="category"
-                width={180}
+                width={260}
                 tick={({ x, y, payload }) => {
+                  const label = String(payload.value);
+                  const maxCharsPerLine = 40;
+
+                  // Split label into lines if too long
+                  const words = label.split(' ');
+                  const lines: string[] = [];
+                  let currentLine = '';
+
+                  words.forEach((word) => {
+                    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
+                      currentLine = (currentLine + ' ' + word).trim();
+                    } else {
+                      if (currentLine) lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  });
+                  if (currentLine) lines.push(currentLine);
+
+                  // For multi-line labels, offset the first line up
+                  const lineHeight = 16;
+                  const offsetY = lines.length > 1 ? -((lines.length - 1) * lineHeight) / 2 : 0;
+
                   return (
                     <text
                       x={x}
@@ -347,8 +410,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                       textAnchor="end"
                       fill={mutedForegroundColor}
                       fontSize={14}
+                      dominantBaseline="middle"
                     >
-                      {payload.value}
+                      {lines.map((line, i) => (
+                        <tspan
+                          key={i}
+                          x={x}
+                          dy={i === 0 ? offsetY : lineHeight}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
                     </text>
                   );
                 }}
@@ -380,7 +452,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   position="right"
                   formatter={(val: any) => `${val}%`}
                   offset={12}
-                  style={{ fill: foregroundColor, fontSize: '14px', fontWeight: 'bold' }}
+                  style={{ fill: foregroundColor, fontSize: '14px', fontWeight: 600 }}
                 />
               </Bar>
             </BarChart>

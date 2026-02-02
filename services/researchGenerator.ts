@@ -159,7 +159,8 @@ export interface ResearchResult {
     abstract: string
     segments: string[]
     questions: Array<{
-      question: string
+      title?: string // Insight header
+      question: string // Actual survey question
       options: Array<{
         label: string
         percentage?: number
@@ -189,7 +190,8 @@ const surveyResultSchema = {
       items: {
         type: 'object',
         properties: {
-          question: { type: 'string', description: 'Concise 3-7 word header like "Primary purchase drivers" (NOT verbose survey questions)' },
+          title: { type: 'string', description: 'Concise 3-7 word insight header like "Primary purchase drivers" or "Brand perception"' },
+          question: { type: 'string', description: 'The actual survey question asked, e.g., "What are the primary factors that drive your purchase decisions?"' },
           options: {
             type: 'array',
             items: {
@@ -202,7 +204,7 @@ const surveyResultSchema = {
             }
           }
         },
-        required: ['question', 'options']
+        required: ['title', 'question', 'options']
       }
     }
   },
@@ -684,10 +686,9 @@ Research Question: ${researchQuestion}
 
 Guidelines:
 - Generate 3 specific, measurable questions with clear options
-- IMPORTANT: Each question should be written as a CONCISE HEADER (3-7 words ideal)
-  - Good: "Primary purchase drivers", "Brand loyalty factors", "Weekly usage frequency"
-  - Bad: "What are the primary factors that drive your purchase decisions?"
-  - Think "section title" not "survey question"
+- IMPORTANT: Each question has TWO text fields:
+  1. "title": A concise 3-7 word insight header (e.g., "Primary purchase drivers", "Brand perception")
+  2. "question": The actual survey question that was asked (e.g., "What are the primary factors that drive your purchase decisions?")
 - Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
 - Reflect real-world trends and knowledge
 - Ensure percentages in each question sum to approximately 100%
@@ -744,7 +745,8 @@ Guidelines:
 
       const questions = questionsArray.map((q: any, idx: number) => ({
         id: `q${idx + 1}`,
-        question: q.question || '',
+        title: q.title || '', // Insight header
+        question: q.question || q.title || '', // Actual survey question (fallback to title if not provided)
         respondents: result.sample_size || 500,
         options: normalizeOptions(q.options)
       }))
@@ -803,7 +805,8 @@ async function executeComparisonSurveyTool(audience: string, researchQuestion: s
         items: {
           type: 'object',
           properties: {
-            question: { type: 'string', description: 'The survey question' },
+            title: { type: 'string', description: 'Concise 3-7 word insight header like "Primary purchase drivers"' },
+            question: { type: 'string', description: 'The actual survey question asked' },
             options: {
               type: 'array',
               items: {
@@ -817,7 +820,7 @@ async function executeComparisonSurveyTool(audience: string, researchQuestion: s
               description: 'Array of answer options, each with percentages for all segments'
             }
           },
-          required: ['question', 'options']
+          required: ['title', 'question', 'options']
         }
       }
     },
@@ -831,10 +834,9 @@ Segments to Compare: ${segments.join(', ')}
 
 Guidelines:
 - Generate 3 specific, measurable questions that compare the segments
-- IMPORTANT: Each question should be written as a CONCISE HEADER (3-7 words ideal)
-  - Good: "Primary purchase drivers", "Brand preference split", "Weekly usage frequency"
-  - Bad: "What are the primary factors that drive your purchase decisions?"
-  - Think "section title" not "survey question"
+- IMPORTANT: Each question has TWO text fields:
+  1. "title": A concise 3-7 word insight header (e.g., "Primary purchase drivers", "Brand preference split")
+  2. "question": The actual survey question that was asked (e.g., "What are the primary factors that drive your purchase decisions?")
 - For each question option, provide a percentage for EACH segment: ${segments.join(', ')}
 - Example option format: {"label": "Option A", ${segments.map(s => `"${s}": 45.2`).join(', ')}}
 - Use realistic percentages (avoid round numbers, use values like 42.8%, 17.3%)
@@ -891,7 +893,8 @@ Guidelines:
       // Normalize options with segment data
       const questions = questionsArray.map((q: any, idx: number) => ({
         id: `q${idx + 1}`,
-        question: q.question || '',
+        title: q.title || '', // Insight header
+        question: q.question || q.title || '', // Actual survey question
         respondents: (result.sample_size_per_segment || 500) * segments.length,
         segments: segments, // Use the segments we passed in
         options: normalizeComparisonOptions(q.options, segments)
@@ -958,6 +961,7 @@ function generateFallbackComparisonCanvas(audience: string, researchQuestion: st
   const mockQuestions = [
     {
       id: 'q1',
+      title: 'Preference comparison',
       question: `How do ${segments.join(' and ')} compare on preferences?`,
       respondents: 500 * segments.length,
       segments,
@@ -1105,7 +1109,8 @@ Guidelines:
         const normalizedOpts = normalizeOptions(q.options)
         return {
           id: `q${idx + 1}`,
-          question: q.question || '',
+          title: (q as any).title || '', // Insight header
+          question: q.question || (q as any).title || '', // Actual survey question
           respondents: result.sample_size || 500,
           segments,
           options: normalizedOpts.map(opt => {
@@ -1184,7 +1189,8 @@ function generateFallbackSurveyCanvas(audience: string, query: string): Canvas {
     questions: [
       {
         id: 'q1',
-        question: 'Primary factors influencing decision?',
+        title: 'Primary decision factors',
+        question: 'What are the primary factors that influence your decision?',
         respondents: 500,
         options: [
           { label: 'Cost / Value', percentage: 38.4 },
@@ -1195,7 +1201,8 @@ function generateFallbackSurveyCanvas(audience: string, query: string): Canvas {
       },
       {
         id: 'q2',
-        question: 'Overall sentiment?',
+        title: 'Overall sentiment',
+        question: 'How would you describe your overall sentiment?',
         respondents: 500,
         options: [
           { label: 'Very Positive', percentage: 24.6 },
@@ -1207,7 +1214,8 @@ function generateFallbackSurveyCanvas(audience: string, query: string): Canvas {
       },
       {
         id: 'q3',
-        question: 'Likelihood to recommend?',
+        title: 'Recommendation likelihood',
+        question: 'How likely are you to recommend this to others?',
         respondents: 500,
         options: [
           { label: 'Very Likely', percentage: 41.3 },
@@ -1335,6 +1343,7 @@ export async function generateResearchData(
       abstract: canvas.abstract,
       segments: canvas.questions[0]?.segments || [],
       questions: canvas.questions.map(q => ({
+        title: q.title,
         question: q.question,
         options: q.options
       })),
@@ -1357,7 +1366,8 @@ function generateQuantitativeFallback(query: string): ResearchResult {
       segments: [],
       questions: [
         {
-          question: 'Key factors driving this trend?',
+          title: 'Key trend drivers',
+          question: 'What are the key factors driving this trend?',
           options: [
             { label: 'Cost / Pricing', percentage: 42.4 },
             { label: 'Quality & Reliability', percentage: 28.7 },
@@ -1366,6 +1376,7 @@ function generateQuantitativeFallback(query: string): ResearchResult {
           ],
         },
         {
+          title: 'Sentiment change',
           question: 'How has sentiment changed over the last year?',
           options: [
             { label: 'Significantly Positive', percentage: 33.5 },
@@ -1376,7 +1387,8 @@ function generateQuantitativeFallback(query: string): ResearchResult {
           ],
         },
         {
-          question: 'Future outlook and adoption likelihood?',
+          title: 'Future adoption outlook',
+          question: 'What is the future outlook and adoption likelihood?',
           options: [
             { label: 'Very Likely', percentage: 55.4 },
             { label: 'Somewhat Likely', percentage: 23.8 },
