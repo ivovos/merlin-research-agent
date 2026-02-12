@@ -73,6 +73,50 @@ module.exports = {
           '3': 'var(--chart-3)',
           '4': 'var(--chart-4)',
           '5': 'var(--chart-5)'
+        },
+        surface: {
+          primary: 'var(--surface-primary)',
+          secondary: 'var(--surface-secondary)',
+          elevated: 'var(--surface-elevated)',
+          overlay: 'var(--surface-overlay)',
+        },
+        text: {
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+          inverse: 'var(--text-inverse)',
+          link: 'var(--text-link)',
+        },
+        'border-semantic': {
+          DEFAULT: 'var(--border-default)',
+          subtle: 'var(--border-subtle)',
+          strong: 'var(--border-strong)',
+        },
+        status: {
+          success: 'var(--status-success)',
+          'success-subtle': 'var(--status-success-subtle)',
+          warning: 'var(--status-warning)',
+          'warning-subtle': 'var(--status-warning-subtle)',
+          error: 'var(--status-error)',
+          'error-subtle': 'var(--status-error-subtle)',
+          info: 'var(--status-info)',
+          'info-subtle': 'var(--status-info-subtle)',
+        },
+        sentiment: {
+          positive: 'var(--sentiment-positive)',
+          'positive-subtle': 'var(--sentiment-positive-subtle)',
+          negative: 'var(--sentiment-negative)',
+          'negative-subtle': 'var(--sentiment-negative-subtle)',
+          neutral: 'var(--sentiment-neutral)',
+          'neutral-subtle': 'var(--sentiment-neutral-subtle)',
+          mixed: 'var(--sentiment-mixed)',
+          'mixed-subtle': 'var(--sentiment-mixed-subtle)',
+        },
+        brand: {
+          primary: 'var(--brand-primary)',
+          secondary: 'var(--brand-secondary)',
+          tertiary: 'var(--brand-tertiary)',
+          quaternary: 'var(--brand-quaternary)',
         }
       },
       borderRadius: {
@@ -81,10 +125,9 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)'
       },
       boxShadow: {
-        '2xs': 'var(--shadow-2xs)',
         'xs': 'var(--shadow-xs)',
         'sm': 'var(--shadow-sm)',
-        DEFAULT: 'var(--shadow)',
+        DEFAULT: 'var(--shadow-sm)',
         'md': 'var(--shadow-md)',
         'lg': 'var(--shadow-lg)',
         'xl': 'var(--shadow-xl)',

@@ -38,7 +38,7 @@ function renderClarificationContent(content: string) {
   });
 }
 
-export function ClarificationMessage({ clarification }: ClarificationMessageProps) {
+export function ClarificationMessage({ clarification, onSuggestionClick }: ClarificationMessageProps) {
   // Ensure suggestions is always an array
   const suggestions = Array.isArray(clarification.suggestions) ? clarification.suggestions : []
 
@@ -56,13 +56,15 @@ export function ClarificationMessage({ clarification }: ClarificationMessageProp
       {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {suggestions.map((suggestion, index) => (
-            <div
+            <button
               key={index}
-              className="inline-flex items-center py-2 px-3 text-xs text-muted-foreground border border-border rounded-md bg-muted/30"
+              type="button"
+              onClick={() => onSuggestionClick?.(suggestion)}
+              className="inline-flex items-center py-2 px-3 text-xs text-muted-foreground border border-border rounded-md bg-muted/30 cursor-pointer hover:bg-muted/60 hover:border-primary/30 transition-colors"
             >
               <Sparkles className="mr-1.5 h-3 w-3 shrink-0 text-primary/60" />
               <span>{suggestion}</span>
-            </div>
+            </button>
           ))}
         </div>
       )}

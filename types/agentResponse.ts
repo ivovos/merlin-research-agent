@@ -80,6 +80,7 @@ export interface ComparisonData {
 }
 
 // Extended canvas type to support new research formats
+// TODO: heatmap, sentiment, comparison types are defined but not yet supported by UI renderers
 export type CanvasType =
   | 'quantitative'
   | 'qualitative'

@@ -40,7 +40,7 @@ export const MonoIcon: React.FC<MonoIconProps> = ({ text, src, alt, size = 'md',
   return (
     <div
       className={cn(
-        'bg-gray-900 text-white rounded-sm font-semibold flex items-center justify-center flex-shrink-0',
+        'bg-primary text-primary-foreground rounded-sm font-semibold flex items-center justify-center flex-shrink-0',
         sizeClasses[size],
         className
       )}

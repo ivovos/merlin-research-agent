@@ -28,6 +28,8 @@ import { MethodSidePanel } from '@/components/MethodSidePanel'
 import { MethodFullPage } from '@/components/MethodFullPage'
 import { Button } from '@/components/ui/button'
 import { Layers } from 'lucide-react'
+import { createPlanningSteps, createExecutionSteps } from '@/constants/processSteps'
+import { TIMING } from '@/constants/timing'
 
 type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
 
@@ -97,10 +99,7 @@ const App: React.FC = () => {
     }
 
     // Initial planning steps
-    const planningSteps = [
-      { id: 'plan_1', label: 'Analyzing your question', status: 'in-progress' as const },
-      { id: 'plan_2', label: 'Selecting research method', status: 'pending' as const },
-    ]
+    const planningSteps = createPlanningSteps(1)
 
     // Create initial planning message (no pill yet)
     const planningMessageId = `msg_${Date.now()}_planning`
@@ -129,10 +128,7 @@ const App: React.FC = () => {
     console.log('Tool selection:', toolSelection)
 
     // Animate planning step 2 (selecting method)
-    const planningStep2 = [
-      { id: 'plan_1', label: 'Analyzing your question', status: 'complete' as const },
-      { id: 'plan_2', label: 'Selecting research method', status: 'in-progress' as const },
-    ]
+    const planningStep2 = createPlanningSteps(2)
     setConversation((prev) => ({
       ...prev,
       title,
@@ -143,13 +139,10 @@ const App: React.FC = () => {
     }))
 
     // Brief delay to show step 2 animating
-    await new Promise(resolve => setTimeout(resolve, 600))
+    await new Promise(resolve => setTimeout(resolve, TIMING.PHASE_1_COMPLETE))
 
     // Complete planning steps
-    const planningComplete = [
-      { id: 'plan_1', label: 'Analyzing your question', status: 'complete' as const },
-      { id: 'plan_2', label: 'Selecting research method', status: 'complete' as const },
-    ]
+    const planningComplete = createPlanningSteps('complete')
     setConversation((prev) => ({
       ...prev,
       processSteps: planningComplete,
@@ -159,7 +152,7 @@ const App: React.FC = () => {
     }))
 
     // Brief pause after planning completes
-    await new Promise(resolve => setTimeout(resolve, 400))
+    await new Promise(resolve => setTimeout(resolve, TIMING.PHASE_2_METHOD_SELECTION))
 
     // Handle clarification request
     if (toolSelection.type === 'clarification') {
@@ -211,14 +204,10 @@ const App: React.FC = () => {
     }))
 
     // Brief pause to show the survey design before starting execution
-    await new Promise(resolve => setTimeout(resolve, 600))
+    await new Promise(resolve => setTimeout(resolve, TIMING.PHASE_3_EXECUTION_START))
 
     // ===== PHASE 3: Execution with animated steps =====
-    const executionSteps = selection.processSteps.map((label, i) => ({
-      id: `exec_${i}`,
-      label,
-      status: i === 0 ? 'in-progress' as const : 'pending' as const,
-    }))
+    const executionSteps = createExecutionSteps(selection.processSteps, 0)
 
     // Update to show execution steps
     setConversation((prev) => ({
@@ -255,7 +244,7 @@ const App: React.FC = () => {
           }
         })
       }
-    }, 800)
+    }, TIMING.PHASE_1_STEP_2)
 
     // Execute the research tool
     const agentResult = await executeSelectedTool(selection, query)
@@ -276,11 +265,7 @@ const App: React.FC = () => {
 
     // ===== PHASE 4: Results =====
     // Mark all steps complete
-    const completedSteps = selection.processSteps.map((label, i) => ({
-      id: `exec_${i}`,
-      label,
-      status: 'complete' as const,
-    }))
+    const completedSteps = createExecutionSteps(selection.processSteps, selection.processSteps.length)
 
     // Create results message with canvas
     const resultsMessage: Message = {

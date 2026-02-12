@@ -22,7 +22,7 @@ export const SuggestionRow: React.FC<SuggestionRowProps> = ({ suggestions, onSel
     return (
         <div className="relative group mt-6 animate-fade-in">
             <div className="flex items-center gap-2 mb-3 px-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Suggested Next Steps</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Suggested Next Steps</span>
             </div>
 
             <div className="relative">
@@ -37,12 +37,12 @@ export const SuggestionRow: React.FC<SuggestionRowProps> = ({ suggestions, onSel
                         <button
                             key={idx}
                             onClick={() => onSelect(suggestion)}
-                            className="flex-shrink-0 snap-start bg-card hover:bg-accent/50 border border-border hover:border-gray-300 text-muted-foreground hover:text-foreground px-4 py-2 rounded-full text-sm transition-all duration-200 whitespace-nowrap group-hover:shadow-sm"
+                            className="flex-shrink-0 snap-start bg-card hover:bg-accent/50 border border-border hover:border-border text-muted-foreground hover:text-foreground px-4 py-2 rounded-full text-sm transition-all duration-200 whitespace-nowrap group-hover:shadow-sm"
                         >
                             <span className="flex items-center gap-2">
                                 {suggestion.split(/([@/#][\w-]+)/g).map((part, i) => {
                                     if (part.startsWith('@') || part.startsWith('/') || part.startsWith('#')) {
-                                        return <span key={i} className="text-gray-400 font-medium">{part}</span>;
+                                        return <span key={i} className="text-muted-foreground font-medium">{part}</span>;
                                     }
                                     return <span key={i}>{part}</span>;
                                 })}
@@ -55,7 +55,7 @@ export const SuggestionRow: React.FC<SuggestionRowProps> = ({ suggestions, onSel
 
                 {/* Right Fade */}
                 <div
-                    className={`absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[var(--background)] to-transparent z-10 transition-opacity duration-300 pointer-events-none ${showRightFade ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10 transition-opacity duration-300 pointer-events-none ${showRightFade ? 'opacity-100' : 'opacity-0'}`}
                 />
             </div>
         </div>

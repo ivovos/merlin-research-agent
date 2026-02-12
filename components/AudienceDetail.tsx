@@ -34,12 +34,12 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
   const project = account.projects?.find(p => p.id === audience.projectId);
 
   return (
-    <div className="flex-1 overflow-auto bg-white">
+    <div className="flex-1 overflow-auto bg-background">
       <div className="p-6">
         {/* Back button */}
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 hover:bg-muted rounded-md px-2 py-1 -ml-2"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to audiences
@@ -48,7 +48,7 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-lg font-semibold text-gray-900">{audience.name}</h1>
+            <h1 className="text-lg font-semibold text-foreground">{audience.name}</h1>
             {account.type === 'agency' && project && (
               <Badge variant="secondary" className="text-xs">
                 {project.name}
@@ -56,24 +56,24 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
             )}
           </div>
           {audience.description && (
-            <p className="text-sm text-gray-600">{audience.description}</p>
+            <p className="text-sm text-muted-foreground">{audience.description}</p>
           )}
 
           {/* Metadata */}
-          <div className="flex items-center gap-6 text-sm text-gray-600">
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <div>
-              <span className="text-gray-500">Agents:</span>{' '}
-              <span className="font-medium text-gray-900">
+              <span className="text-muted-foreground">Agents:</span>{' '}
+              <span className="font-medium text-foreground">
                 {audience.agents.toLocaleString()}
               </span>
             </div>
             <div>
-              <span className="text-gray-500">Segments:</span>{' '}
-              <span className="font-medium text-gray-900">{audience.segments.length}</span>
+              <span className="text-muted-foreground">Segments:</span>{' '}
+              <span className="font-medium text-foreground">{audience.segments.length}</span>
             </div>
             <div>
-              <span className="text-gray-500">Updated:</span>{' '}
-              <span className="font-medium text-gray-900">
+              <span className="text-muted-foreground">Updated:</span>{' '}
+              <span className="font-medium text-foreground">
                 {new Date(audience.updatedAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -99,7 +99,7 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
                 type="submit"
                 size="sm"
                 disabled={!question.trim()}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-gray-900 hover:bg-gray-800 text-white rounded-md px-3 py-1.5"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md px-3 py-1.5"
               >
                 <Send className="w-4 h-4" />
               </Button>
@@ -109,42 +109,42 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
 
         {/* Segments Table */}
         <div className="mb-6">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
             Segments
           </h2>
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <TableRow className="bg-muted">
+                  <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Name
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Count
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Percentage
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Distribution
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-y divide-gray-100">
+              <TableBody className="divide-y divide-border">
                 {audience.segments.map((segment) => (
                   <TableRow key={segment.id}>
-                    <TableCell className="font-medium text-gray-900">
+                    <TableCell className="font-medium text-foreground">
                       {segment.name}
                     </TableCell>
-                    <TableCell className="text-gray-600">
+                    <TableCell className="text-muted-foreground">
                       {segment.count.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-gray-600">{segment.percentage}%</TableCell>
+                    <TableCell className="text-muted-foreground">{segment.percentage}%</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                           <div
-                            className="bg-gray-900 h-full rounded-full"
+                            className="bg-primary h-full rounded-full"
                             style={{ width: `${segment.percentage}%` }}
                           />
                         </div>
@@ -160,22 +160,22 @@ export const AudienceDetail: React.FC<AudienceDetailProps> = ({
         {/* Data Sources (Collapsible) */}
         <Collapsible open={isDataSourcesOpen} onOpenChange={setIsDataSourcesOpen}>
           <CollapsibleTrigger className="flex items-center justify-between w-full text-left mb-2">
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Data Sources
             </h2>
             {isDataSourcesOpen ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
             )}
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="border border-gray-200 rounded-lg p-4 mb-6">
+            <div className="border border-border rounded-lg p-4 mb-6">
               <div className="space-y-2">
                 {audience.source.split(',').map((source, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-900" />
-                    <span className="text-sm text-gray-700">{source.trim()}</span>
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="text-sm text-foreground">{source.trim()}</span>
                   </div>
                 ))}
               </div>

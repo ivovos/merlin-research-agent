@@ -218,7 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             // When expanded, show full conversation list
             <>
-              <div className="px-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <div className="px-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Recent
               </div>
               <div className="space-y-1">
@@ -254,17 +254,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors">
                   <MonoIcon text={currentAccount.icon} src={currentAccount.logo} size="md" className="rounded-md" />
                   <div className="flex-1 text-left">
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-foreground">
                       {currentAccount.name}
                     </div>
-                    <div className="text-xs text-gray-500 capitalize">
+                    <div className="text-xs text-muted-foreground capitalize">
                       {currentAccount.type}
                     </div>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -277,7 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <MonoIcon text={account.icon} src={account.logo} size="sm" className="rounded-md" />
                     <div className="flex-1">
                       <div className="text-sm font-medium">{account.name}</div>
-                      <div className="text-xs text-gray-500 capitalize">
+                      <div className="text-xs text-muted-foreground capitalize">
                         {account.type}
                       </div>
                     </div>

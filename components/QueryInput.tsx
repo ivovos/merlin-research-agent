@@ -37,10 +37,11 @@ const PLACEHOLDER_EXAMPLES = [
 ];
 
 const RESEARCH_METHODS = [
-  { id: 'explore-audience', label: 'Explore Audience', description: 'Understand who they are', icon: Users },
-  { id: 'survey', label: 'Survey', description: 'Broad quantitative data', icon: ClipboardList },
-  { id: 'focus-group', label: 'Focus Group', description: 'Deep qualitative insights', icon: Users },
-  { id: 'message-testing', label: 'Message Testing', description: 'Test copy and value props', icon: MessageSquare },
+  { id: 'survey', name: 'Survey', description: 'Questionnaire with large group of respondent', icon: ClipboardList },
+  { id: 'focus-group', name: 'Focus Group', description: 'Group conversation with small number of participants', icon: Users },
+  { id: 'message-testing', name: 'Message Test', description: 'Test copy or assets variants with', icon: MessageSquare },
+  { id: 'explore-audience', name: 'Understand audience', description: 'Deep dive on an audience\'s attributes', icon: Users },
+  { id: 'audience-segmentation', name: 'Audience Segmentation', description: 'Find segments to target in an audience', icon: Users },
 ];
 
 export const QueryInput: React.FC<QueryInputProps> = ({
@@ -253,7 +254,7 @@ export const QueryInput: React.FC<QueryInputProps> = ({
   );
 
   const filteredMethods = RESEARCH_METHODS.filter(m =>
-    m.label.toLowerCase().includes(methodSearch.toLowerCase()) ||
+    m.name.toLowerCase().includes(methodSearch.toLowerCase()) ||
     m.id.toLowerCase().includes(methodSearch.toLowerCase()) ||
     m.description.toLowerCase().includes(methodSearch.toLowerCase())
   );

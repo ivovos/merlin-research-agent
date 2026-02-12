@@ -77,42 +77,42 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
   const renderAudienceRow = (audience: Audience, _showProject: boolean = false) => (
     <TableRow
       key={audience.id}
-      className="cursor-pointer hover:bg-gray-50"
+      className="cursor-pointer hover:bg-muted"
       onClick={() => onSelectAudience(audience)}
     >
       <TableCell className="font-medium">
         <span className="line-clamp-2">{audience.name}</span>
       </TableCell>
-      <TableCell className="text-gray-600">
+      <TableCell className="text-muted-foreground">
         {audience.agents.toLocaleString()}
       </TableCell>
-      <TableCell className="text-gray-600">{audience.segments.length}</TableCell>
-      <TableCell className="text-gray-500 text-xs">{formatDate(audience.updatedAt)}</TableCell>
-      <TableCell className="text-gray-500 text-xs">{audience.source}</TableCell>
+      <TableCell className="text-muted-foreground">{audience.segments.length}</TableCell>
+      <TableCell className="text-muted-foreground text-xs">{formatDate(audience.updatedAt)}</TableCell>
+      <TableCell className="text-muted-foreground text-xs">{audience.source}</TableCell>
     </TableRow>
   );
 
   return (
-    <div className="flex-1 overflow-auto bg-white">
+    <div className="flex-1 overflow-auto bg-background">
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-gray-900" />
-            <h1 className="text-lg font-semibold text-gray-900">
+            <Users className="w-5 h-5 text-foreground" />
+            <h1 className="text-lg font-semibold text-foreground">
               {!selectedProject || selectedProject === 'all'
                 ? 'All Audiences'
                 : `${account.projects?.find(p => p.id === selectedProject)?.name || ''} Audiences`}
             </h1>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {filteredAudiences.length} {filteredAudiences.length === 1 ? 'audience' : 'audiences'}
           </p>
         </div>
 
         {/* Search */}
         <div className="mb-6 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search audiences or describe a new one..."
@@ -130,7 +130,7 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
         {/* Recent Audiences Cards */}
         {!searchQuery && (
           <div className="mb-6">
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
               Recent
             </h2>
             <div className="grid grid-cols-3 gap-3">
@@ -139,21 +139,21 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
                 return (
                   <div
                     key={audience.id}
-                    className="border border-gray-200 rounded-sm p-3 hover:border-gray-300 hover:shadow-sm cursor-pointer transition-all"
+                    className="border border-border rounded-sm p-3 hover:border-border hover:shadow-sm cursor-pointer transition-all"
                     onClick={() => onSelectAudience(audience)}
                   >
                     <div className="mb-2">
-                      <span className="text-sm font-medium text-gray-900 line-clamp-2">{audience.name}</span>
+                      <span className="text-sm font-medium text-foreground line-clamp-2">{audience.name}</span>
                       {project && (
                         <div className="flex items-center gap-1 mt-1">
                           {account.id !== 'canva' && (
                             <MonoIcon text={project.icon} src={project.logo} size="sm" />
                           )}
-                          <span className="text-xs text-gray-500">{project.name}</span>
+                          <span className="text-xs text-muted-foreground">{project.name}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{audience.agents.toLocaleString()} agents</span>
                       <span>•</span>
                       <span>{audience.segments.length} segments</span>
@@ -167,7 +167,7 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
 
         {/* Audiences Table */}
         <div className="mb-6">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
             {searchQuery ? 'Search Results' : 'All'}
           </h2>
 
@@ -180,33 +180,33 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
                     {account.id !== 'canva' && (
                       <MonoIcon text={project.icon} src={project.logo} size="sm" />
                     )}
-                    <h3 className="text-sm font-semibold text-gray-900">{project.name}</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{project.name}</h3>
                     <Badge variant="secondary" className="text-xs">
                       {projectAudiences.length}
                     </Badge>
                   </div>
-                  <div className="border border-gray-200 rounded-sm overflow-hidden">
+                  <div className="border border-border rounded-sm overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        <TableRow className="bg-muted">
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Name
                           </TableHead>
-                          <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Agents
                           </TableHead>
-                          <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Segments
                           </TableHead>
-                          <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Updated
                           </TableHead>
-                          <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                          <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Source
                           </TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody className="divide-y divide-gray-100">
+                      <TableBody className="divide-y divide-border">
                         {projectAudiences.map((audience) => renderAudienceRow(audience))}
                       </TableBody>
                     </Table>
@@ -216,28 +216,28 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
             </>
           ) : (
             // Flat view for single project or brand account
-            <div className="border border-gray-200 rounded-sm overflow-hidden">
+            <div className="border border-border rounded-sm overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <TableRow className="bg-muted">
+                    <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Name
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Agents
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Segments
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Updated
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <TableHead className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Source
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody className="divide-y divide-gray-100">
+                <TableBody className="divide-y divide-border">
                   {filteredAudiences.map((audience) => renderAudienceRow(audience))}
                 </TableBody>
               </Table>
@@ -245,8 +245,8 @@ export const AudiencesList: React.FC<AudiencesListProps> = ({
           )}
 
           {filteredAudiences.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm">No audiences found</p>
               {searchQuery && (
                 <>

@@ -48,24 +48,24 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[var(--background)] w-full max-w-lg rounded-xl shadow-2xl border border-[var(--border)] p-6 relative animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay backdrop-blur-sm animate-fade-in">
+            <div className="bg-background w-full max-w-lg rounded-xl shadow-2xl border border-border p-6 relative animate-scale-in">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
-                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-1">Edit Research Question</h2>
-                <p className="text-sm text-[var(--text-muted)] mb-6">Refine the question or adjust audience comparisons.</p>
+                <h2 className="text-xl font-bold text-foreground mb-1">Edit Research Question</h2>
+                <p className="text-sm text-muted-foreground mb-6">Refine the question or adjust audience comparisons.</p>
 
                 <div className="space-y-6">
                     {/* Question Input */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-[var(--text-secondary)]">Question</label>
+                        <label className="text-sm font-medium text-muted-foreground">Question</label>
                         <textarea
-                            className="w-full h-24 p-3 rounded-lg border border-[var(--border)] bg-[var(--background-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+                            className="w-full h-24 p-3 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
                             placeholder="e.g. What differs in podcast preferences?"
@@ -74,13 +74,13 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
 
                     {/* Segments Input */}
                     <div className="space-y-3">
-                        <label className="text-sm font-medium text-[var(--text-secondary)]">
-                            Audience Comparisons <span className="text-[var(--text-muted)] font-normal text-xs">(optional)</span>
+                        <label className="text-sm font-medium text-muted-foreground">
+                            Audience Comparisons <span className="text-muted-foreground font-normal text-xs">(optional)</span>
                         </label>
 
                         <div className="flex flex-wrap gap-2 mb-2">
                             {segments.map(seg => (
-                                <div key={seg} className="flex items-center gap-1 bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded text-sm border border-[var(--accent)]/20">
+                                <div key={seg} className="flex items-center gap-1 bg-accent/10 text-accent-foreground px-2 py-1 rounded text-sm border border-accent/20">
                                     <span>{seg}</span>
                                     <button onClick={() => handleRemoveSegment(seg)} className="hover:text-red-500 ml-1">
                                         <X className="w-3 h-3" />
@@ -92,7 +92,7 @@ export const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
                         <div className="flex gap-2">
                             <input
                                 type="text"
-                                className="flex-1 p-2 rounded-lg border border-[var(--border)] bg-[var(--background-card)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] text-sm"
+                                className="flex-1 p-2 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-accent text-sm"
                                 placeholder="Add segment (e.g. Gen Z vs Boomers)"
                                 value={newSegment}
                                 onChange={(e) => setNewSegment(e.target.value)}

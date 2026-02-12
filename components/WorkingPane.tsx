@@ -4,16 +4,9 @@ import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
 import { InlineCanvas } from './InlineCanvas';
 import { ClarificationMessage } from './ClarificationMessage';
-import { ClipboardList, Users, MessageSquare, BarChart3, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Icon mapping for methods (same as StudyPlanPill)
-const methodIcons: Record<string, React.ElementType> = {
-  'explore-audience': BarChart3,
-  'survey': ClipboardList,
-  'focus-group': Users,
-  'message-testing': MessageSquare,
-};
+import { METHOD_ICONS } from '@/lib/methodIcons';
 
 // Inline method link component
 interface MethodLinkProps {
@@ -23,7 +16,7 @@ interface MethodLinkProps {
 }
 
 const MethodLink: React.FC<MethodLinkProps> = ({ title, methodId, onClick }) => {
-  const Icon = methodIcons[methodId] || Settings2;
+  const Icon = METHOD_ICONS[methodId] || Settings2;
   return (
     <button
       onClick={onClick}
@@ -178,12 +171,12 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* Main content area with responsive padding */}
         <div className={cn(
-          "py-6 space-y-8 transition-all duration-300",
+          "py-6 space-y-6 transition-all duration-300",
           isSidePanelOpen ? "px-6 lg:px-10" : "px-[100px]"
         )}>
 
           {/* Query History */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {conversation.messages.map((msg) => {
               // Render USER message - right aligned, max 50% width
               if (msg.role === 'user') {

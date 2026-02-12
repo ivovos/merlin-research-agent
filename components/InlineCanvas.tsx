@@ -29,15 +29,10 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { DEFAULT_BRAND_COLORS } from '@/lib/brandDefaults';
+import { SENTIMENT_COLORS } from '@/lib/sentimentColors';
+import { parsePercentage } from '@/lib/parseUtils';
 import { EditQuestionModal } from './EditQuestionModal';
-
-// Default brand colors (MUBI)
-const DEFAULT_BRAND_COLORS: BrandColors = {
-  primary: '#2768E3',   // MUBI Blue
-  secondary: '#1BD571', // MUBI Green
-  tertiary: '#E32768',  // MUBI Pink
-  quaternary: '#D5711B', // MUBI Orange
-};
 
 interface InlineCanvasProps {
   canvas: Canvas;
@@ -427,16 +422,6 @@ const MiniQuestionCard: React.FC<{
   const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
   // Helper to parse percentage values (handles "37.2%" strings)
-  const parsePercentage = (value: unknown): number => {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const cleaned = value.replace('%', '').trim();
-      const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
-  };
-
   // Normalize and sort options - handle both array and object formats
   const sortedOptions = React.useMemo(() => {
     const opts = data.options;
@@ -667,12 +652,7 @@ const ThemeCard: React.FC<{ theme: QualitativeTheme; index: number }> = ({
 }) => {
   const [showAllQuotes, setShowAllQuotes] = useState(false);
 
-  const sentimentColors = {
-    positive: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    mixed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  };
+
 
   const displayedQuotes = showAllQuotes ? theme.quotes : theme.quotes.slice(0, 1);
 
@@ -683,7 +663,7 @@ const ThemeCard: React.FC<{ theme: QualitativeTheme; index: number }> = ({
           <span
             className={cn(
               'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
-              sentimentColors[theme.sentiment]
+              SENTIMENT_COLORS[theme.sentiment]
             )}
           >
             {theme.sentiment}
