@@ -3,6 +3,7 @@ import type { SurveyProject } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { FindingsCanvas } from '@/components/results/FindingsCanvas'
 import { ArrowLeft, FileQuestion, BarChart3, Users, Image as ImageIcon } from 'lucide-react'
 
 interface ProjectDetailProps {
@@ -112,14 +113,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         </div>
       )}
 
-      {/* Placeholder for findings */}
-      <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
-        <BarChart3 className="w-8 h-8 mx-auto mb-3 opacity-50" />
-        <p className="text-sm font-medium">Findings canvas coming in Phase 3</p>
-        <p className="text-xs mt-1">
-          {totalFindings} finding{totalFindings !== 1 ? 's' : ''} with charts and AI insights
-        </p>
-      </div>
+      {/* Findings */}
+      {project.surveys.map((s) => (
+        s.findings && s.findings.length > 0 ? (
+          <div key={s.id} className="mb-8">
+            <FindingsCanvas
+              findings={s.findings}
+              title={s.name}
+              typeBadge={typeConfig?.label}
+              respondents={s.sampleSize}
+            />
+          </div>
+        ) : null
+      ))}
     </div>
   )
 }

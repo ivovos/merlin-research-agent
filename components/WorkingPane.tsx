@@ -2,7 +2,8 @@ import React from 'react';
 import type { Conversation, Canvas, SelectedSegment, SelectedSegments, StudyPlan } from '@/types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
-import { InlineCanvas } from './InlineCanvas';
+import { FindingsCanvas } from './results/FindingsCanvas';
+import { canvasToFindings } from '@/lib/canvasToFindings';
 import { ClarificationMessage } from './ClarificationMessage';
 import { Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -236,29 +237,16 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                           )}
                         </div>
 
-                        {/* 5. Inline Canvas - centered, full width within padding */}
+                        {/* 5. Findings Canvas - centered, full width within padding */}
                         {msg.canvas && (
                           <>
                             <div className="flex justify-center">
-                              <InlineCanvas
-                                canvas={msg.canvas}
+                              <FindingsCanvas
+                                findings={canvasToFindings(msg.canvas)}
+                                title={msg.canvas.title}
+                                respondents={msg.canvas.respondents}
+                                compact
                                 onExpand={() => onExpandCanvas?.(msg.canvas!)}
-                                selectedSegments={selectedSegments}
-                                isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
-                                onBarSelect={onBarSelect}
-                                onClearSegments={onClearSegments}
-                                onRemoveSegment={onRemoveSegment}
-                                onAskSegment={onAskSegment}
-                                onEditQuestion={onEditQuestion}
-                                onEditStudyPlan={onEditStudyPlan}
-                                onTitleChange={
-                                  onCanvasTitleChange
-                                    ? (newTitle) => onCanvasTitleChange(msg.canvas!.id, newTitle)
-                                    : undefined
-                                }
-                                onAskAnotherQuestion={
-                                  msg.canvas.type === 'qualitative' ? handleAskAnotherQuestion : undefined
-                                }
                                 className="w-full max-w-3xl"
                               />
                             </div>

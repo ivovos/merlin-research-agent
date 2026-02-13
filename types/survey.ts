@@ -76,6 +76,7 @@ export interface SegmentBreakdown {
 
 export interface Finding {
   questionId: string
+  questionText?: string
   headline: string
   insight: string
   chartType: 'bar' | 'stacked_bar' | 'radar' | 'table' | 'heatmap' | 'line' | 'grouped_bar'

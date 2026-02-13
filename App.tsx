@@ -26,6 +26,8 @@ import { QueryInput } from '@/components/QueryInput'
 import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
+import { FindingsCanvas } from '@/components/results/FindingsCanvas'
+import { canvasToFindings } from '@/lib/canvasToFindings'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
 import { MethodSidePanel } from '@/components/MethodSidePanel'
 import { MethodFullPage } from '@/components/MethodFullPage'
@@ -529,19 +531,32 @@ const App: React.FC = () => {
         <>
         {/* Main content area with optional side panel */}
         <main className="flex flex-1 flex-col overflow-hidden transition-all duration-300 min-w-0">
-          {/* Expanded Canvas - replaces entire content including header */}
+          {/* Expanded Findings - replaces entire content including header */}
           {expandedCanvas ? (
-            <ExpandedCanvas
-              canvas={expandedCanvas}
-              conversation={conversation}
-              onClose={handleCloseExpandedCanvas}
-              onEditQuestion={handleEditQuestion}
-              selectedSegments={selectedSegments}
-              isSelectionForThisCanvas={isForCanvas(expandedCanvas.id)}
-              onClearSegments={clearSegments}
-              onRemoveSegment={removeSegment}
-              onEditStudyPlan={handleEditStudyPlan}
-            />
+            <div className="flex flex-col h-full w-full bg-background">
+              <div className="flex items-center h-14 px-6 border-b border-border bg-background flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={handleCloseExpandedCanvas}
+                >
+                  <Layers className="w-4 h-4" />
+                  Back
+                </Button>
+                <div className="flex-1" />
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-5xl mx-auto">
+                  <FindingsCanvas
+                    findings={canvasToFindings(expandedCanvas)}
+                    title={expandedCanvas.title}
+                    respondents={expandedCanvas.respondents}
+                    onInsightEdit={(qId, text) => console.log('Edit insight:', qId, text)}
+                  />
+                </div>
+              </div>
+            </div>
           ) : (
             <>
               <MainHeader
@@ -591,8 +606,8 @@ const App: React.FC = () => {
                     onBack={handleDashboardClick}
                   />
                 ) : activeView === 'results' ? (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    Results view coming in Phase 3
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                    Select a project from the Dashboard to view its findings.
                   </div>
                 ) : activeView === 'audiences' ? (
                   <AudiencesList
