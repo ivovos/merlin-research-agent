@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Users, ArrowUp, Search, X, ClipboardList, MessageSquare, SquareSlash } from 'lucide-react';
+import { Plus, Users, ArrowUp, Search, X, ClipboardList, FileQuestion, MessageSquare, SquareSlash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockAudiences } from '../data/mockData';
@@ -37,7 +37,8 @@ const PLACEHOLDER_EXAMPLES = [
 ];
 
 const RESEARCH_METHODS = [
-  { id: 'survey', name: 'Survey', description: 'Questionnaire with large group of respondent', icon: ClipboardList },
+  { id: 'survey', name: 'Survey', description: 'Build a multi-step survey with question editor', icon: FileQuestion },
+  { id: 'poll', name: 'Poll', description: 'Quick question to an audience', icon: ClipboardList },
   { id: 'focus-group', name: 'Focus Group', description: 'Group conversation with small number of participants', icon: Users },
   { id: 'message-testing', name: 'Message Test', description: 'Test copy or assets variants with', icon: MessageSquare },
   { id: 'explore-audience', name: 'Understand audience', description: 'Deep dive on an audience\'s attributes', icon: Users },

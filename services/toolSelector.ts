@@ -8,9 +8,9 @@ import { AGENT_SYSTEM_PROMPT, getAgentPromptWithContext } from './agentPrompt'
 // ---------------------------------------------------------------------------
 
 const toolToMethodMapping: Record<string, { methodId: string; methodName: string; variantId?: string; variantName?: string }> = {
-  'run_survey': { methodId: 'survey', methodName: 'Survey' },
+  'run_survey': { methodId: 'poll', methodName: 'Poll' },
   'run_focus_group': { methodId: 'focus-group', methodName: 'Focus Group' },
-  'run_comparison': { methodId: 'survey', methodName: 'Survey', variantId: 'comparison', variantName: 'Comparison' },
+  'run_comparison': { methodId: 'poll', methodName: 'Poll', variantId: 'comparison', variantName: 'Comparison' },
   'run_heatmap': { methodId: 'explore-audience', methodName: 'Explore Audience', variantId: 'heatmap', variantName: 'Heatmap' },
   'run_sentiment_analysis': { methodId: 'explore-audience', methodName: 'Explore Audience', variantId: 'sentiment', variantName: 'Sentiment Analysis' },
   'run_message_testing': { methodId: 'message-testing', methodName: 'Message Testing' },
@@ -126,7 +126,7 @@ function generateStudyTitle(toolInput: Record<string, unknown>, methodName: stri
 }
 
 export function createStudyPlan(toolName: string, toolInput: Record<string, unknown>): StudyPlan {
-  const mapping = toolToMethodMapping[toolName] || { methodId: 'survey', methodName: 'Survey' }
+  const mapping = toolToMethodMapping[toolName] || { methodId: 'poll', methodName: 'Poll' }
   const title = generateStudyTitle(toolInput, mapping.methodName)
 
   return {

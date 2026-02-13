@@ -29,6 +29,7 @@ import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
 import { MethodSidePanel } from '@/components/MethodSidePanel'
 import { MethodFullPage } from '@/components/MethodFullPage'
+import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
 import { Button } from '@/components/ui/button'
 import { Layers } from 'lucide-react'
 import { createPlanningSteps, createExecutionSteps } from '@/constants/processSteps'
@@ -414,8 +415,12 @@ const App: React.FC = () => {
     setActiveView('projectDetail')
   }, [])
 
-  const handleNewSurvey = useCallback(() => {
+  const handleOpenSurveyBuilder = useCallback(() => {
     setActiveView('surveyBuilder')
+  }, [])
+
+  const handleCloseSurveyBuilder = useCallback(() => {
+    setActiveView('dashboard')
   }, [])
 
   const handleExpandCanvas = useCallback((canvas: Canvas) => {
@@ -472,6 +477,11 @@ const App: React.FC = () => {
 
   // Method creation handlers
   const handleOpenMethodCreator = useCallback((methodId?: string) => {
+    // Route /survey to the new multi-step builder
+    if (methodId === 'survey') {
+      setActiveView('surveyBuilder')
+      return
+    }
     setCreatingMethod({ methodId })
   }, [])
 
@@ -503,11 +513,12 @@ const App: React.FC = () => {
         onRenameConversation={handleRenameConversation}
         onDeleteConversation={handleDeleteConversation}
         onDashboardClick={handleDashboardClick}
-        onNewSurvey={handleNewSurvey}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
-        {/* Method Full Page - replaces entire main content when creating new */}
-        {creatingMethod ? (
+        {/* Survey Builder - full page view */}
+        {activeView === 'surveyBuilder' ? (
+          <SurveyBuilder onClose={handleCloseSurveyBuilder} />
+        ) : creatingMethod ? (
           <MethodFullPage
             isOpen={true}
             onClose={handleCloseMethodCreator}
@@ -539,8 +550,6 @@ const App: React.FC = () => {
                     ? 'Projects'
                     : activeView === 'projectDetail' && selectedSurveyProject
                     ? selectedSurveyProject.name
-                    : activeView === 'surveyBuilder'
-                    ? 'New Survey'
                     : activeView === 'audiences'
                     ? 'Audiences'
                     : activeView === 'audienceDetail' && selectedAudience
@@ -574,16 +583,13 @@ const App: React.FC = () => {
                   <Dashboard
                     projects={surveyProjects}
                     onSelectProject={handleProjectDetailClick}
+                    onNewSurvey={handleOpenSurveyBuilder}
                   />
                 ) : activeView === 'projectDetail' && selectedSurveyProject ? (
                   <ProjectDetail
                     project={selectedSurveyProject}
                     onBack={handleDashboardClick}
                   />
-                ) : activeView === 'surveyBuilder' ? (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    Survey builder coming in Phase 2
-                  </div>
                 ) : activeView === 'results' ? (
                   <div className="flex-1 flex items-center justify-center text-muted-foreground">
                     Results view coming in Phase 3

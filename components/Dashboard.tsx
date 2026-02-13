@@ -11,11 +11,13 @@ import {
   Image as ImageIcon,
   Users,
   BarChart3,
+  Plus,
 } from 'lucide-react'
 
 interface DashboardProps {
   projects: SurveyProject[]
   onSelectProject: (project: SurveyProject) => void
+  onNewSurvey?: () => void
 }
 
 function getTypeLabel(type: SurveyProject['surveyType']): string {
@@ -41,7 +43,7 @@ function getTotalFindings(project: SurveyProject): number {
   return project.surveys.reduce((sum, s) => sum + (s.findings?.length ?? 0), 0)
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ projects, onSelectProject }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ projects, onSelectProject, onNewSurvey }) => {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredProjects = useMemo(() => {
@@ -78,6 +80,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ projects, onSelectProject 
 
       {/* Project Grid */}
       <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* New Survey CTA card */}
+        {onNewSurvey && !searchQuery.trim() && (
+          <Card
+            className="cursor-pointer transition-shadow hover:shadow-md border-dashed border-2"
+            onClick={onNewSurvey}
+          >
+            <div className="p-5 flex flex-col items-center justify-center text-center min-h-[140px]">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mb-3">
+                <Plus className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-semibold">Create New Survey</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Start a new research project
+              </p>
+            </div>
+          </Card>
+        )}
         {filteredProjects.map((project) => (
           <ProjectCard
             key={project.id}

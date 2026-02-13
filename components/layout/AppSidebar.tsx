@@ -2,7 +2,6 @@ import * as React from "react"
 import {
   ChevronDown,
   ChevronRight,
-  FileQuestion,
   Folder,
   LayoutDashboard,
   MessageSquare,
@@ -59,7 +58,6 @@ interface AppSidebarProps {
   onAudiencesClick?: () => void
   onNewChat?: () => void
   onDashboardClick?: () => void
-  onNewSurvey?: () => void
   // History
   conversation?: Conversation
   history?: Conversation[]
@@ -81,7 +79,6 @@ export function AppSidebar({
   onAudiencesClick,
   onNewChat,
   onDashboardClick,
-  onNewSurvey,
   conversation,
   history = [],
   onSelectHistory,
@@ -215,18 +212,6 @@ export function AppSidebar({
                 >
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* New Survey */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={onNewSurvey}
-                  isActive={activeView === "surveyBuilder"}
-                  tooltip="New Survey"
-                >
-                  <FileQuestion className="h-4 w-4" />
-                  <span>New Survey</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

@@ -4,7 +4,7 @@ import type { ElementType } from 'react';
 export const METHOD_ICONS: Record<string, ElementType> = {
   'explore-audience': BarChart3,
   'chart-bar': BarChart3,
-  'survey': ClipboardList,
+  'poll': ClipboardList,
   'clipboard-list': ClipboardList,
   'focus-group': Users,
   'users': Users,
