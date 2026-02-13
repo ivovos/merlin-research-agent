@@ -686,6 +686,132 @@ That's the demo.
 
 ---
 
+## Implementation Status
+
+All phases are complete. 34 files changed, ~4,400 lines added across 5 commits on `feature/survey-builder-merge`.
+
+### Phase 1: Foundations ✅ (`eef6fcb`)
+
+**What was built:**
+- Extended `ActiveView` with `dashboard`, `projectDetail`, `surveyBuilder`, `results`
+- Created `types/survey.ts` with full type system: `SurveyType`, `QuestionType` (19 types), `Stimulus`, `SurveyQuestion`, `Finding`, `Survey`, `SurveyProject`, `SURVEY_TYPE_CONFIGS`
+- Exported all types via `types/index.ts`
+- Created `data/projects/` with hand-authored TypeScript data files (not SheetJS — simpler for prototype) for all 5 case studies:
+  - `vodafone.ts` — 10 propositions × 7 KPIs × 2 segments, 3 concept card images
+  - `bp.ts` — 4 OOH variants × 14 metrics with norms, 4 stimulus images
+  - `disney.ts` — 3 key art versions × 14 metrics, attribute maps
+  - `philips.ts` — 7 KPIs with means and T2B%
+  - `candyCrush.ts` — 3 segments, MaxDiff, IP partnership fit
+- Created `components/Dashboard.tsx` — project card grid with search, stimulus thumbnails, stats, type badges
+- Created initial `components/ProjectDetail.tsx` — header, stats, stimulus gallery, survey metadata
+
+**Deviation from plan:** Mock data is authored as TypeScript constants (not parsed from Excel via SheetJS). This is simpler and more maintainable for a prototype — the Excel structure varies per sheet and doesn't justify a parser for 5 static datasets.
+
+### Phase 2: Survey Builder ✅ (`ebd0817`)
+
+**What was built:**
+- `hooks/useSurveyBuilder.ts` — `useReducer`-based state machine with `BuilderState`, dynamic flow steps, validation per step
+- `components/builder/SurveyBuilder.tsx` — full-screen overlay with sidebar + main area + action bar
+- `components/builder/BuilderSidebar.tsx` — dynamic step navigation, completion states
+- `components/builder/BuilderActionBar.tsx` — context-aware CTA bar (Back/Next/Launch)
+- `components/builder/steps/TypeStep.tsx` — 6 survey type cards
+- `components/builder/steps/AudienceStep.tsx` — audience picker integrated with existing `useAudiences`
+- `components/builder/steps/StimulusStep.tsx` — drag-and-drop file upload zone, thumbnail cards
+- `components/builder/steps/QuestionsStep.tsx` — gateway (AI/Manual/Template methods) + two-panel editor with question list and detail editing, type switching, options management
+
+**Deviation from plan:** `PreviewStep` was not built as a separate component — the builder launches directly from the Questions step. `QuestionsGateway` and `QuestionsEditor` were merged into a single `QuestionsStep.tsx` that handles both the method selection gateway and the full editor. Builder is accessible via "New Survey" sidebar button and via `/survey` slash command in chat.
+
+### Phase 3: FindingsCanvas ✅ (`734cc54`)
+
+**What was built:**
+- `components/results/FindingsCanvas.tsx` — grouped container with header (title, respondent count, type badge, finding count), collapse/expand, dropdown menu (copy, download, share, save to project, refine in builder)
+- `components/results/FindingCard.tsx` — per-finding card with headline stat extraction, editable AI insight, chart, segment breakdown
+- `components/results/FindingChart.tsx` — Recharts visualisation supporting `bar`, `horizontal_bar`, `stacked_bar`, `grouped_bar`, `pie`, `radar` chart types
+- `components/results/EditableInsight.tsx` — click-to-edit AI narrative text
+- `components/results/SegmentBreakdown.tsx` — per-segment comparison bars
+- `lib/canvasToFindings.ts` — adapter converting existing `Canvas` → `Finding[]` so both chat and builder paths feed into `FindingsCanvas`
+- Updated `WorkingPane.tsx` to render `FindingsCanvas` instead of `InlineCanvas` for chat results
+
+**Deviation from plan:** `FindingsHeader.tsx` was not a separate component — the header is inline in `FindingsCanvas.tsx`. Full-page tabs (Per Question / Full Report / Segments) were not built — the expanded view uses the same `FindingsCanvas` component at larger size. `InlineCanvas` was not removed (kept for backward compatibility) but is no longer used in the primary flow.
+
+### Phase 3.5: Survey Launch Wiring ✅ (`cfeda1d`)
+
+**What was built (not in original plan):**
+- Changed `SurveyBuilder.onLaunch` to pass `BuilderState` before reset, so launch data isn't lost
+- Made `projects` list stateful in `App.tsx` (was a static import)
+- Created `lib/generateMockFindings.ts` — generates realistic mock findings from builder questions at launch time, supporting all chartable question types with realistic percentage distributions and insight narratives
+- Wired `handleSurveyLaunch` in `App.tsx`: creates a `SurveyProject` from builder state with generated findings, navigates to `projectDetail`
+
+### Phases 4 & 5: ProjectDetail Polish, Chat-to-Project, Navigation ✅ (`9821a9a`)
+
+**What was built:**
+- **ProjectDetail.tsx rewrite:** Stimulus lightbox dialog (shadcn `Dialog`) with prev/next arrow buttons and keyboard navigation, formatted dates ("Created 15 Jan 2026 · Updated 22 Jan 2026"), Key Findings summary section extracting leading stats from headlines (e.g. "59%") with first 3 findings + "+N more"
+- **FindingsCanvas.tsx:** Added "Save to Project" (`FolderPlus` icon) and "Refine in Builder" (`Wand2` icon) dropdown menu items, conditionally rendered when callbacks provided
+- **WorkingPane.tsx:** Threaded `onSaveToProject` and `onRefineInBuilder` callbacks to FindingsCanvas
+- **AppSidebar.tsx:** Added survey projects list (iterates `surveyProjects` prop, shows icon + name), "New Survey" button (`FileQuestion` icon), breadcrumb navigation in `MainHeader` (clickable ancestors with `ChevronRight` separators)
+- **App.tsx:** `handleSaveCanvasToProject` (uses `canvasToProject()` utility), `handleRefineInBuilder` (navigates to builder), `breadcrumbs` useMemo, all new props threaded to sidebar/header/working pane
+- **lib/canvasToProject.ts (new):** Converts chat `Canvas` → `SurveyProject` using `canvasToFindings()` adapter
+
+**Deviation from plan:**
+- Phase 5B (Builder ↔ Chat crossover — connecting builder AI method to `researchGenerator`/`toolSelector`) was not implemented. The builder's AI question generation path is a UI placeholder.
+- Phase 5C breadcrumbs are simplified (only "Projects >" for projectDetail, "Audiences >" for audienceDetail) — no deep builder breadcrumbs.
+- Phase 2C (design system alignment — monochrome tokens, Cabinet Grotesk, button variants) was not applied. The app uses Merlin's existing design tokens.
+
+### Files Created (27 new)
+
+```
+types/survey.ts
+types/index.ts (re-exports)
+data/projects/index.ts
+data/projects/vodafone.ts
+data/projects/bp.ts
+data/projects/disney.ts
+data/projects/philips.ts
+data/projects/candyCrush.ts
+components/Dashboard.tsx
+components/ProjectDetail.tsx
+components/builder/SurveyBuilder.tsx
+components/builder/BuilderSidebar.tsx
+components/builder/BuilderActionBar.tsx
+components/builder/steps/TypeStep.tsx
+components/builder/steps/AudienceStep.tsx
+components/builder/steps/StimulusStep.tsx
+components/builder/steps/QuestionsStep.tsx
+components/results/FindingsCanvas.tsx
+components/results/FindingCard.tsx
+components/results/FindingChart.tsx
+components/results/EditableInsight.tsx
+components/results/SegmentBreakdown.tsx
+hooks/useSurveyBuilder.ts
+lib/canvasToFindings.ts
+lib/canvasToProject.ts
+lib/generateMockFindings.ts
+```
+
+### Files Modified (7)
+
+```
+App.tsx                     (+178 lines — navigation, handlers, state, new view routing)
+components/WorkingPane.tsx  (+36 lines — FindingsCanvas integration, new callbacks)
+components/layout/AppSidebar.tsx (+71 lines — projects list, New Survey, breadcrumbs)
+components/QueryInput.tsx   (+5 lines — /survey command support)
+data/methods.ts             (+10 lines — survey method config)
+lib/methodIcons.ts          (+2 lines — survey icon mapping)
+services/toolSelector.ts    (+6 lines — survey type selection)
+```
+
+### What's Not Built (Out of Scope for Prototype)
+
+- **SheetJS Excel parsing** (1C) — replaced with hand-authored TS data files
+- **Design system overhaul** (2C) — monochrome tokens, Cabinet Grotesk font, button variant changes not applied
+- **PreviewStep** (2B) — builder launches from Questions step directly
+- **Full-page tabs** (3E) — Per Question / Full Report / Segments views in expanded FindingsCanvas
+- **Builder ↔ Chat AI crossover** (5B) — builder AI method doesn't connect to `researchGenerator`
+- **Deep breadcrumbs** (5C) — simplified to single-level ancestors only
+- **InlineCanvas removal** — kept for backward compatibility, but no longer rendered in primary flows
+
+---
+
 ## Appendix: Unified Design System Spec
 
 A single monochrome minimal theme applied globally across chat, builder, and results views. No per-view scoping — the whole app looks and feels the same.
