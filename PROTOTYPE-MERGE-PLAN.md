@@ -35,6 +35,135 @@ Merge the **Merlin Research Agent** (React/TS chat-driven research tool) with th
 
 ---
 
+## Object Model & App Structure
+
+### Core Concept: Project = Chat
+
+Every project is a conversation. The sidebar shows a list of projects; click one and you see a chat. There is no separate dashboard, no project detail view, no standalone results page. The conversation is the project — it accumulates research iteratively.
+
+A typical session:
+
+1. Open a project (or create new)
+2. Upload a brief via the **+** button, ask "what should we test here?"
+3. AI suggests an approach
+4. Click **Add Study** to build a structured concept test (guided builder opens)
+5. Builder closes, results drop into the chat as a FindingsCanvas
+6. Ask a follow-up: "how does this compare to the last wave?"
+7. AI runs a quick supplementary study, results appear inline
+8. Ask "summarise what we've learned" → AI produces a deliverable from accumulated context
+
+The conversation is the spine. Everything hangs off it.
+
+### Object Model
+
+```
+Account
+  └── Project (= Conversation)
+        ├── Messages[]
+        │     ├── User messages (questions, requests, instructions)
+        │     ├── AI responses (thinking, methodology, narrative)
+        │     ├── StudyResult blocks (FindingsCanvas, inline in the stream)
+        │     └── Uploaded content (briefs, images, stimulus — via + button)
+        ├── Studies[] (metadata for each study run)
+        │     ├── type: SurveyType
+        │     ├── questions: SurveyQuestion[]
+        │     ├── audiences: Audience[]
+        │     ├── stimuli: Stimulus[]
+        │     ├── methodology: string
+        │     └── findings: Finding[]
+        ├── Audiences[] (created via Add Audience or during study setup)
+        └── Attachments[] (briefs, documents, images uploaded via +)
+```
+
+A **Study** is created one of two ways but produces the same output:
+
+| Path | Trigger | Experience | Output |
+|------|---------|------------|--------|
+| **Agentic (chat)** | Type a research question | AI picks methodology, selects audience, generates findings. Fast, exploratory. | FindingsCanvas appears inline |
+| **Guided (builder)** | Click "Add Study" in input bar | Step-by-step: Type → Audience → Stimulus → Questions → Preview → Launch. Full control. | FindingsCanvas appears inline |
+
+Both paths produce a `Study` with `Finding[]` that render as a FindingsCanvas block in the conversation stream. From the user's perspective, the chat just grows — messages interspersed with study results.
+
+### Navigation
+
+**Sidebar (left):**
+- Account selector (top)
+- Project list — each item shows project name, last activity, maybe a status dot
+- "New Project" button
+- Audiences section (browse/manage audiences across projects)
+
+**Main area (always a chat):**
+- Message stream: user messages, AI responses, FindingsCanvas blocks, uploaded attachments
+- Chat input bar (bottom)
+
+**No other views.** No dashboard. No project detail. No standalone results page. The chat IS the project view.
+
+### Chat Input Bar
+
+The input bar is the control centre. Text input plus action buttons:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [+]  [Add Audience]  [Add Study]     Type a message...  → │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Button | Action |
+|--------|--------|
+| **+** (attach) | Upload a brief, image, stimulus, document. Appears as an inline attachment in the chat. Can then discuss it: "what does this brief suggest we test?" |
+| **Add Audience** | Opens audience picker/creator. Selected audience becomes available for studies in this project. |
+| **Add Study** | Opens the guided study builder as a full-screen overlay. On completion, study results drop into the chat. |
+| **Text input** | Type a question or instruction. AI responds agentically — may run a study, answer from context, or produce a deliverable. |
+
+### The Builder (Overlay)
+
+When you click "Add Study," the builder opens as a **full-screen overlay** on top of the chat. It uses the interaction model's step-by-step flow:
+
+Type → Audience → Stimulus (conditional) → Questions → Preview → Launch
+
+The builder has its own sidebar (step navigation), main area, and bottom action bar — exactly as documented in the interaction model. It does NOT need its own route or URL. It's a modal layer.
+
+When the user clicks "Launch" on the Preview step:
+1. Builder closes
+2. A message appears in the chat: "Study launched: Vodafone Concept Test — 10 propositions, 7 KPIs, 2 segments"
+3. After a brief animation (simulating fieldwork), the FindingsCanvas drops in with results
+
+For the prototype, "Launch" immediately produces results from mock data. No actual fieldwork simulation needed beyond a quick loading state.
+
+### Pre-populated Demo Projects
+
+The BP, Vodafone, Disney, Philips, and Candy Crush cases show up as **projects in the sidebar**. Opening one reveals a conversation that looks like a researcher already worked through it:
+
+```
+Vodafone Broadband Research
+├── [User] "Here's the brief for the Vodafone broadband proposition testing"
+│   └── [Attachment: research-brief.pdf]
+├── [AI] "I can see this is a proposition testing study across 10 broadband concepts..."
+├── [User] "Let's test all 10 propositions with broadband decision-makers"
+├── [AI] "Setting up a concept test..."
+│   └── [FindingsCanvas: 10 propositions × 7 KPIs — switching intent, appeal, relevance...]
+├── [User] "How do tech-savvy families compare to general broadband users?"
+├── [AI] "Breaking down by segment..."
+│   └── [FindingsCanvas: segment comparison — tech-savvy vs. general]
+├── [User] "Which propositions should we take forward?"
+└── [AI] "Based on the data, the top 3 propositions are... [narrative summary]"
+```
+
+This is generated from the Excel mock data — the messages are synthetic but the findings are real data from the spreadsheet. Each demo project is a pre-built conversation with FindingsCanvas blocks containing actual case study data.
+
+### Deliverables
+
+Because the chat accumulates all context (studies, findings, briefs, discussion), the user can ask for deliverables at any point:
+
+- "Summarise what we've learned so far"
+- "Create a report comparing the top 5 propositions"
+- "Write a recommendation for the client"
+- "Export the key findings as a presentation"
+
+The AI has the full conversation history to draw from. Deliverables appear as messages (narrative text) or as generated artifacts (report cards, exportable content).
+
+---
+
 ## Architecture Decision
 
 **Base: Merlin Research Agent (React/TS)**

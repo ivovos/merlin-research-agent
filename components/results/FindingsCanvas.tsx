@@ -8,6 +8,8 @@ import {
   Share2,
   MoreVertical,
   BarChart3,
+  FolderPlus,
+  Wand2,
 } from 'lucide-react'
 import type { Finding } from '@/types'
 import { FindingCard } from './FindingCard'
@@ -17,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -29,6 +32,8 @@ interface FindingsCanvasProps {
   compact?: boolean
   onExpand?: () => void
   onInsightEdit?: (questionId: string, newText: string) => void
+  onSaveToProject?: () => void
+  onRefineInBuilder?: () => void
   defaultCollapsed?: boolean
   className?: string
 }
@@ -41,6 +46,8 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
   compact = false,
   onExpand,
   onInsightEdit,
+  onSaveToProject,
+  onRefineInBuilder,
   defaultCollapsed = false,
   className,
 }) => {
@@ -121,6 +128,19 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </DropdownMenuItem>
+              {(onSaveToProject || onRefineInBuilder) && <DropdownMenuSeparator />}
+              {onSaveToProject && (
+                <DropdownMenuItem onClick={onSaveToProject}>
+                  <FolderPlus className="w-4 h-4 mr-2" />
+                  Save to Project
+                </DropdownMenuItem>
+              )}
+              {onRefineInBuilder && (
+                <DropdownMenuItem onClick={onRefineInBuilder}>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Refine in Builder
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

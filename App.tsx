@@ -31,6 +31,7 @@ import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { FindingsCanvas } from '@/components/results/FindingsCanvas'
 import { canvasToFindings } from '@/lib/canvasToFindings'
 import { generateMockFindings } from '@/lib/generateMockFindings'
+import { canvasToProject } from '@/lib/canvasToProject'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
 import { MethodSidePanel } from '@/components/MethodSidePanel'
 import { MethodFullPage } from '@/components/MethodFullPage'
@@ -471,6 +472,17 @@ const App: React.FC = () => {
     setActiveView('projectDetail')
   }, [])
 
+  const handleSaveCanvasToProject = useCallback((canvas: Canvas) => {
+    const newProject = canvasToProject(canvas)
+    setProjects(prev => [newProject, ...prev])
+    setSelectedSurveyProject(newProject)
+    setActiveView('projectDetail')
+  }, [])
+
+  const handleRefineInBuilder = useCallback(() => {
+    setActiveView('surveyBuilder')
+  }, [])
+
   const handleExpandCanvas = useCallback((canvas: Canvas) => {
     setExpandedCanvas(canvas)
   }, [])
@@ -478,6 +490,17 @@ const App: React.FC = () => {
   const handleCloseExpandedCanvas = useCallback(() => {
     setExpandedCanvas(null)
   }, [])
+
+  // Breadcrumbs based on active view
+  const breadcrumbs = useMemo(() => {
+    if (activeView === 'projectDetail' && selectedSurveyProject) {
+      return [{ label: 'Projects', onClick: handleDashboardClick }]
+    }
+    if (activeView === 'audienceDetail') {
+      return [{ label: 'Audiences', onClick: handleAudiencesClick }]
+    }
+    return undefined
+  }, [activeView, selectedSurveyProject, handleDashboardClick, handleAudiencesClick])
 
   const handleCanvasPrompt = useCallback(async (prompt: string, segments?: SelectedSegments) => {
     // Handle canvas prompts - could modify existing canvas or create follow-up
@@ -561,6 +584,9 @@ const App: React.FC = () => {
         onRenameConversation={handleRenameConversation}
         onDeleteConversation={handleDeleteConversation}
         onDashboardClick={handleDashboardClick}
+        surveyProjects={projects}
+        onSurveyProjectSelect={handleProjectDetailClick}
+        onNewSurvey={handleOpenSurveyBuilder}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Survey Builder - full page view */}
@@ -599,6 +625,8 @@ const App: React.FC = () => {
                     title={expandedCanvas.title}
                     respondents={expandedCanvas.respondents}
                     onInsightEdit={(qId, text) => console.log('Edit insight:', qId, text)}
+                    onSaveToProject={() => handleSaveCanvasToProject(expandedCanvas)}
+                    onRefineInBuilder={handleRefineInBuilder}
                   />
                 </div>
               </div>
@@ -624,6 +652,7 @@ const App: React.FC = () => {
                     ? (newTitle) => handleRenameConversation(conversation.id, newTitle)
                     : undefined
                 }
+                breadcrumbs={breadcrumbs}
               >
                 {/* View Canvas button - only show when there are canvases */}
                 {activeView === 'conversation' && hasCanvases && (
@@ -701,6 +730,8 @@ const App: React.FC = () => {
                     onEditStudyPlan={handleEditStudyPlan}
                     onCanvasTitleChange={handleCanvasTitleChange}
                     onOpenMethodCreator={handleOpenMethodCreator}
+                    onSaveToProject={handleSaveCanvasToProject}
+                    onRefineInBuilder={handleRefineInBuilder}
                     isSidePanelOpen={!!editingStudyPlan}
                   />
                 )}

@@ -2,6 +2,7 @@ import * as React from "react"
 import {
   ChevronDown,
   ChevronRight,
+  FileQuestion,
   Folder,
   LayoutDashboard,
   MessageSquare,
@@ -44,7 +45,7 @@ import {
 import { cn } from "@/lib/utils"
 import { MonoIcon } from "@/components/MonoIcon"
 import { Input } from "@/components/ui/input"
-import type { Account, Conversation, ResearchProject } from "@/types"
+import type { Account, Conversation, ResearchProject, SurveyProject } from "@/types"
 
 interface AppSidebarProps {
   // Account
@@ -67,6 +68,10 @@ interface AppSidebarProps {
   // Research Projects
   selectedResearchProject?: ResearchProject | null
   onResearchProjectSelect?: (project: ResearchProject) => void
+  // Survey Projects
+  surveyProjects?: SurveyProject[]
+  onSurveyProjectSelect?: (project: SurveyProject) => void
+  onNewSurvey?: () => void
 }
 
 export function AppSidebar({
@@ -86,6 +91,9 @@ export function AppSidebar({
   onDeleteConversation,
   selectedResearchProject,
   onResearchProjectSelect,
+  surveyProjects = [],
+  onSurveyProjectSelect,
+  onNewSurvey,
 }: AppSidebarProps) {
   const { state, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
@@ -203,6 +211,17 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
+              {/* New Survey */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={onNewSurvey}
+                  tooltip="New Survey"
+                >
+                  <FileQuestion className="h-4 w-4" />
+                  <span>New Survey</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {/* Dashboard */}
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -227,8 +246,8 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Research Projects (collapsible) */}
-              {currentAccount?.researchProjects && currentAccount.researchProjects.length > 0 && (
+              {/* Survey Projects (collapsible) */}
+              {surveyProjects.length > 0 && (
                 <Collapsible
                   open={isProjectsOpen}
                   onOpenChange={setIsProjectsOpen}
@@ -248,13 +267,13 @@ export function AppSidebar({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {currentAccount.researchProjects.map((project) => (
+                        {surveyProjects.map((project) => (
                           <SidebarMenuSubItem key={project.id}>
                             <SidebarMenuSubButton
-                              onClick={() => onResearchProjectSelect?.(project)}
-                              isActive={selectedResearchProject?.id === project.id}
+                              onClick={() => onSurveyProjectSelect?.(project)}
+                              isActive={activeView === 'projectDetail' && selectedResearchProject === null}
                             >
-                              <span className="truncate">{project.name}</span>
+                              <span className="truncate">{project.icon} {project.name}</span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -388,10 +407,12 @@ export function MainHeader({
   title,
   children,
   onTitleChange,
+  breadcrumbs,
 }: {
   title?: string
   children?: React.ReactNode
   onTitleChange?: (newTitle: string) => void
+  breadcrumbs?: Array<{ label: string; onClick?: () => void }>
 }) {
   const [isEditing, setIsEditing] = React.useState(false)
   const [editValue, setEditValue] = React.useState(title || "")
@@ -411,6 +432,25 @@ export function MainHeader({
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
       <SidebarTrigger className="-ml-1" />
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          {breadcrumbs.map((crumb, i) => (
+            <React.Fragment key={i}>
+              {crumb.onClick ? (
+                <button
+                  onClick={crumb.onClick}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {crumb.label}
+                </button>
+              ) : (
+                <span>{crumb.label}</span>
+              )}
+              <ChevronRight className="h-3 w-3" />
+            </React.Fragment>
+          ))}
+        </div>
+      )}
       {title && (
         isEditing ? (
           <Input

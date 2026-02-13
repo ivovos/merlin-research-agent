@@ -128,6 +128,10 @@ interface WorkingPaneProps {
   onCanvasTitleChange?: (canvasId: string, newTitle: string) => void;
   /** Callback when opening method creator from slash command */
   onOpenMethodCreator?: (methodId?: string) => void;
+  /** Callback to save a canvas as a project */
+  onSaveToProject?: (canvas: Canvas) => void;
+  /** Callback to open builder for refining results */
+  onRefineInBuilder?: () => void;
   /** Whether the side panel is open (reduces padding) */
   isSidePanelOpen?: boolean;
 }
@@ -150,6 +154,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onEditStudyPlan,
   onCanvasTitleChange,
   onOpenMethodCreator,
+  onSaveToProject,
+  onRefineInBuilder,
   isSidePanelOpen = false,
 }) => {
   // Auto-scroll to bottom when new messages arrive
@@ -247,6 +253,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                                 respondents={msg.canvas.respondents}
                                 compact
                                 onExpand={() => onExpandCanvas?.(msg.canvas!)}
+                                onSaveToProject={() => onSaveToProject?.(msg.canvas!)}
+                                onRefineInBuilder={onRefineInBuilder}
                                 className="w-full max-w-3xl"
                               />
                             </div>
