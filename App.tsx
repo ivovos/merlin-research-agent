@@ -7,7 +7,9 @@ import {
 } from '@/components/ui/sidebar'
 import { useConversation, useHistory, useAudiences, useSegmentSelection } from '@/hooks'
 import { selectResearchTool, executeSelectedTool, isQualitativeQuery, generateConversationTitle } from '@/services'
-import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments, StudyPlan, SurveyProject } from '@/types'
+import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments, StudyPlan, SurveyProject, Survey } from '@/types'
+import { SURVEY_TYPE_CONFIGS } from '@/types'
+import type { BuilderState } from '@/hooks/useSurveyBuilder'
 import {
   mockAccounts,
   mubiAccount,
@@ -20,7 +22,7 @@ import {
 // Import feature components
 import { Dashboard } from '@/components/Dashboard'
 import { ProjectDetail } from '@/components/ProjectDetail'
-import { surveyProjects } from '@/data/projects'
+import { surveyProjects as initialSurveyProjects } from '@/data/projects'
 import { WorkingPane } from '@/components/WorkingPane'
 import { QueryInput } from '@/components/QueryInput'
 import { AudiencesList } from '@/components/AudiencesList'
@@ -28,6 +30,7 @@ import { AudienceDetail } from '@/components/AudienceDetail'
 import { ExpandedCanvas } from '@/components/ExpandedCanvas'
 import { FindingsCanvas } from '@/components/results/FindingsCanvas'
 import { canvasToFindings } from '@/lib/canvasToFindings'
+import { generateMockFindings } from '@/lib/generateMockFindings'
 import { MessageTestingModal } from '@/components/MessageTestingModal'
 import { MethodSidePanel } from '@/components/MethodSidePanel'
 import { MethodFullPage } from '@/components/MethodFullPage'
@@ -48,6 +51,7 @@ const App: React.FC = () => {
   const [selectedAudience, setSelectedAudience] = useState<AudienceDetails | null>(null)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
   const [selectedSurveyProject, setSelectedSurveyProject] = useState<SurveyProject | null>(null)
+  const [projects, setProjects] = useState<SurveyProject[]>(initialSurveyProjects)
 
   // Use custom hooks for state management
   const {
@@ -425,6 +429,48 @@ const App: React.FC = () => {
     setActiveView('dashboard')
   }, [])
 
+  const handleSurveyLaunch = useCallback((builderState: BuilderState) => {
+    const typeConfig = SURVEY_TYPE_CONFIGS.find(c => c.key === builderState.selectedType)
+    const today = new Date().toISOString().slice(0, 10)
+    const projectName = builderState.surveyName?.trim() || typeConfig?.label || 'Untitled Survey'
+    const hasMultipleSegments = builderState.selectedAudiences.length > 1
+
+    // Generate mock findings so the user sees results immediately
+    const findings = generateMockFindings(builderState.questions, hasMultipleSegments)
+
+    const survey: Survey = {
+      id: `survey_${Date.now()}`,
+      type: builderState.selectedType!,
+      name: projectName,
+      status: 'completed',
+      questions: builderState.questions,
+      audiences: builderState.selectedAudiences,
+      stimuli: builderState.stimuli.map(s => s.id),
+      findings,
+      sampleSize: hasMultipleSegments ? 800 : 400,
+      createdAt: today,
+      updatedAt: today,
+    }
+
+    const newProject: SurveyProject = {
+      id: `proj_new_${Date.now()}`,
+      name: projectName,
+      brand: 'New',
+      icon: typeConfig?.icon || '📋',
+      surveyType: builderState.selectedType!,
+      surveys: [survey],
+      stimuli: builderState.stimuli,
+      audienceIds: builderState.selectedAudiences,
+      status: 'completed',
+      createdAt: today,
+      updatedAt: today,
+    }
+
+    setProjects(prev => [newProject, ...prev])
+    setSelectedSurveyProject(newProject)
+    setActiveView('projectDetail')
+  }, [])
+
   const handleExpandCanvas = useCallback((canvas: Canvas) => {
     setExpandedCanvas(canvas)
   }, [])
@@ -519,7 +565,7 @@ const App: React.FC = () => {
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Survey Builder - full page view */}
         {activeView === 'surveyBuilder' ? (
-          <SurveyBuilder onClose={handleCloseSurveyBuilder} />
+          <SurveyBuilder onClose={handleCloseSurveyBuilder} onLaunch={handleSurveyLaunch} />
         ) : creatingMethod ? (
           <MethodFullPage
             isOpen={true}
@@ -596,7 +642,7 @@ const App: React.FC = () => {
               <div className="flex-1 overflow-hidden">
                 {activeView === 'dashboard' ? (
                   <Dashboard
-                    projects={surveyProjects}
+                    projects={projects}
                     onSelectProject={handleProjectDetailClick}
                     onNewSurvey={handleOpenSurveyBuilder}
                   />

@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useSurveyBuilder } from '@/hooks/useSurveyBuilder'
+import type { BuilderState } from '@/hooks/useSurveyBuilder'
 import { BuilderSidebar } from './BuilderSidebar'
 import { BuilderActionBar } from './BuilderActionBar'
 import { TypeStep } from './steps/TypeStep'
@@ -12,7 +13,7 @@ import { QuestionsStep } from './steps/QuestionsStep'
 
 interface SurveyBuilderProps {
   onClose: () => void
-  onLaunch?: () => void
+  onLaunch?: (state: BuilderState) => void
 }
 
 export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
@@ -38,15 +39,8 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   }, [reset, onClose])
 
   const handleLaunch = useCallback(() => {
-    console.log('Survey launched:', {
-      name: state.surveyName,
-      type: state.selectedType,
-      audiences: state.selectedAudiences,
-      stimuli: state.stimuli,
-      questions: state.questions,
-    })
+    onLaunch?.(state)
     reset()
-    onLaunch?.()
     onClose()
   }, [state, reset, onLaunch, onClose])
 
