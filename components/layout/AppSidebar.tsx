@@ -2,15 +2,11 @@ import * as React from "react"
 import {
   ChevronDown,
   ChevronRight,
-  FileQuestion,
   Folder,
   LayoutDashboard,
   MessageSquare,
-  MoreHorizontal,
-  Pencil,
   Plus,
   Settings,
-  Trash2,
   Users,
 } from "lucide-react"
 
@@ -28,7 +24,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
@@ -44,85 +39,50 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 import { MonoIcon } from "@/components/MonoIcon"
-import { Input } from "@/components/ui/input"
-import type { Account, Conversation, ResearchProject, SurveyProject } from "@/types"
+import type { Account, AppView, ProjectState } from "@/types"
 
 interface AppSidebarProps {
   // Account
   currentAccount?: Account
   accounts?: Account[]
   onAccountChange?: (account: Account) => void
-  // Navigation
-  activeView?: "conversation" | "audiences" | "audienceDetail" | "project" | "dashboard" | "projectDetail" | "surveyBuilder" | "results"
-  selectedProject?: string | null
-  onProjectSelect?: (projectId: string) => void
+  // Navigation (new two-state model)
+  view: AppView
+  projects: ProjectState[]
+  onSelectProject: (id: string) => void
+  onGoHome: () => void
+  onNewProject: () => void
   onAudiencesClick?: () => void
-  onNewChat?: () => void
-  onDashboardClick?: () => void
-  // History
-  conversation?: Conversation
-  history?: Conversation[]
-  onSelectHistory?: (conv: Conversation) => void
-  onRenameConversation?: (id: string, newTitle: string) => void
-  onDeleteConversation?: (id: string) => void
-  // Research Projects
-  selectedResearchProject?: ResearchProject | null
-  onResearchProjectSelect?: (project: ResearchProject) => void
-  // Survey Projects
-  surveyProjects?: SurveyProject[]
-  onSurveyProjectSelect?: (project: SurveyProject) => void
-  onNewSurvey?: () => void
 }
 
 export function AppSidebar({
   currentAccount,
   accounts = [],
   onAccountChange,
-  activeView = "conversation",
-  selectedProject,
-  onProjectSelect,
+  view,
+  projects,
+  onSelectProject,
+  onGoHome,
+  onNewProject,
   onAudiencesClick,
-  onNewChat,
-  onDashboardClick,
-  conversation,
-  history = [],
-  onSelectHistory,
-  onRenameConversation,
-  onDeleteConversation,
-  selectedResearchProject,
-  onResearchProjectSelect,
-  surveyProjects = [],
-  onSurveyProjectSelect,
-  onNewSurvey,
 }: AppSidebarProps) {
   const { state, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [isProjectsOpen, setIsProjectsOpen] = React.useState(true)
-  const [editingId, setEditingId] = React.useState<string | null>(null)
-  const [editingTitle, setEditingTitle] = React.useState("")
 
-  // Use history as-is, don't reorder based on current conversation
-  // This keeps the list stable during the session
-  const allItems = React.useMemo(() => {
-    // If current conversation is new (not in history), we could add it
-    // But for stability, just use history directly
-    if (!conversation) return history
+  const activeProjectId = view.screen === 'project' ? view.projectId : null
 
-    // Check if current conversation is already in history
-    const isInHistory = history.some(h => h.id === conversation.id)
+  // Sort projects by updatedAt (most recent first) for the Recent section
+  const recentProjects = React.useMemo(
+    () => [...projects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [projects],
+  )
 
-    if (isInHistory) {
-      // Just return history as-is, the current one will be highlighted
-      return history
-    }
-
-    // Current conversation is new - add at top only if it has content
-    if (conversation.status !== 'idle' || conversation.query) {
-      return [conversation, ...history]
-    }
-
-    return history
-  }, [conversation, history])
+  // Pinned/demo projects (first 5)
+  const pinnedProjects = React.useMemo(
+    () => projects.slice(0, 5),
+    [projects],
+  )
 
   return (
     <Sidebar collapsible="icon">
@@ -200,10 +160,10 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* New Chat Button */}
+              {/* + Ask question (creates new project) */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={onNewChat}
+                  onClick={onNewProject}
                   tooltip="Ask question"
                 >
                   <Plus className="h-4 w-4" />
@@ -211,22 +171,11 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* New Survey */}
+              {/* Dashboard / Home */}
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={onNewSurvey}
-                  tooltip="New Survey"
-                >
-                  <FileQuestion className="h-4 w-4" />
-                  <span>New Survey</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Dashboard */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={onDashboardClick}
-                  isActive={activeView === "dashboard" || activeView === "projectDetail"}
+                  onClick={onGoHome}
+                  isActive={view.screen === 'home'}
                   tooltip="Dashboard"
                 >
                   <LayoutDashboard className="h-4 w-4" />
@@ -238,7 +187,6 @@ export function AppSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={onAudiencesClick}
-                  isActive={activeView === "audiences" && selectedProject === null}
                   tooltip="Audiences"
                 >
                   <Users className="h-4 w-4" />
@@ -246,8 +194,8 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Survey Projects (collapsible) */}
-              {surveyProjects.length > 0 && (
+              {/* Projects (collapsible — pinned/demo projects) */}
+              {pinnedProjects.length > 0 && (
                 <Collapsible
                   open={isProjectsOpen}
                   onOpenChange={setIsProjectsOpen}
@@ -267,13 +215,15 @@ export function AppSidebar({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {surveyProjects.map((project) => (
+                        {pinnedProjects.map((project) => (
                           <SidebarMenuSubItem key={project.id}>
                             <SidebarMenuSubButton
-                              onClick={() => onSurveyProjectSelect?.(project)}
-                              isActive={activeView === 'projectDetail' && selectedResearchProject === null}
+                              onClick={() => onSelectProject(project.id)}
+                              isActive={activeProjectId === project.id}
                             >
-                              <span className="truncate">{project.icon} {project.name}</span>
+                              <span className="truncate">
+                                {project.icon ?? '📊'} {project.name}
+                              </span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -286,102 +236,36 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Recent Conversations */}
+        {/* Recent Projects */}
         <SidebarGroup>
           <SidebarGroupLabel>Recent</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {isCollapsed ? (
-                // When collapsed, show single icon that opens sidebar
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={() => setOpen(true)}
-                    tooltip="Recent conversations"
+                    tooltip="Recent projects"
                   >
                     <MessageSquare className="h-4 w-4" />
                     <span>Recent</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : (
-                // When expanded, show list with hover actions
-                allItems.map((item) => {
-                  if (item.status === "idle" && item.query === "") return null
-                  const isActive =
-                    item.id === conversation?.id && activeView === "conversation"
-                  const isEditing = editingId === item.id
-
-                  const displayTitle = item.title || item.query || "New Conversation"
-
-                  // Handle save rename
-                  const handleSaveRename = () => {
-                    if (editingTitle.trim() && onRenameConversation) {
-                      onRenameConversation(item.id, editingTitle.trim())
-                    }
-                    setEditingId(null)
-                    setEditingTitle("")
-                  }
-
-                  return (
-                    <SidebarMenuItem key={item.id} className="group/item">
-                      {isEditing ? (
-                        <Input
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={handleSaveRename}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSaveRename()
-                            if (e.key === "Escape") {
-                              setEditingId(null)
-                              setEditingTitle("")
-                            }
-                          }}
-                          autoFocus
-                          className="h-8 text-sm mx-2"
-                        />
-                      ) : (
-                        <SidebarMenuButton
-                          onClick={() => onSelectHistory?.(item)}
-                          isActive={isActive}
-                          tooltip={displayTitle}
-                          className="pl-2 pr-1 w-full justify-between"
-                        >
-                          <span className="truncate flex-1">
-                            {displayTitle}
-                          </span>
-                          {/* Hover actions - inside the highlight bar */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                className="h-6 w-6 p-0 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity hover:bg-sidebar-accent rounded flex-shrink-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-32">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingId(item.id)
-                                  setEditingTitle(displayTitle)
-                                }}
-                              >
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Rename
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => onDeleteConversation?.(item.id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </SidebarMenuButton>
-                      )}
-                    </SidebarMenuItem>
-                  )
-                })
+                recentProjects.map((project) => (
+                  <SidebarMenuItem key={project.id}>
+                    <SidebarMenuButton
+                      onClick={() => onSelectProject(project.id)}
+                      isActive={activeProjectId === project.id}
+                      tooltip={project.name}
+                      className="pl-2 pr-1"
+                    >
+                      <span className="truncate flex-1">
+                        {project.icon ?? '📊'} {project.name}
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -399,96 +283,5 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-  )
-}
-
-// Export a header component for the main content area
-export function MainHeader({
-  title,
-  children,
-  onTitleChange,
-  breadcrumbs,
-}: {
-  title?: string
-  children?: React.ReactNode
-  onTitleChange?: (newTitle: string) => void
-  breadcrumbs?: Array<{ label: string; onClick?: () => void }>
-}) {
-  const [isEditing, setIsEditing] = React.useState(false)
-  const [editValue, setEditValue] = React.useState(title || "")
-  const [isHovered, setIsHovered] = React.useState(false)
-
-  React.useEffect(() => {
-    setEditValue(title || "")
-  }, [title])
-
-  const handleSave = () => {
-    if (editValue.trim() && onTitleChange) {
-      onTitleChange(editValue.trim())
-    }
-    setIsEditing(false)
-  }
-
-  return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-      <SidebarTrigger className="-ml-1" />
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          {breadcrumbs.map((crumb, i) => (
-            <React.Fragment key={i}>
-              {crumb.onClick ? (
-                <button
-                  onClick={crumb.onClick}
-                  className="hover:text-foreground transition-colors"
-                >
-                  {crumb.label}
-                </button>
-              ) : (
-                <span>{crumb.label}</span>
-              )}
-              <ChevronRight className="h-3 w-3" />
-            </React.Fragment>
-          ))}
-        </div>
-      )}
-      {title && (
-        isEditing ? (
-          <Input
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSave()
-              if (e.key === "Escape") {
-                setEditValue(title)
-                setIsEditing(false)
-              }
-            }}
-            autoFocus
-            className="h-8 text-base font-medium max-w-xs"
-          />
-        ) : (
-          <div
-            className="group/title flex items-center gap-1"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <h1 className="text-base font-medium">{title}</h1>
-            {onTitleChange && (
-              <button
-                onClick={() => setIsEditing(true)}
-                className={cn(
-                  "h-6 w-6 p-0 flex items-center justify-center hover:bg-muted rounded transition-opacity",
-                  isHovered ? "opacity-100" : "opacity-0"
-                )}
-              >
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-        )
-      )}
-      {children}
-    </header>
   )
 }

@@ -59,4 +59,19 @@ export type {
   SurveyTypeConfig,
 } from './survey';
 
-export { SURVEY_TYPE_CONFIGS } from './survey';
+export { SURVEY_TYPE_CONFIGS } from './survey'
+
+// Chat & project types (Phase 2 - project=chat migration)
+export type {
+  Attachment,
+  ChatMessage,
+  ChatMessageUser,
+  ChatMessageAI,
+  ChatMessageFindings,
+  ChatMessageAttachment,
+  ChatMessageDeliverable,
+  ChatMessageSystem,
+  AppView,
+  ProjectState,
+  Study,
+} from './chat';
