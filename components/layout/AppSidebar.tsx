@@ -2,7 +2,9 @@ import * as React from "react"
 import {
   ChevronDown,
   ChevronRight,
+  FileQuestion,
   Folder,
+  LayoutDashboard,
   MessageSquare,
   MoreHorizontal,
   Pencil,
@@ -51,11 +53,13 @@ interface AppSidebarProps {
   accounts?: Account[]
   onAccountChange?: (account: Account) => void
   // Navigation
-  activeView?: "conversation" | "audiences" | "audienceDetail" | "project"
+  activeView?: "conversation" | "audiences" | "audienceDetail" | "project" | "dashboard" | "projectDetail" | "surveyBuilder" | "results"
   selectedProject?: string | null
   onProjectSelect?: (projectId: string) => void
   onAudiencesClick?: () => void
   onNewChat?: () => void
+  onDashboardClick?: () => void
+  onNewSurvey?: () => void
   // History
   conversation?: Conversation
   history?: Conversation[]
@@ -76,6 +80,8 @@ export function AppSidebar({
   onProjectSelect,
   onAudiencesClick,
   onNewChat,
+  onDashboardClick,
+  onNewSurvey,
   conversation,
   history = [],
   onSelectHistory,
@@ -197,6 +203,30 @@ export function AppSidebar({
                 >
                   <Plus className="h-4 w-4" />
                   <span>Ask question</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Dashboard */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={onDashboardClick}
+                  isActive={activeView === "dashboard" || activeView === "projectDetail"}
+                  tooltip="Dashboard"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Dashboard</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* New Survey */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={onNewSurvey}
+                  isActive={activeView === "surveyBuilder"}
+                  tooltip="New Survey"
+                >
+                  <FileQuestion className="h-4 w-4" />
+                  <span>New Survey</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 

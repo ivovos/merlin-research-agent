@@ -44,3 +44,19 @@ export type {
   ComparisonData,
   CanvasType,
 } from './agentResponse';
+
+// Survey types (Phase 1 - survey builder merge)
+export type {
+  SurveyType,
+  SurveyStatus,
+  QuestionType,
+  Stimulus,
+  SurveyQuestion,
+  SegmentBreakdown,
+  Finding,
+  Survey,
+  SurveyProject,
+  SurveyTypeConfig,
+} from './survey';
+
+export { SURVEY_TYPE_CONFIGS } from './survey';

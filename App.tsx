@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useConversation, useHistory, useAudiences, useSegmentSelection } from '@/hooks'
 import { selectResearchTool, executeSelectedTool, isQualitativeQuery, generateConversationTitle } from '@/services'
-import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments, StudyPlan } from '@/types'
+import type { Account, AudienceDetails, Conversation, Canvas, Message, SelectedSegments, StudyPlan, SurveyProject } from '@/types'
 import {
   mockAccounts,
   mubiAccount,
@@ -18,6 +18,9 @@ import {
 } from '@/data/mockData'
 
 // Import feature components
+import { Dashboard } from '@/components/Dashboard'
+import { ProjectDetail } from '@/components/ProjectDetail'
+import { surveyProjects } from '@/data/projects'
 import { WorkingPane } from '@/components/WorkingPane'
 import { QueryInput } from '@/components/QueryInput'
 import { AudiencesList } from '@/components/AudiencesList'
@@ -31,7 +34,7 @@ import { Layers } from 'lucide-react'
 import { createPlanningSteps, createExecutionSteps } from '@/constants/processSteps'
 import { TIMING } from '@/constants/timing'
 
-type ActiveView = 'conversation' | 'audiences' | 'audienceDetail'
+type ActiveView = 'conversation' | 'audiences' | 'audienceDetail' | 'dashboard' | 'projectDetail' | 'surveyBuilder' | 'results'
 
 const App: React.FC = () => {
   // Account state - default to MUBI
@@ -41,6 +44,7 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('conversation')
   const [selectedAudience, setSelectedAudience] = useState<AudienceDetails | null>(null)
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
+  const [selectedSurveyProject, setSelectedSurveyProject] = useState<SurveyProject | null>(null)
 
   // Use custom hooks for state management
   const {
@@ -400,6 +404,20 @@ const App: React.FC = () => {
     setSelectedAudience(null)
   }, [])
 
+  const handleDashboardClick = useCallback(() => {
+    setActiveView('dashboard')
+    setSelectedSurveyProject(null)
+  }, [])
+
+  const handleProjectDetailClick = useCallback((project: SurveyProject) => {
+    setSelectedSurveyProject(project)
+    setActiveView('projectDetail')
+  }, [])
+
+  const handleNewSurvey = useCallback(() => {
+    setActiveView('surveyBuilder')
+  }, [])
+
   const handleExpandCanvas = useCallback((canvas: Canvas) => {
     setExpandedCanvas(canvas)
   }, [])
@@ -484,6 +502,8 @@ const App: React.FC = () => {
         onSelectHistory={handleSelectHistory}
         onRenameConversation={handleRenameConversation}
         onDeleteConversation={handleDeleteConversation}
+        onDashboardClick={handleDashboardClick}
+        onNewSurvey={handleNewSurvey}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Method Full Page - replaces entire main content when creating new */}
@@ -515,7 +535,13 @@ const App: React.FC = () => {
             <>
               <MainHeader
                 title={
-                  activeView === 'audiences'
+                  activeView === 'dashboard'
+                    ? 'Projects'
+                    : activeView === 'projectDetail' && selectedSurveyProject
+                    ? selectedSurveyProject.name
+                    : activeView === 'surveyBuilder'
+                    ? 'New Survey'
+                    : activeView === 'audiences'
                     ? 'Audiences'
                     : activeView === 'audienceDetail' && selectedAudience
                     ? selectedAudience.name
@@ -544,7 +570,25 @@ const App: React.FC = () => {
               </MainHeader>
 
               <div className="flex-1 overflow-hidden">
-                {activeView === 'audiences' ? (
+                {activeView === 'dashboard' ? (
+                  <Dashboard
+                    projects={surveyProjects}
+                    onSelectProject={handleProjectDetailClick}
+                  />
+                ) : activeView === 'projectDetail' && selectedSurveyProject ? (
+                  <ProjectDetail
+                    project={selectedSurveyProject}
+                    onBack={handleDashboardClick}
+                  />
+                ) : activeView === 'surveyBuilder' ? (
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                    Survey builder coming in Phase 2
+                  </div>
+                ) : activeView === 'results' ? (
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                    Results view coming in Phase 3
+                  </div>
+                ) : activeView === 'audiences' ? (
                   <AudiencesList
                     account={currentAccount}
                     selectedProject={selectedProject}
