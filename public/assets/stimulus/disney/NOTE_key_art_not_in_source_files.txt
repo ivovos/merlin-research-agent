@@ -1,0 +1,21 @@
+DISNEY+ ALICE & STEVE — KEY ART STIMULUS
+
+The original source files (questionnaire PDF) contain only the survey structure
+with a placeholder: "INSERT ONE KEY ART OPTION"
+
+The 3 key art versions were not included in the mockdata folder.
+
+Description from the questionnaire review:
+- Version 1 (V1): Character-driven poster — focus on leads in dramatic/comedic tension
+  Cast: Nicola Walker, Jemaine Clement
+  Branding: Disney+ branded
+
+- Version 2 (V2): Ensemble cast poster — full cast with tagline and tone cues
+  Cast: Nicola Walker, Jemaine Clement, Yali Topol Margalith, Joel Fry
+  Branding: Disney+ branded
+
+- Version 3 (V3): Stylised/artistic poster — abstract/graphic treatment with leads
+  Cast: Nicola Walker, Jemaine Clement, Yali Topol Margalith
+  Branding: Unbranded (used for attribution test)
+
+To complete this dataset, you'd need to source or create 3 key art images.
