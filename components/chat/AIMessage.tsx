@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import type { ChatMessageAI } from '@/types'
+import { ActionStrip } from './ActionStrip'
 
 // Simple markdown-like renderer for AI messages
 function renderContent(content: string): React.ReactNode[] {
@@ -51,10 +52,24 @@ interface AIMessageProps {
 }
 
 export const AIMessage: React.FC<AIMessageProps> = ({ message }) => {
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(message.text)
+  }, [message.text])
+
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
-      <div className="max-w-[80%] lg:max-w-[60%] text-sm space-y-2">
-        {renderContent(message.text)}
+      <div className="max-w-[80%] lg:max-w-[60%]">
+        <div className="text-sm space-y-2">
+          {renderContent(message.text)}
+        </div>
+        <ActionStrip
+          variant="ai-interpretation"
+          onCopy={handleCopy}
+          onThumbsUp={() => {}}
+          onThumbsDown={() => {}}
+          onSave={() => {}}
+          onShare={() => {}}
+        />
       </div>
     </div>
   )

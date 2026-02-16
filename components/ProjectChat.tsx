@@ -4,7 +4,10 @@ import { SURVEY_TYPE_CONFIGS } from '@/types'
 import type { PickerMethod } from '@/components/chat/MethodsPicker'
 import { ChatStream } from '@/components/chat/ChatStream'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
+import { QuickPollPage } from '@/components/quick-poll/QuickPollPage'
 import { StudyPlanOverlay } from '@/components/results/StudyPlanOverlay'
+import { Button } from '@/components/ui/button'
+import { SquareArrowOutUpRight } from 'lucide-react'
 import { generateMockFindings } from '@/lib/generateMockFindings'
 import { canvasToFindings } from '@/lib/canvasToFindings'
 import { selectResearchTool, executeSelectedTool } from '@/services'
@@ -26,6 +29,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   onRenameProject,
 }) => {
   const [showBuilder, setShowBuilder] = useState(false)
+  const [showQuickPoll, setShowQuickPoll] = useState(false)
   const [processing, setProcessing] = useState<{
     steps?: ProcessStep[]
     isComplete?: boolean
@@ -377,12 +381,44 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     [project.studies, onAddMessage],
   )
 
+  // ── Quick Poll launch ──
+  const handleQuickPollLaunch = useCallback(
+    (survey: Survey) => {
+      onAddStudy(survey)
+
+      const systemMsg: ChatMessage = {
+        id: `msg_${Date.now()}_sys`,
+        type: 'system',
+        text: `Quick Poll launched with ${survey.questions.length} questions.`,
+        timestamp: Date.now(),
+      }
+      onAddMessage(systemMsg)
+
+      const findingsMsg: ChatMessage = {
+        id: `msg_${Date.now()}_f`,
+        type: 'findings',
+        studyId: survey.id,
+        studyName: survey.name,
+        typeBadge: 'Quick Poll',
+        findings: survey.findings!,
+        respondents: survey.sampleSize,
+        timestamp: Date.now(),
+      }
+      onAddMessage(findingsMsg)
+
+      setShowQuickPoll(false)
+    },
+    [onAddMessage, onAddStudy],
+  )
+
   // ── Method selection from picker ──
   const handleSelectMethod = useCallback(
-    (_method: PickerMethod) => {
-      // For now, all methods open the survey builder
-      // In the future, different methods could open different UIs
-      setShowBuilder(true)
+    (method: PickerMethod) => {
+      if (method.id === 'quick-poll') {
+        setShowQuickPoll(true)
+      } else {
+        setShowBuilder(true)
+      }
     },
     [],
   )
@@ -391,7 +427,11 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
       {/* Header — full width */}
       <header className="flex items-center gap-3 h-14 px-6 border-b bg-background flex-shrink-0 w-full">
-        <h1 className="text-sm font-semibold truncate">{project.name}</h1>
+        <h1 className="text-sm font-semibold truncate flex-1">{project.name}</h1>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+          <SquareArrowOutUpRight className="w-3.5 h-3.5" />
+          Share
+        </Button>
       </header>
 
       {/* Chat stream */}
@@ -411,6 +451,16 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           <SurveyBuilder
             onClose={() => setShowBuilder(false)}
             onLaunch={handleBuilderLaunch}
+          />
+        </div>
+      )}
+
+      {/* Quick Poll overlay */}
+      {showQuickPoll && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <QuickPollPage
+            onClose={() => setShowQuickPoll(false)}
+            onLaunch={handleQuickPollLaunch}
           />
         </div>
       )}

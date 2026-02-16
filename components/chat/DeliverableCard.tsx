@@ -1,6 +1,7 @@
 import React from 'react'
 import type { ChatMessageDeliverable } from '@/types'
 import { FileOutput, ScrollText, FileBarChart } from 'lucide-react'
+import { ActionStrip } from './ActionStrip'
 
 const FORMAT_ICONS: Record<ChatMessageDeliverable['format'], React.ElementType> = {
   narrative: ScrollText,
@@ -34,6 +35,12 @@ export const DeliverableCard: React.FC<DeliverableCardProps> = ({ message }) => 
         <div className="px-4 py-3 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
+        <ActionStrip
+          variant="data-card"
+          onExpand={() => {}}
+          onSave={() => {}}
+          onShare={() => {}}
+        />
       </div>
     </div>
   )

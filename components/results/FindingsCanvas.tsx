@@ -4,7 +4,7 @@ import {
   ChevronUp,
   Copy,
   Download,
-  Share2,
+  SquareArrowOutUpRight,
   MoreVertical,
   BarChart3,
   FileText,
@@ -160,7 +160,7 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
                 Download
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Share2 className="w-4 h-4 mr-2" />
+                <SquareArrowOutUpRight className="w-4 h-4 mr-2" />
                 Share
               </DropdownMenuItem>
             </DropdownMenuContent>

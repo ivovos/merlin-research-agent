@@ -20,6 +20,7 @@ import { ProjectChat } from '@/components/ProjectChat'
 import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
+import { QuickPollPage } from '@/components/quick-poll/QuickPollPage'
 
 import type { AudienceDetails, Survey } from '@/types'
 
@@ -37,8 +38,9 @@ const App: React.FC = () => {
     | { mode: 'detail'; audience: AudienceDetails }
   >(null)
 
-  // Survey builder overlay
+  // Survey builder / quick poll overlays
   const [showBuilder, setShowBuilder] = useState(false)
+  const [showQuickPoll, setShowQuickPoll] = useState(false)
 
   // Sidebar state — collapse when builder is open
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -159,6 +161,44 @@ const App: React.FC = () => {
     setView({ screen: 'project', projectId: project.id })
   }, [store, currentAccount])
 
+  // ── Quick Poll handlers ──
+
+  const handleOpenQuickPoll = useCallback(() => {
+    sidebarOpenBeforeBuilder.current = sidebarOpen
+    setSidebarOpen(false)
+    setShowQuickPoll(true)
+  }, [sidebarOpen])
+
+  const handleCloseQuickPoll = useCallback(() => {
+    setShowQuickPoll(false)
+    setSidebarOpen(sidebarOpenBeforeBuilder.current)
+  }, [])
+
+  const handleQuickPollLaunch = useCallback((survey: Survey) => {
+    const project = store.createProject('Quick Poll', currentAccount.name)
+    store.addStudy(project.id, survey)
+    store.addMessage(project.id, {
+      id: `msg_${Date.now()}_sys`,
+      type: 'system',
+      text: `Quick Poll launched with ${survey.questions.length} questions.`,
+      timestamp: Date.now(),
+    })
+    store.addMessage(project.id, {
+      id: `msg_${Date.now()}_findings`,
+      type: 'findings',
+      studyId: survey.id,
+      findings: survey.findings!,
+      studyName: survey.name,
+      typeBadge: 'Quick Poll',
+      respondents: survey.sampleSize,
+      timestamp: Date.now(),
+    })
+
+    setShowQuickPoll(false)
+    setSidebarOpen(sidebarOpenBeforeBuilder.current)
+    setView({ screen: 'project', projectId: project.id })
+  }, [store, currentAccount, sidebarOpen])
+
   // ── Render ──
 
   return (
@@ -176,8 +216,10 @@ const App: React.FC = () => {
         onDeleteProject={handleDeleteProject}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
-        {/* Survey Builder — full page overlay */}
-        {showBuilder ? (
+        {/* Quick Poll — full page overlay */}
+        {showQuickPoll ? (
+          <QuickPollPage onClose={handleCloseQuickPoll} onLaunch={handleQuickPollLaunch} />
+        ) : showBuilder ? (
           <SurveyBuilder onClose={handleCloseBuilder} onLaunch={handleBuilderLaunch} />
         ) : audienceOverlay ? (
           /* Audience overlay */
@@ -214,7 +256,13 @@ const App: React.FC = () => {
             projects={store.projects}
             onSelectProject={handleSelectProject}
             onCreateProject={(text) => handleNewProject(text)}
-            onSelectMethod={() => handleOpenBuilder()}
+            onSelectMethod={(method) => {
+              if (method.id === 'quick-poll') {
+                handleOpenQuickPoll()
+              } else {
+                handleOpenBuilder()
+              }
+            }}
             brand={currentAccount.name}
           />
         )}

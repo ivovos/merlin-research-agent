@@ -1,5 +1,5 @@
-import React from 'react'
-import { MoreHorizontal, Copy, Download, Trash2 } from 'lucide-react'
+import React, { useState } from 'react'
+import { MoreHorizontal, Copy, Download, Trash2, Bookmark, BookmarkCheck, SquareArrowOutUpRight } from 'lucide-react'
 import type { Finding, Stimulus } from '@/types'
 import { cn } from '@/lib/utils'
 import { DEFAULT_BRAND_COLORS } from '@/lib/brandDefaults'
@@ -103,6 +103,8 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   const audienceLabel =
     finding.segmentBreakdowns?.[0]?.segmentName ?? 'General Population'
 
+  const [saved, setSaved] = useState(false)
+
   return (
     <div
       className={cn(
@@ -128,12 +130,25 @@ export const FindingCard: React.FC<FindingCardProps> = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+              className="text-muted-foreground/40 hover:text-muted-foreground transition-colors p-1 rounded"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSaved(prev => !prev)}>
+              {saved ? (
+                <BookmarkCheck className="w-4 h-4 mr-2" />
+              ) : (
+                <Bookmark className="w-4 h-4 mr-2" />
+              )}
+              {saved ? 'Saved as finding' : 'Save as finding'}
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <SquareArrowOutUpRight className="w-4 h-4 mr-2" />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Copy className="w-4 h-4 mr-2" />
               Copy

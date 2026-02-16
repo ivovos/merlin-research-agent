@@ -5,7 +5,7 @@ import {
   Maximize2,
   Copy,
   Download,
-  Share2,
+  SquareArrowOutUpRight,
   RefreshCw,
   FileText,
   Sparkles,
@@ -221,7 +221,7 @@ export const InlineCanvas: React.FC<InlineCanvasProps> = ({
                 Download
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleShare}>
-                <Share2 className="w-4 h-4 mr-2" />
+                <SquareArrowOutUpRight className="w-4 h-4 mr-2" />
                 Share
               </DropdownMenuItem>
             </DropdownMenuContent>
