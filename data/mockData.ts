@@ -1019,7 +1019,83 @@ export const electricTwinGenericAudiences: Audience[] = [
   },
 ] as unknown as Audience[];
 
-export const mockAccounts: Account[] = [mubiAccount, canvaAccount, wonderhoodAccount];
+// ── Additional brand accounts ──
+
+export const vodafoneAccount: Account = {
+  id: 'vodafone',
+  name: 'Vodafone',
+  type: 'brand',
+  icon: 'VF',
+  brandColors: {
+    primary: '#E60000',   // Vodafone Red
+    secondary: '#FFFFFF',
+    tertiary: '#4A4D4E',
+    quaternary: '#333333',
+  },
+}
+
+export const disneyAccount: Account = {
+  id: 'disney',
+  name: 'Disney+',
+  type: 'brand',
+  icon: 'D+',
+  brandColors: {
+    primary: '#113CCF',   // Disney+ Blue
+    secondary: '#1CE783',
+    tertiary: '#7B61FF',
+    quaternary: '#0A1E3D',
+  },
+}
+
+export const bpAccount: Account = {
+  id: 'bp',
+  name: 'BP',
+  type: 'brand',
+  icon: 'BP',
+  brandColors: {
+    primary: '#009B3A',   // BP Green
+    secondary: '#FFD700',
+    tertiary: '#00703C',
+    quaternary: '#1C1C1C',
+  },
+}
+
+export const philipsAccount: Account = {
+  id: 'philips',
+  name: 'Philips',
+  type: 'brand',
+  icon: 'PH',
+  brandColors: {
+    primary: '#0B5ED7',   // Philips Blue
+    secondary: '#001D60',
+    tertiary: '#00A3E0',
+    quaternary: '#EAEAEA',
+  },
+}
+
+export const kingAccount: Account = {
+  id: 'king',
+  name: 'King / Activision Blizzard',
+  type: 'brand',
+  icon: 'KG',
+  brandColors: {
+    primary: '#FF6B00',   // King Orange
+    secondary: '#7B2D8E',
+    tertiary: '#FFB800',
+    quaternary: '#1A1A2E',
+  },
+}
+
+export const mockAccounts: Account[] = [
+  mubiAccount,
+  vodafoneAccount,
+  disneyAccount,
+  bpAccount,
+  philipsAccount,
+  kingAccount,
+  canvaAccount,
+  wonderhoodAccount,
+];
 
 // Helper function to get all audiences from an account
 // includeGenericET: whether to include Electric Twin generic audiences (default: true)

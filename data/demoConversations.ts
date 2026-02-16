@@ -44,7 +44,7 @@ function buildVodafoneConversation(): ChatMessage[] {
     {
       id: msgId('vod'), type: 'user', timestamp: ts(7),
       text: "Here's the brief for the Vodafone broadband proposition testing. We need to evaluate 10 service propositions across two audience segments.",
-      attachments: [{ id: 'att_vod_1', name: 'Vodafone_Broadband_Brief.pdf', type: 'pdf' }],
+      attachments: [{ id: 'att_vod_1', name: 'Vodafone_Broadband_Brief.pdf', type: 'pdf', url: '/assets/stimulus/vodafone/Report_01_Cover.png' }],
     },
     {
       id: msgId('vod'), type: 'ai', timestamp: ts(7, 0.1),
@@ -64,6 +64,7 @@ function buildVodafoneConversation(): ChatMessage[] {
       studyName: survey.name,
       typeBadge: 'Concept Testing',
       findings: survey.findings ?? [],
+      stimuli: vodafoneProject.stimuli,
       respondents: survey.sampleSize,
     },
     {
@@ -105,6 +106,7 @@ function buildBpConversation(): ChatMessage[] {
       studyName: survey.name,
       typeBadge: 'Creative Testing',
       findings: survey.findings ?? [],
+      stimuli: bpProject.stimuli,
       respondents: survey.sampleSize,
     },
     {
@@ -145,6 +147,7 @@ function buildDisneyConversation(): ChatMessage[] {
       studyName: survey.name,
       typeBadge: 'Creative Testing',
       findings: survey.findings ?? [],
+      stimuli: disneyProject.stimuli,
       respondents: survey.sampleSize,
     },
   ]
@@ -173,6 +176,7 @@ function buildPhilipsConversation(): ChatMessage[] {
       studyName: survey.name,
       typeBadge: 'Concept Testing',
       findings: survey.findings ?? [],
+      stimuli: philipsProject.stimuli,
       respondents: survey.sampleSize,
     },
   ]
@@ -201,6 +205,7 @@ function buildCandyCrushConversation(): ChatMessage[] {
       studyName: survey.name,
       typeBadge: 'Audience Exploration',
       findings: survey.findings ?? [],
+      stimuli: candyCrushProject.stimuli,
       respondents: survey.sampleSize,
     },
   ]

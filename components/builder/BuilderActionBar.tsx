@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { ArrowLeft, ArrowRight, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { BuilderStepId } from '@/hooks/useSurveyBuilder'
@@ -14,6 +14,8 @@ interface BuilderActionBarProps {
   onBack: () => void
   onNext: () => void
   onLaunch: () => void
+  /** Called when trying to leave Questions step with incomplete questions */
+  onShowQuestionErrors?: () => void
 }
 
 function getCtaLabel(step: BuilderStepId, isLast: boolean): string {
@@ -32,9 +34,22 @@ export const BuilderActionBar: React.FC<BuilderActionBarProps> = ({
   onBack,
   onNext,
   onLaunch,
+  onShowQuestionErrors,
 }) => {
   const ctaLabel = getCtaLabel(currentStep, isLastStep)
-  const handleCtaClick = isLastStep ? onLaunch : onNext
+
+  const handleCtaClick = useCallback(() => {
+    if (isLastStep) {
+      onLaunch()
+      return
+    }
+    // If leaving questions step and can't go next, trigger error display
+    if (currentStep === 'questions' && !canGoNext) {
+      onShowQuestionErrors?.()
+      return
+    }
+    onNext()
+  }, [isLastStep, currentStep, canGoNext, onLaunch, onNext, onShowQuestionErrors])
 
   return (
     <div className="shrink-0 border-t bg-background px-6 py-3 flex items-center justify-between">
@@ -59,7 +74,7 @@ export const BuilderActionBar: React.FC<BuilderActionBarProps> = ({
         <Button
           size="sm"
           onClick={handleCtaClick}
-          disabled={!canGoNext}
+          disabled={currentStep === 'questions' ? false : !canGoNext}
         >
           {isLastStep ? (
             <>

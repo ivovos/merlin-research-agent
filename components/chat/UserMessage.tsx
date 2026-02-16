@@ -29,7 +29,7 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
           </div>
         )}
         {/* Message bubble */}
-        <div className="bg-muted px-6 py-4 rounded-2xl rounded-tr-sm text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
+        <div className="bg-stone-200 p-6 rounded-[20px] text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
           {message.text}
         </div>
       </div>

@@ -43,6 +43,7 @@ export interface ChatMessageFindings {
   studyName: string
   typeBadge?: string
   findings: Finding[]
+  stimuli?: Stimulus[]
   respondents?: number
   timestamp: number
 }

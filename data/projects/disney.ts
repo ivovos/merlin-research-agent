@@ -44,6 +44,7 @@ export const disneyProject: SurveyProject = {
       findings: [
         {
           questionId: 'q_dis_like',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: 'V2 Ensemble leads on likeability (64% T2B)',
           insight: 'The ensemble cast artwork resonates most strongly, with 64% liking it a lot or somewhat — 6 points ahead of V1 Character (58%) and 12 ahead of V3 Stylised (52%). The full cast image likely communicates more about the show\'s tone and genre.',
           chartType: 'bar',
@@ -56,6 +57,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_intent',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: 'V2 drives strongest viewing intent (55% T2B)',
           insight: 'V2 Ensemble generates the highest intent to view at 55%, significantly ahead of V1 (47%) and V3 (42%). The gap between V2 and V3 is 13 points — the stylised artwork, while potentially more distinctive, fails to generate curiosity about the show.',
           chartType: 'bar',
@@ -68,6 +70,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_talent',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: '48% recognise cast from V2 Ensemble',
           insight: 'Talent recognition is strongest for V2 Ensemble (48%) where all principal cast are visible. V1 Character achieves 34% and V3 Stylised 31%. Higher talent recognition correlates with higher likeability and intent across all versions.',
           chartType: 'bar',
@@ -80,6 +83,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_attrs',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: 'V2 scores highest on "Funny" (46%) and "British" (55%)',
           insight: 'Key attribute associations differ meaningfully across versions. V2 leads on Funny (46%) and British (55%). V3 Stylised indexes highest on Adult (55%) and Dramatic (50%), positioning the show differently. V1 sits between the two profiles.',
           chartType: 'grouped_bar',
@@ -95,6 +99,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_genre',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: 'V3 most likely to be classified as Dark Comedy (45%)',
           insight: 'Genre perception varies by artwork. V3 Stylised skews toward Dark Comedy (45%) while V1 and V2 both index more toward Drama (28–31%). Comedy classification is relatively low across all versions (15–22%), suggesting the artwork communicates dramatic tone over comedic tone.',
           chartType: 'grouped_bar',
@@ -107,6 +112,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_pref',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: '45% prefer V2 after reading synopsis',
           insight: 'After reading the show synopsis, V2 Ensemble is the clear preference at 45%, with V1 Character and V3 Stylised nearly tied (28% and 27%). The synopsis may reinforce the ensemble dynamic that V2 uniquely communicates.',
           chartType: 'bar',
@@ -119,6 +125,7 @@ export const disneyProject: SurveyProject = {
         },
         {
           questionId: 'q_dis_sub',
+          stimuliIds: ['stim_dis_v1', 'stim_dis_v2', 'stim_dis_v3'],
           headline: 'V2 generates strongest subscription impact (42% T2B)',
           insight: 'V2 Ensemble drives the strongest Disney+ subscription interest at 42% much more/somewhat more interested. V3 Stylised performs weakest on this commercial metric (30%), and its unbranded design meant only 28% correctly attributed it to Disney+.',
           chartType: 'bar',

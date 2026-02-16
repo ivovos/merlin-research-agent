@@ -1,12 +1,11 @@
 import React from 'react'
 import type { ProjectState } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
-import { Card } from '@/components/ui/card'
+import type { PickerMethod } from '@/components/chat/MethodsPicker'
 import { Badge } from '@/components/ui/badge'
 import { ChatInputBar } from '@/components/chat/ChatInputBar'
 import {
   FileQuestion,
-  Image as ImageIcon,
   Users,
   BarChart3,
 } from 'lucide-react'
@@ -15,7 +14,9 @@ interface HomeProps {
   projects: ProjectState[]
   onSelectProject: (id: string) => void
   onCreateProject: (text: string) => void
-  onOpenBuilder: () => void
+  onSelectMethod: (method: PickerMethod) => void
+  /** Current brand name — used to filter audiences in the picker */
+  brand?: string
 }
 
 function getTypeLabel(type: string | undefined): string {
@@ -35,7 +36,8 @@ export const Home: React.FC<HomeProps> = ({
   projects,
   onSelectProject,
   onCreateProject,
-  onOpenBuilder,
+  onSelectMethod,
+  brand,
 }) => {
   return (
     <div className="flex-1 overflow-y-auto">
@@ -52,53 +54,44 @@ export const Home: React.FC<HomeProps> = ({
         <div className="w-full max-w-2xl mt-8">
           <ChatInputBar
             onSend={onCreateProject}
-            onAddStudy={onOpenBuilder}
-            onAddAudience={() => {}}
+            onSelectMethod={onSelectMethod}
+            onAddAudience={() => {}  /* picker handles display */}
             onAttach={() => {}}
             placeholder="What do you want to research?"
             variant="home"
+            brand={brand}
           />
         </div>
       </div>
 
-      {/* Project grid */}
-      <div className="px-6 pt-4 pb-8">
-        <div className="flex items-baseline justify-between mb-4">
+      {/* Studies list */}
+      <div className="px-6 pt-4 pb-8 max-w-3xl mx-auto">
+        <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Your Projects
+            Recent Studies
           </h2>
           <span className="text-xs text-muted-foreground">
-            {projects.length} project{projects.length !== 1 ? 's' : ''}
+            {projects.length} {projects.length === 1 ? 'study' : 'studies'}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="divide-y divide-border border-t border-b">
           {projects.map(project => (
-            <HomeProjectCard
+            <StudyRow
               key={project.id}
               project={project}
               onClick={() => onSelectProject(project.id)}
             />
           ))}
         </div>
-
-        {/* Shared section (placeholder for future) */}
-        <div className="mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-            Shared with you
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            No shared projects yet.
-          </p>
-        </div>
       </div>
     </div>
   )
 }
 
-// ── Project card for home grid ──
+// ── Study row for home list ──
 
-function HomeProjectCard({
+function StudyRow({
   project,
   onClick,
 }: {
@@ -107,108 +100,57 @@ function HomeProjectCard({
 }) {
   const totalQuestions = getTotalQuestions(project)
   const totalFindings = getTotalFindings(project)
-  const stimuli = project.stimuli ?? []
-  const messageCount = project.messages.length
   const studyCount = project.studies.length
 
   return (
-    <Card
-      className="cursor-pointer transition-shadow hover:shadow-md overflow-hidden"
+    <button
+      type="button"
+      className="w-full text-left flex items-center gap-4 py-3 px-2 hover:bg-muted/50 transition-colors group"
       onClick={onClick}
     >
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold leading-tight line-clamp-2">
-              {project.name}
-            </h3>
-            {project.brand && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {project.brand}
-              </p>
-            )}
-          </div>
+      {/* Name + brand + type */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium truncate">
+            {project.name}
+          </span>
+          {project.surveyType && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+              {getTypeLabel(project.surveyType)}
+            </Badge>
+          )}
         </div>
-
-        {/* Type badge */}
-        {project.surveyType && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 mb-3">
-            {getTypeLabel(project.surveyType)}
-          </Badge>
-        )}
-
-        {/* Description */}
-        {project.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-            {project.description}
+        {project.brand && (
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            {project.brand}
           </p>
         )}
-
-        {/* Stimulus thumbnails */}
-        {stimuli.length > 0 && (
-          <div className="flex items-center gap-1.5 mb-3">
-            {stimuli.slice(0, 4).map(stim => (
-              <div
-                key={stim.id}
-                className="w-10 h-10 rounded border border-border overflow-hidden bg-muted flex-shrink-0"
-              >
-                {stim.type === 'image' || stim.type === 'concept' ? (
-                  <img
-                    src={stim.url}
-                    alt={stim.name}
-                    className="w-full h-full object-cover"
-                    onError={e => {
-                      ;(e.target as HTMLImageElement).style.display = 'none'
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-            ))}
-            {stimuli.length > 4 && (
-              <span className="text-xs text-muted-foreground ml-0.5">
-                +{stimuli.length - 4}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Stats row */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground border-t border-border pt-3">
-          {studyCount > 0 && (
-            <span>
-              {studyCount} {studyCount === 1 ? 'study' : 'studies'}
-            </span>
-          )}
-          {totalQuestions > 0 && (
-            <span className="flex items-center gap-1">
-              <FileQuestion className="w-3.5 h-3.5" />
-              {totalQuestions}
-            </span>
-          )}
-          {totalFindings > 0 && (
-            <span className="flex items-center gap-1">
-              <BarChart3 className="w-3.5 h-3.5" />
-              {totalFindings}
-            </span>
-          )}
-          {project.audiences.length > 0 && (
-            <span className="flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" />
-              {project.audiences.length}
-            </span>
-          )}
-          {messageCount > 0 && (
-            <span className="ml-auto">
-              {messageCount} message{messageCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
       </div>
-    </Card>
+
+      {/* Stats */}
+      <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+        {studyCount > 0 && (
+          <span>{studyCount} {studyCount === 1 ? 'study' : 'studies'}</span>
+        )}
+        {totalQuestions > 0 && (
+          <span className="flex items-center gap-1">
+            <FileQuestion className="w-3 h-3" />
+            {totalQuestions}
+          </span>
+        )}
+        {totalFindings > 0 && (
+          <span className="flex items-center gap-1">
+            <BarChart3 className="w-3 h-3" />
+            {totalFindings}
+          </span>
+        )}
+        {project.audiences.length > 0 && (
+          <span className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            {project.audiences.length}
+          </span>
+        )}
+      </div>
+    </button>
   )
 }

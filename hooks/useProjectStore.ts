@@ -45,7 +45,7 @@ export function useProjectStore() {
     [projects, activeProjectId],
   )
 
-  const createProject = useCallback((firstMessage?: string): ProjectState => {
+  const createProject = useCallback((firstMessage?: string, brand?: string): ProjectState => {
     const id = `proj_${Date.now()}`
     const today = new Date().toISOString().slice(0, 10)
     const name = firstMessage
@@ -54,6 +54,7 @@ export function useProjectStore() {
     const newProject: ProjectState = {
       id,
       name,
+      brand,
       messages: [],
       studies: [],
       audiences: [],

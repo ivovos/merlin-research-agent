@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useRef } from 'react'
 import type { ProjectState, ChatMessage, Finding, Survey, ProcessStep } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
+import type { PickerMethod } from '@/components/chat/MethodsPicker'
 import { ChatStream } from '@/components/chat/ChatStream'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
+import { StudyPlanOverlay } from '@/components/results/StudyPlanOverlay'
 import { generateMockFindings } from '@/lib/generateMockFindings'
 import { canvasToFindings } from '@/lib/canvasToFindings'
 import { selectResearchTool, executeSelectedTool } from '@/services'
@@ -268,6 +270,123 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     [onAddMessage, onAddStudy],
   )
 
+  // ── Open study plan (review) from findings card ──
+  const [planStudyId, setPlanStudyId] = useState<string | null>(null)
+
+  const handleOpenPlan = useCallback(
+    (studyId: string) => {
+      setPlanStudyId(studyId)
+    },
+    [],
+  )
+
+  // Resolve the study for the plan overlay
+  const planStudy = planStudyId
+    ? project.studies?.find(s => s.id === planStudyId) ?? null
+    : null
+
+  // ── Study plan actions ──
+  const handleRerunStudy = useCallback(
+    (studyId: string) => {
+      const study = project.studies?.find(s => s.id === studyId)
+      if (!study) return
+
+      // Re-run overwrites existing results with new mock findings
+      const newFindings: Finding[] = generateMockFindings(study.questions, false)
+      const updatedStudy: Survey = {
+        ...study,
+        findings: newFindings,
+        updatedAt: new Date().toISOString().slice(0, 10),
+      }
+      onAddStudy(updatedStudy)
+
+      const systemMsg: ChatMessage = {
+        id: `msg_${Date.now()}_sys`,
+        type: 'system',
+        text: `Re-ran study: ${study.name}`,
+        timestamp: Date.now(),
+      }
+      onAddMessage(systemMsg)
+
+      const findingsMsg: ChatMessage = {
+        id: `msg_${Date.now()}_f`,
+        type: 'findings',
+        studyId: updatedStudy.id,
+        studyName: updatedStudy.name,
+        findings: newFindings,
+        respondents: updatedStudy.sampleSize,
+        timestamp: Date.now(),
+      }
+      onAddMessage(findingsMsg)
+    },
+    [project.studies, onAddStudy, onAddMessage],
+  )
+
+  const handleRunNewStudy = useCallback(
+    (studyId: string) => {
+      const study = project.studies?.find(s => s.id === studyId)
+      if (!study) return
+
+      // Run new creates an additional study with fresh findings
+      const newFindings: Finding[] = generateMockFindings(study.questions, false)
+      const newStudy: Survey = {
+        ...study,
+        id: `study_${Date.now()}`,
+        name: `${study.name} (v2)`,
+        findings: newFindings,
+        createdAt: new Date().toISOString().slice(0, 10),
+        updatedAt: new Date().toISOString().slice(0, 10),
+      }
+      onAddStudy(newStudy)
+
+      const systemMsg: ChatMessage = {
+        id: `msg_${Date.now()}_sys`,
+        type: 'system',
+        text: `New survey created: ${newStudy.name}`,
+        timestamp: Date.now(),
+      }
+      onAddMessage(systemMsg)
+
+      const findingsMsg: ChatMessage = {
+        id: `msg_${Date.now()}_f`,
+        type: 'findings',
+        studyId: newStudy.id,
+        studyName: newStudy.name,
+        findings: newFindings,
+        respondents: newStudy.sampleSize,
+        timestamp: Date.now(),
+      }
+      onAddMessage(findingsMsg)
+    },
+    [project.studies, onAddStudy, onAddMessage],
+  )
+
+  const handleSaveAsTemplate = useCallback(
+    (studyId: string) => {
+      const study = project.studies?.find(s => s.id === studyId)
+      if (!study) return
+
+      const systemMsg: ChatMessage = {
+        id: `msg_${Date.now()}_sys`,
+        type: 'system',
+        text: `Saved "${study.name}" as a template`,
+        timestamp: Date.now(),
+      }
+      onAddMessage(systemMsg)
+    },
+    [project.studies, onAddMessage],
+  )
+
+  // ── Method selection from picker ──
+  const handleSelectMethod = useCallback(
+    (_method: PickerMethod) => {
+      // For now, all methods open the survey builder
+      // In the future, different methods could open different UIs
+      setShowBuilder(true)
+    },
+    [],
+  )
+
   return (
     <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
       {/* Header — full width */}
@@ -279,9 +398,11 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
       <ChatStream
         messages={project.messages}
         onSendMessage={startSimulation}
-        onAddStudy={() => setShowBuilder(true)}
-        onAddAudience={() => {}}
+        onSelectMethod={handleSelectMethod}
+        onAddAudience={() => {} /* picker handles display */}
+        onOpenPlan={handleOpenPlan}
         processing={processing}
+        brand={project.brand}
       />
 
       {/* Builder overlay */}
@@ -292,6 +413,17 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
             onLaunch={handleBuilderLaunch}
           />
         </div>
+      )}
+
+      {/* Study plan overlay */}
+      {planStudy && (
+        <StudyPlanOverlay
+          study={planStudy}
+          onClose={() => setPlanStudyId(null)}
+          onRerun={handleRerunStudy}
+          onRunNew={handleRunNewStudy}
+          onSaveAsTemplate={handleSaveAsTemplate}
+        />
       )}
     </div>
   )

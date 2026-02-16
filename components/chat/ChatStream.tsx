@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import type { ChatMessage, ProcessStep } from '@/types'
+import type { PickerMethod } from './MethodsPicker'
+import type { PickerAudience } from './AudiencePicker'
 import { UserMessage } from './UserMessage'
 import { AIMessage } from './AIMessage'
 import { FindingsMessage } from './FindingsMessage'
@@ -13,31 +15,40 @@ import { Loader2 } from 'lucide-react'
 interface ChatStreamProps {
   messages: ChatMessage[]
   onSendMessage: (text: string) => void
-  onAddStudy?: () => void
-  onAddAudience?: () => void
+  onSelectMethod?: (method: PickerMethod) => void
+  onAddAudience?: (audience: PickerAudience) => void
+  onOpenPlan?: (studyId: string) => void
   /** Processing state — shown as inline indicator at end of stream */
   processing?: {
     steps?: ProcessStep[]
     isComplete?: boolean
     thinkingTime?: number
   }
+  /** Current brand — used to filter audiences in the picker */
+  brand?: string
   className?: string
 }
 
 export const ChatStream: React.FC<ChatStreamProps> = ({
   messages,
   onSendMessage,
-  onAddStudy,
+  onSelectMethod,
   onAddAudience,
+  onOpenPlan,
   processing,
+  brand,
   className,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isInitialRef = useRef(true)
 
-  // Auto-scroll on new messages
+  // Scroll to bottom: instant on first render, smooth on subsequent updates
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      messagesEndRef.current?.scrollIntoView({
+        behavior: isInitialRef.current ? 'auto' : 'smooth',
+      })
+      isInitialRef.current = false
     }, 100)
     return () => clearTimeout(timeoutId)
   }, [messages, processing])
@@ -56,7 +67,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
                 case 'ai':
                   return <AIMessage key={msg.id} message={msg} />
                 case 'findings':
-                  return <FindingsMessage key={msg.id} message={msg} />
+                  return <FindingsMessage key={msg.id} message={msg} onOpenPlan={onOpenPlan} />
                 case 'system':
                   return <SystemMessage key={msg.id} message={msg} />
                 case 'attachment':
@@ -94,14 +105,15 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
 
       {/* Floating input bar */}
       <div className="absolute bottom-0 left-0 right-0 py-6 z-10 pointer-events-none">
-        <div className="max-w-3xl mx-auto px-6 pointer-events-auto">
+        <div className="max-w-[576px] mx-auto px-6 pointer-events-auto">
           <ChatInputBar
             onSend={onSendMessage}
-            onAddStudy={onAddStudy}
+            onSelectMethod={onSelectMethod}
             onAddAudience={onAddAudience}
             onAttach={() => {}}
             placeholder="Ask another question"
             variant="chat"
+            brand={brand}
           />
         </div>
       </div>

@@ -50,6 +50,7 @@ export const bpProject: SurveyProject = {
       findings: [
         {
           questionId: 'q_bp_persuade',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'OOH A Route 1 is the most persuasive ad (93rd percentile)',
           insight: 'OOH A Route 1 achieves exceptional persuasion at the 93rd percentile vs. market norms — a standout result. All four variants outperform norms on persuasion, with the weakest (OOH B Route 1) still reaching the 80th percentile. The F1 partnership message is clearly resonating commercially.',
           chartType: 'grouped_bar',
@@ -63,6 +64,7 @@ export const bpProject: SurveyProject = {
         },
         {
           questionId: 'q_bp_involve',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'Route 2 variants drive stronger emotional involvement',
           insight: 'OOH B Route 2 leads on involvement (mean 6.05 vs. norm 5.6, 77th percentile), followed by OOH A Route 2 (5.94, 72nd). The "Best of Both Worlds" creative route generates more emotional engagement than the "Racetrack to Everyone" route, possibly because it feels more personally relevant.',
           chartType: 'grouped_bar',
@@ -77,6 +79,7 @@ export const bpProject: SurveyProject = {
         },
         {
           questionId: 'q_bp_like',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'All variants beat market norm on likeability',
           insight: 'Likeability scores range from 4.30 (OOH B Route 1) to 4.45 (OOH B Route 2), all above the market norm of 4.20. The range is narrow (0.15 points), suggesting all four executions are well-liked with no clear "weaker" variant on this metric.',
           chartType: 'grouped_bar',
@@ -91,6 +94,7 @@ export const bpProject: SurveyProject = {
         },
         {
           questionId: 'q_bp_brand',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'OOH B Route 2 has strongest branding (mean 4.03)',
           insight: 'Branding scores vary more than other metrics: OOH B Route 2 leads at 4.03 (47th percentile) while OOH A Route 2 scores highest percentile at 52nd. OOH B Route 1 underperforms at 3.88 (28th percentile) — this variant may need stronger brand cues despite its F1 visual.',
           chartType: 'grouped_bar',
@@ -105,6 +109,7 @@ export const bpProject: SurveyProject = {
         },
         {
           questionId: 'q_bp_msg2',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'Engine protection is the strongest message (51% for OOH A Route 1)',
           insight: 'OOH A Route 1 is the best vehicle for message delivery across all 5 messages tested. "BP Ultimate cleans & protects the engine" achieves 51% cut-through — the strongest individual message score. The gap between Route 1 and Route 2 variants is most pronounced on F1 technology (36% vs 29-33%), suggesting the Racetrack creative does a better job of communicating the technical partnership story.',
           chartType: 'grouped_bar',
@@ -119,6 +124,7 @@ export const bpProject: SurveyProject = {
         },
         {
           questionId: 'q_bp_affinity',
+          stimuliIds: ['stim_bp_a1', 'stim_bp_b1', 'stim_bp_a2', 'stim_bp_b2'],
           headline: 'Brand affinity highest for OOH A Route 1 (72.6 vs norm 68)',
           insight: 'All variants generate brand affinity above the market norm of 68. OOH A Route 1 leads at 72.6 (61st percentile). The scores cluster tightly (70.8–72.6), suggesting the campaign consistently builds emotional connection regardless of creative route.',
           chartType: 'bar',

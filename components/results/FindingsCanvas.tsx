@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
-  Maximize2,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -8,18 +7,16 @@ import {
   Share2,
   MoreVertical,
   BarChart3,
-  FolderPlus,
-  Wand2,
+  FileText,
 } from 'lucide-react'
-import type { Finding } from '@/types'
+import type { Finding, Stimulus } from '@/types'
 import { FindingCard } from './FindingCard'
+import { StimulusStrip } from './StimulusStrip'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -29,8 +26,11 @@ interface FindingsCanvasProps {
   title: string
   typeBadge?: string
   respondents?: number
+  /** All stimuli from the project — used to resolve finding.stimuliIds */
+  stimuli?: Stimulus[]
   compact?: boolean
   onExpand?: () => void
+  onOpenPlan?: () => void
   onInsightEdit?: (questionId: string, newText: string) => void
   onSaveToProject?: () => void
   onRefineInBuilder?: () => void
@@ -41,155 +41,173 @@ interface FindingsCanvasProps {
 export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
   findings,
   title,
-  typeBadge,
   respondents,
-  compact = false,
-  onExpand,
-  onInsightEdit,
-  onSaveToProject,
-  onRefineInBuilder,
+  stimuli = [],
+  onOpenPlan,
   defaultCollapsed = false,
   className,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
 
+  // Determine if all findings share the same stimulus set
+  const { sharedStimuli, isShared } = useMemo(() => {
+    if (stimuli.length === 0) return { sharedStimuli: [], isShared: false }
+
+    const findingsWithStimuli = findings.filter(f => f.stimuliIds && f.stimuliIds.length > 0)
+    if (findingsWithStimuli.length === 0) return { sharedStimuli: [], isShared: false }
+
+    // Check if all findings have the same stimuliIds set
+    const firstSet = [...(findingsWithStimuli[0].stimuliIds ?? [])].sort().join(',')
+    const allSame = findingsWithStimuli.every(
+      f => [...(f.stimuliIds ?? [])].sort().join(',') === firstSet
+    )
+
+    if (allSame) {
+      const ids = findingsWithStimuli[0].stimuliIds ?? []
+      const resolved = ids.map(id => stimuli.find(s => s.id === id)).filter(Boolean) as Stimulus[]
+      return { sharedStimuli: resolved, isShared: true }
+    }
+
+    return { sharedStimuli: [], isShared: false }
+  }, [findings, stimuli])
+
+  /** Resolve stimuliIds to Stimulus objects for a specific finding */
+  const resolveFindingStimuli = (finding: Finding): Stimulus[] => {
+    if (!finding.stimuliIds || finding.stimuliIds.length === 0) return []
+    return finding.stimuliIds
+      .map(id => stimuli.find(s => s.id === id))
+      .filter(Boolean) as Stimulus[]
+  }
+
   const handleCopy = () => {
-    const text = findings.map((f, i) => `Finding ${i + 1}: ${f.headline}\n${f.insight}`).join('\n\n')
+    const text = findings
+      .map(
+        (f, i) =>
+          `Q${i + 1}: ${f.questionText || f.headline}\n${(f.chartData ?? []).map(d => `  ${d.name}: ${d.value}%`).join('\n')}`,
+      )
+      .join('\n\n')
     navigator.clipboard.writeText(`${title}\n\n${text}`)
   }
 
   return (
-    <div className={cn(
-      'bg-muted border border-border rounded-xl overflow-hidden shadow-sm transition-all duration-300',
-      'hover:border-primary/30 hover:shadow-md',
-      className,
-    )}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <BarChart3 className="w-4 h-4 text-primary" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-semibold text-foreground truncate">
-              {title}
+    <div
+      className={cn(
+        'bg-muted/50 border border-border rounded-xl overflow-hidden',
+        className,
+      )}
+    >
+      {/* Header — left-aligned title + right actions */}
+      <div className="flex items-center px-4 py-3 bg-background border-b border-border">
+        {/* Left-aligned title */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="text-sm font-semibold text-foreground truncate">
+            {title}
+          </span>
+          {respondents && (
+            <span className="text-xs text-muted-foreground shrink-0">
+              {respondents.toLocaleString()} respondents
             </span>
-            <div className="flex items-center gap-2">
-              {respondents && (
-                <span className="text-xs text-muted-foreground">
-                  {respondents.toLocaleString()} respondents
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Type badge */}
-          {typeBadge && (
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
-              {typeBadge}
-            </Badge>
           )}
-
-          {/* Finding count */}
-          <Badge variant="outline" className="text-xs flex-shrink-0 gap-1">
-            {findings.length} finding{findings.length !== 1 ? 's' : ''}
-          </Badge>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0 ml-3">
-          {/* Collapse toggle */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          {/* Open Plan */}
+          {onOpenPlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={onOpenPlan}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Open Plan
+            </Button>
+          )}
+
+          {/* Collapse */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            title={isCollapsed ? 'Expand findings' : 'Collapse findings'}
           >
-            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+            {isCollapsed ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronUp className="w-4 h-4" />
+            )}
           </Button>
 
-          {/* More options */}
+          {/* More */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleCopy}>
                 <Copy className="w-4 h-4 mr-2" />
-                Copy all findings
+                Copy all
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Download findings')}>
+              <DropdownMenuItem>
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Share findings')}>
+              <DropdownMenuItem>
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </DropdownMenuItem>
-              {(onSaveToProject || onRefineInBuilder) && <DropdownMenuSeparator />}
-              {onSaveToProject && (
-                <DropdownMenuItem onClick={onSaveToProject}>
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                  Save to Project
-                </DropdownMenuItem>
-              )}
-              {onRefineInBuilder && (
-                <DropdownMenuItem onClick={onRefineInBuilder}>
-                  <Wand2 className="w-4 h-4 mr-2" />
-                  Refine in Builder
-                </DropdownMenuItem>
-              )}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* Expand to full page */}
-          {onExpand && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={onExpand}
-              title="Open in full view"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Body: finding cards */}
+      {/* Cards */}
       {!isCollapsed && (
-        <div className="overflow-y-auto scrollbar-hide">
-          <div className={cn(
-            'space-y-3',
-            compact ? 'p-3' : 'p-4',
-          )}>
-            {findings.map((finding, i) => (
-              <FindingCard
-                key={finding.questionId}
-                finding={finding}
-                index={i}
-                compact={compact}
-                onInsightEdit={onInsightEdit}
-              />
-            ))}
+        <div className="p-3 space-y-3">
+          {/* Shared stimulus strip — shown once above all findings */}
+          {isShared && sharedStimuli.length > 0 && (
+            <StimulusStrip
+              stimuli={sharedStimuli}
+              className="px-2 py-2 mb-1 bg-background rounded-lg border border-border"
+            />
+          )}
 
-            {findings.length === 0 && (
-              <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-                No findings available
-              </div>
-            )}
-          </div>
+          {findings.map((finding, i) => (
+            <FindingCard
+              key={finding.questionId}
+              finding={finding}
+              index={i}
+              respondents={respondents}
+              stimuli={!isShared ? resolveFindingStimuli(finding) : undefined}
+              sharedStimuliNames={isShared && sharedStimuli.length > 0
+                ? sharedStimuli.map(s => s.name)
+                : undefined
+              }
+            />
+          ))}
+
+          {findings.length === 0 && (
+            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+              No findings available
+            </div>
+          )}
         </div>
       )}
 
-      {/* Collapsed preview: show first headline */}
+      {/* Collapsed preview */}
       {isCollapsed && findings.length > 0 && (
         <div className="px-4 py-3 bg-background/50">
           <p className="text-sm text-muted-foreground truncate">
-            <span className="font-semibold text-foreground">{findings[0].headline}</span>
+            <span className="font-medium text-foreground">
+              {findings[0].questionText || findings[0].headline}
+            </span>
             {findings.length > 1 && (
               <span className="ml-2">+{findings.length - 1} more</span>
             )}

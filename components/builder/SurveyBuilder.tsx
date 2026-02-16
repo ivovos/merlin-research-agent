@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { useSurveyBuilder } from '@/hooks/useSurveyBuilder'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
 import { BuilderSidebar } from './BuilderSidebar'
@@ -99,19 +98,26 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
         return (
           <QuestionsStep
             surveyType={state.selectedType!}
-            buildMethod={state.questionBuildMethod}
-            buildPhase={state.questionBuildPhase}
             questions={state.questions}
-            stimuli={state.stimuli}
-            activeQuestionId={state.activeQuestionId}
-            onSetBuildMethod={(m) => dispatch({ type: 'SET_BUILD_METHOD', payload: m })}
-            onSetBuildPhase={(p) => dispatch({ type: 'SET_BUILD_PHASE', payload: p })}
+            questionSourceTab={state.questionSourceTab}
+            editingQuestionIndex={state.editingQuestionIndex}
+            showQuestionErrors={state.showQuestionErrors}
+            selectedTemplate={state.selectedTemplate}
+            importBriefText={state.importBriefText}
+            importBriefUploaded={state.importBriefUploaded}
+            importBriefExtracted={state.importBriefExtracted}
+            onSetSourceTab={(tab) => dispatch({ type: 'SET_QUESTION_SOURCE_TAB', payload: tab })}
+            onSetEditingIndex={(idx) => dispatch({ type: 'SET_EDITING_QUESTION_INDEX', payload: idx })}
+            onSelectTemplate={(key) => dispatch({ type: 'SELECT_TEMPLATE', payload: key })}
+            onResetTemplate={() => dispatch({ type: 'RESET_TEMPLATE' })}
+            onSetImportBriefText={(text) => dispatch({ type: 'SET_IMPORT_BRIEF_TEXT', payload: text })}
+            onSetImportBriefUploaded={(uploaded) => dispatch({ type: 'SET_IMPORT_BRIEF_UPLOADED', payload: uploaded })}
+            onExtractFromBrief={(qs) => dispatch({ type: 'EXTRACT_FROM_BRIEF', payload: qs })}
             onAddQuestion={(q) => dispatch({ type: 'ADD_QUESTION', payload: q })}
             onUpdateQuestion={(id, updates) => dispatch({ type: 'UPDATE_QUESTION', payload: { id, updates } })}
             onRemoveQuestion={(id) => dispatch({ type: 'REMOVE_QUESTION', payload: id })}
-            onReorderQuestions={(qs) => dispatch({ type: 'REORDER_QUESTIONS', payload: qs })}
-            onSetActiveQuestion={(id) => dispatch({ type: 'SET_ACTIVE_QUESTION', payload: id })}
             onGenerateQuestions={(qs) => dispatch({ type: 'GENERATE_QUESTIONS', payload: qs })}
+            onCloseEditor={() => dispatch({ type: 'CLOSE_QUESTION_EDITOR' })}
           />
         )
       case 'review':
@@ -176,17 +182,10 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
         />
 
         {/* Main content */}
-        <div className={cn('flex-1 overflow-hidden')}>
-          {currentStep === 'questions' && state.questionBuildPhase === 'editor' ? (
-            // Questions editor fills entire content area (no padding/max-width)
-            <div className="h-full">
-              {renderStep()}
-            </div>
-          ) : (
-            <div className="h-full overflow-y-auto p-6 max-w-4xl mx-auto">
-              {renderStep()}
-            </div>
-          )}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto p-6 max-w-4xl mx-auto">
+            {renderStep()}
+          </div>
         </div>
       </div>
 
@@ -201,6 +200,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
         onBack={goBack}
         onNext={goNext}
         onLaunch={handleLaunch}
+        onShowQuestionErrors={() => dispatch({ type: 'SET_SHOW_QUESTION_ERRORS', payload: true })}
       />
     </div>
   )

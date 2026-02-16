@@ -1,10 +1,7 @@
 import * as React from "react"
 import {
   ChevronDown,
-  ChevronRight,
-  Folder,
   LayoutDashboard,
-  MessageSquare,
   PanelLeft,
   Plus,
   Settings,
@@ -23,9 +20,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
@@ -34,11 +28,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 import { MonoIcon } from "@/components/MonoIcon"
 import type { Account, AppView, ProjectState } from "@/types"
@@ -70,21 +59,14 @@ export function AppSidebar({
   onAudiencesClick,
   onDeleteProject,
 }: AppSidebarProps) {
-  const { state, toggleSidebar, setOpen } = useSidebar()
+  const { state, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed"
-  const [isProjectsOpen, setIsProjectsOpen] = React.useState(true)
 
   const activeProjectId = view.screen === 'project' ? view.projectId : null
 
-  // Sort projects by updatedAt (most recent first) for the Recent section
-  const recentProjects = React.useMemo(
+  // All projects sorted by most recently updated
+  const sortedProjects = React.useMemo(
     () => [...projects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
-    [projects],
-  )
-
-  // Pinned/demo projects (first 5)
-  const pinnedProjects = React.useMemo(
-    () => projects.slice(0, 5),
     [projects],
   )
 
@@ -131,14 +113,14 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* + Ask question (creates new project) */}
+              {/* + New Study — opens homepage with centered input */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={onNewProject}
-                  tooltip="Ask question"
+                  tooltip="New Study"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Ask question</span>
+                  <span>New Study</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -164,84 +146,23 @@ export function AppSidebar({
                   <span>Audiences</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
-              {/* Projects (collapsible — pinned/demo projects) */}
-              {pinnedProjects.length > 0 && (
-                <Collapsible
-                  open={isProjectsOpen}
-                  onOpenChange={setIsProjectsOpen}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Projects">
-                        <Folder className="h-4 w-4" />
-                        <span>Projects</span>
-                        {isProjectsOpen ? (
-                          <ChevronDown className="ml-auto h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="ml-auto h-4 w-4" />
-                        )}
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {pinnedProjects.map((project) => (
-                          <SidebarMenuSubItem key={project.id} className="group/project">
-                            <SidebarMenuSubButton
-                              onClick={() => onSelectProject(project.id)}
-                              isActive={activeProjectId === project.id}
-                              className="pr-1"
-                            >
-                              <span className="truncate flex-1">
-                                {project.name}
-                              </span>
-                              {onDeleteProject && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onDeleteProject(project.id)
-                                  }}
-                                  className="opacity-0 group-hover/project:opacity-100 ml-auto flex-shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              )}
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Recent Projects */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Recent</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {isCollapsed ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setOpen(true)}
-                    tooltip="Recent projects"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    <span>Recent</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : (
-                recentProjects.map((project) => (
-                  <SidebarMenuItem key={project.id} className="group/recent">
+        {/* Projects — flat list under header */}
+        {sortedProjects.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sortedProjects.map((project) => (
+                  <SidebarMenuItem key={project.id} className="group/project">
                     <SidebarMenuButton
                       onClick={() => onSelectProject(project.id)}
                       isActive={activeProjectId === project.id}
                       tooltip={project.name}
-                      className="pl-2 pr-1"
+                      className="pr-1"
                     >
                       <span className="truncate flex-1">
                         {project.name}
@@ -252,18 +173,18 @@ export function AppSidebar({
                             e.stopPropagation()
                             onDeleteProject(project.id)
                           }}
-                          className="opacity-0 group-hover/recent:opacity-100 ml-auto flex-shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+                          className="opacity-0 group-hover/project:opacity-100 ml-auto flex-shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
                         >
                           <X className="h-3 w-3" />
                         </button>
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* Footer — Account switcher + Settings */}

@@ -197,6 +197,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
               title={s.name}
               typeBadge={typeConfig?.label}
               respondents={s.sampleSize}
+              stimuli={project.stimuli}
             />
           </div>
         ) : null

@@ -26,8 +26,10 @@ const ICON_MAP: Record<string, ElementType> = {
 const QUESTION_TYPE_LABELS: Record<string, string> = {
   single_select: 'Single Select',
   multi_select: 'Multi Select',
+  single_choice: 'Single Choice',
+  multiple_choice: 'Multiple Choice',
   likert: 'Likert Scale',
-  scale: 'Numeric Scale',
+  scale: 'Scale',
   open_text: 'Open Text',
   rating: 'Star Rating',
   nps: 'NPS',
@@ -150,27 +152,43 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         </div>
       </SectionCard>
 
-      {/* Stimulus (conditional) */}
+      {/* Stimulus (conditional) — with thumbnails */}
       {stimulusStepIndex !== -1 && stimuli.length > 0 && (
-        <SectionCard label="Stimulus" onClick={() => onGoToStep(stimulusStepIndex)}>
-          <div className="flex flex-wrap gap-2">
-            {stimuli.map((s) => (
-              <div
-                key={s.id}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-muted text-sm"
-              >
-                {s.type === 'image' ? (
-                  <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                ) : (
-                  <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                )}
-                <span className="truncate max-w-[180px]">{s.name}</span>
-              </div>
-            ))}
+        <SectionCard label={`Assets to test (${stimuli.length})`} onClick={() => onGoToStep(stimulusStepIndex)}>
+          <div className="space-y-1.5">
+            {stimuli.map((s) => {
+              const thumbSrc = s.thumbnailUrl || s.url
+              const isVisual = s.type === 'image' || s.type === 'video' || s.type === 'concept'
+
+              return (
+                <div key={s.id} className="flex items-center gap-3">
+                  {/* Small thumbnail */}
+                  {isVisual && thumbSrc ? (
+                    <div className="w-12 h-8 rounded overflow-hidden bg-muted border shrink-0">
+                      <img
+                        src={thumbSrc}
+                        alt={s.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-8 rounded overflow-hidden bg-muted border flex items-center justify-center shrink-0">
+                      {s.type === 'document' ? (
+                        <FileText className="w-3.5 h-3.5 text-muted-foreground/50" />
+                      ) : (
+                        <ImageIcon className="w-3.5 h-3.5 text-muted-foreground/50" />
+                      )}
+                    </div>
+                  )}
+
+                  {/* File name */}
+                  <p className="text-sm text-foreground truncate" title={s.name}>
+                    {s.name}
+                  </p>
+                </div>
+              )
+            })}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {stimuli.length} item{stimuli.length !== 1 ? 's' : ''}
-          </p>
         </SectionCard>
       )}
 

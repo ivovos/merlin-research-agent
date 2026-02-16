@@ -34,6 +34,26 @@ export type QuestionType =
   | 'conjoint'
   | 'paired_comparison'
 
+// ── Builder question types (simplified for builder UI) ──
+
+export type BuilderQuestionType =
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'ranking'
+  | 'open_text'
+  | 'nps'
+  | 'scale'
+
+/** Map builder types to the existing QuestionType for downstream compatibility */
+export const BUILDER_TO_SURVEY_TYPE: Record<BuilderQuestionType, QuestionType> = {
+  single_choice: 'single_select',
+  multiple_choice: 'multi_select',
+  ranking: 'ranking',
+  open_text: 'open_text',
+  nps: 'nps',
+  scale: 'scale',
+}
+
 // ── Stimulus material ──
 
 export interface Stimulus {
@@ -84,6 +104,8 @@ export interface Finding {
   editable: boolean
   percentile?: number
   normValue?: number
+  /** IDs of stimuli this finding relates to (references Stimulus.id from project) */
+  stimuliIds?: string[]
 }
 
 // ── Survey ──

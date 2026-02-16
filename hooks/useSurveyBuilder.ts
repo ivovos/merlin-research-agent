@@ -1,5 +1,5 @@
 import { useReducer, useMemo, useCallback } from 'react'
-import type { SurveyType, QuestionType, Stimulus, SurveyQuestion } from '@/types'
+import type { SurveyType, Stimulus, SurveyQuestion } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 
 // ── Step IDs ──
@@ -115,6 +115,8 @@ export function getSelectedRespondentCount(selectedAudiences: string[]): number 
 
 // ── Builder state ──
 
+export type QuestionSourceTab = 'import' | 'templates' | 'scratch'
+
 export interface BuilderState {
   surveyName: string
   selectedType: SurveyType | null
@@ -123,10 +125,15 @@ export interface BuilderState {
   audienceMode: 'single' | 'multi' | null
   selectedAudiences: string[]
   stimuli: Stimulus[]
-  questionBuildMethod: 'ai' | 'manual' | 'template' | null
-  questionBuildPhase: 'gateway' | 'editor'
+  // Question builder state (new inline-card model)
+  questionSourceTab: QuestionSourceTab
+  editingQuestionIndex: number          // -1 = none expanded
+  showQuestionErrors: boolean
+  selectedTemplate: string | null
+  importBriefText: string
+  importBriefUploaded: boolean
+  importBriefExtracted: boolean
   questions: SurveyQuestion[]
-  activeQuestionId: string | null
 }
 
 // ── Flow computation ──
@@ -143,12 +150,23 @@ function computeFlowSteps(type: SurveyType | null): BuilderStepId[] {
 
 // ── Step validation ──
 
+function isChoiceType(type: string): boolean {
+  return ['single_select', 'multi_select', 'single_choice', 'multiple_choice', 'ranking'].includes(type)
+}
+
 function computeStepValidity(state: BuilderState): Record<BuilderStepId, boolean> {
+  const questionsValid = state.questions.length > 0 && state.questions.every(q => {
+    if (!q.text.trim()) return false
+    // Choice-based types need at least 2 non-empty options
+    if (isChoiceType(q.type) && (!q.options || q.options.filter(o => o.trim()).length < 2)) return false
+    return true
+  })
+
   return {
     type: state.selectedType !== null,
     audience: state.selectedAudiences.length > 0,
     stimulus: state.stimuli.length > 0,
-    questions: state.questions.length > 0 && state.questions.every(q => q.text.trim().length > 0),
+    questions: questionsValid,
     review: true,
   }
 }
@@ -164,13 +182,20 @@ export type BuilderAction =
   | { type: 'TOGGLE_ALL_SEGMENTS'; payload: string }
   | { type: 'ADD_STIMULUS'; payload: Stimulus }
   | { type: 'REMOVE_STIMULUS'; payload: string }
-  | { type: 'SET_BUILD_METHOD'; payload: 'ai' | 'manual' | 'template' }
-  | { type: 'SET_BUILD_PHASE'; payload: 'gateway' | 'editor' }
+  // Question builder actions (inline-card model)
+  | { type: 'SET_QUESTION_SOURCE_TAB'; payload: QuestionSourceTab }
+  | { type: 'SET_EDITING_QUESTION_INDEX'; payload: number }
+  | { type: 'SET_SHOW_QUESTION_ERRORS'; payload: boolean }
+  | { type: 'SELECT_TEMPLATE'; payload: string }
+  | { type: 'RESET_TEMPLATE' }
+  | { type: 'SET_IMPORT_BRIEF_TEXT'; payload: string }
+  | { type: 'SET_IMPORT_BRIEF_UPLOADED'; payload: boolean }
+  | { type: 'EXTRACT_FROM_BRIEF'; payload: SurveyQuestion[] }
+  | { type: 'CLOSE_QUESTION_EDITOR' }
   | { type: 'ADD_QUESTION'; payload: SurveyQuestion }
   | { type: 'UPDATE_QUESTION'; payload: { id: string; updates: Partial<SurveyQuestion> } }
   | { type: 'REMOVE_QUESTION'; payload: string }
   | { type: 'REORDER_QUESTIONS'; payload: SurveyQuestion[] }
-  | { type: 'SET_ACTIVE_QUESTION'; payload: string | null }
   | { type: 'GENERATE_QUESTIONS'; payload: SurveyQuestion[] }
   | { type: 'GO_NEXT' }
   | { type: 'GO_BACK' }
@@ -187,10 +212,14 @@ const initialState: BuilderState = {
   audienceMode: null,
   selectedAudiences: [],
   stimuli: [],
-  questionBuildMethod: null,
-  questionBuildPhase: 'gateway',
+  questionSourceTab: 'templates',
+  editingQuestionIndex: -1,
+  showQuestionErrors: false,
+  selectedTemplate: null,
+  importBriefText: '',
+  importBriefUploaded: false,
+  importBriefExtracted: false,
   questions: [],
-  activeQuestionId: null,
 }
 
 // ── Reducer ──
@@ -202,7 +231,6 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
     case 'SELECT_TYPE': {
       const newFlowSteps = computeFlowSteps(action.payload)
-      // If switching to non-stimulus type, clear stimuli
       const config = SURVEY_TYPE_CONFIGS.find(c => c.key === action.payload)
       const stimuli = config?.needsStimulus ? state.stimuli : []
       return {
@@ -215,13 +243,11 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
     case 'SET_AUDIENCE_MODE': {
       if (action.payload === 'single') {
-        // Clear segment IDs; keep at most one audience-level ID
         const audienceIds = state.selectedAudiences
           .filter(id => !id.includes(':'))
           .slice(0, 1)
         return { ...state, audienceMode: action.payload, selectedAudiences: audienceIds }
       }
-      // Switching to multi — clear selections (user will re-select via segments)
       return { ...state, audienceMode: action.payload, selectedAudiences: [] }
     }
 
@@ -259,13 +285,11 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
       const allSelected = allSegIds.every(id => state.selectedAudiences.includes(id))
 
       if (allSelected) {
-        // Deselect all segments for this audience
         return {
           ...state,
           selectedAudiences: state.selectedAudiences.filter(id => !allSegIds.includes(id)),
         }
       } else {
-        // Select all segments (add any not already present)
         const newIds = allSegIds.filter(id => !state.selectedAudiences.includes(id))
         return {
           ...state,
@@ -280,15 +304,60 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
     case 'REMOVE_STIMULUS':
       return { ...state, stimuli: state.stimuli.filter(s => s.id !== action.payload) }
 
-    case 'SET_BUILD_METHOD':
-      return { ...state, questionBuildMethod: action.payload }
+    // ── Question builder actions (inline-card model) ──
 
-    case 'SET_BUILD_PHASE':
-      return { ...state, questionBuildPhase: action.payload }
+    case 'SET_QUESTION_SOURCE_TAB':
+      return {
+        ...state,
+        questionSourceTab: action.payload,
+        selectedTemplate: null,
+        importBriefExtracted: false,
+        editingQuestionIndex: -1,
+        showQuestionErrors: false,
+      }
+
+    case 'SET_EDITING_QUESTION_INDEX':
+      return { ...state, editingQuestionIndex: action.payload }
+
+    case 'SET_SHOW_QUESTION_ERRORS':
+      return { ...state, showQuestionErrors: action.payload }
+
+    case 'SELECT_TEMPLATE':
+      return { ...state, selectedTemplate: action.payload }
+
+    case 'RESET_TEMPLATE':
+      return {
+        ...state,
+        selectedTemplate: null,
+        questions: [],
+        editingQuestionIndex: -1,
+        showQuestionErrors: false,
+      }
+
+    case 'SET_IMPORT_BRIEF_TEXT':
+      return { ...state, importBriefText: action.payload }
+
+    case 'SET_IMPORT_BRIEF_UPLOADED':
+      return { ...state, importBriefUploaded: action.payload }
+
+    case 'EXTRACT_FROM_BRIEF':
+      return {
+        ...state,
+        questions: action.payload,
+        importBriefExtracted: true,
+        editingQuestionIndex: -1,
+      }
+
+    case 'CLOSE_QUESTION_EDITOR':
+      return { ...state, editingQuestionIndex: -1 }
 
     case 'ADD_QUESTION': {
       const newQuestions = [...state.questions, action.payload]
-      return { ...state, questions: newQuestions, activeQuestionId: action.payload.id }
+      return {
+        ...state,
+        questions: newQuestions,
+        editingQuestionIndex: newQuestions.length - 1,
+      }
     }
 
     case 'UPDATE_QUESTION':
@@ -301,27 +370,25 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
     case 'REMOVE_QUESTION': {
       const filtered = state.questions.filter(q => q.id !== action.payload)
-      const activeId = state.activeQuestionId === action.payload
-        ? (filtered[0]?.id ?? null)
-        : state.activeQuestionId
-      return { ...state, questions: filtered, activeQuestionId: activeId }
+      // If editing the removed question, close editor
+      const removedIndex = state.questions.findIndex(q => q.id === action.payload)
+      const editingIdx = state.editingQuestionIndex === removedIndex
+        ? -1
+        : state.editingQuestionIndex > removedIndex
+          ? state.editingQuestionIndex - 1
+          : state.editingQuestionIndex
+      return { ...state, questions: filtered, editingQuestionIndex: editingIdx }
     }
 
     case 'REORDER_QUESTIONS':
-      return { ...state, questions: action.payload }
+      return { ...state, questions: action.payload, editingQuestionIndex: -1 }
 
-    case 'SET_ACTIVE_QUESTION':
-      return { ...state, activeQuestionId: action.payload }
-
-    case 'GENERATE_QUESTIONS': {
-      const questions = action.payload
+    case 'GENERATE_QUESTIONS':
       return {
         ...state,
-        questions,
-        activeQuestionId: questions[0]?.id ?? null,
-        questionBuildPhase: 'editor',
+        questions: action.payload,
+        editingQuestionIndex: -1,
       }
-    }
 
     case 'GO_NEXT': {
       const validity = computeStepValidity(state)
@@ -337,7 +404,6 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
     }
 
     case 'GO_TO_STEP': {
-      // Only allow navigating to completed steps or current step
       const targetIndex = action.payload
       if (targetIndex < 0 || targetIndex >= state.flowSteps.length) return state
       if (targetIndex > state.currentStepIndex) return state

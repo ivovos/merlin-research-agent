@@ -41,6 +41,7 @@ export const vodafoneProject: SurveyProject = {
       findings: [
         {
           questionId: 'q_vod_switching',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: '59% of tech-savvy families would switch for Market-leading WiFi',
           insight: 'Market-leading WiFi is the strongest switching driver among tech-savvy families, with 59% saying they would switch providers. Service Promise (55%) and Speed Boost (51%) follow closely. Home Care trails significantly at 27%, suggesting practical setup support is less compelling as a switching trigger.',
           chartType: 'grouped_bar',
@@ -64,6 +65,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_appeal',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: '88% find Market-leading WiFi appealing',
           insight: 'Market-leading WiFi leads on overall appeal with 88% Top-2-Box among tech-savvy families. Speed Boost (85%) edges out Service Promise (84%) for second place — the performance/speed territory resonates strongly. Home Care scores lowest at 55%, indicating setup support is a "nice-to-have" rather than a compelling proposition.',
           chartType: 'bar',
@@ -83,6 +85,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_relevance',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: '84% see Market-leading WiFi as personally relevant',
           insight: 'Relevance scores follow a similar pattern to appeal, but with sharper drop-offs in the lower half. The gap between top-tier propositions (WiFi, Promise, Speed) and mid-tier (Security, Connected) is more pronounced on relevance than appeal — suggesting some propositions are liked in theory but not personally meaningful.',
           chartType: 'bar',
@@ -102,6 +105,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_newness',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: 'Speed Boost perceived as most innovative (76%)',
           insight: 'Speed Boost leads on perceived newness at 76%, ahead of Snap to Fix (75%) and Market-leading WiFi (73%). This is a different ranking from appeal/relevance — Speed Boost is seen as more innovative than the WiFi proposition despite scoring lower on overall appeal. Service Promise scores lowest on newness (64%), as guaranteed speeds are an established category promise.',
           chartType: 'bar',
@@ -121,6 +125,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_excitement',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: 'Speed Boost generates most excitement (85%)',
           insight: 'Speed Boost tops the excitement ranking at 85%, suggesting the on-demand speed increase concept is highly engaging. Market-leading WiFi (80%) and Service Promise (72%) follow. The excitement gap between top and bottom propositions is steep — Home Care generates excitement in only 40% of tech-savvy families.',
           chartType: 'bar',
@@ -140,6 +145,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_comp',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: '95% find Home Care easy to understand',
           insight: 'Comprehension is universally high across all propositions, with Home Care (95%) and Service Promise (94%) leading — these are straightforward, tangible concepts. Take your Broadband scores lowest (82%), likely because the portable broadband concept requires more explanation. All propositions clear the 80% comprehension threshold.',
           chartType: 'bar',
@@ -159,6 +165,7 @@ export const vodafoneProject: SurveyProject = {
         },
         {
           questionId: 'q_vod_retention',
+          stimuliIds: ['stim_vod_homecare', 'stim_vod_servicepromise', 'stim_vod_snaptofix'],
           headline: 'Market-leading WiFi drives strongest segment gap (+26pp)',
           insight: 'The gap between tech-savvy families and general broadband decision-makers is widest for Market-leading WiFi (+26pp on switching intent), suggesting this proposition disproportionately appeals to the premium segment. Snap to Fix has the narrowest gap (+13pp), indicating more universal appeal across segments.',
           chartType: 'grouped_bar',

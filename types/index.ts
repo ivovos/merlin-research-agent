@@ -50,6 +50,7 @@ export type {
   SurveyType,
   SurveyStatus,
   QuestionType,
+  BuilderQuestionType,
   Stimulus,
   SurveyQuestion,
   SegmentBreakdown,
@@ -59,7 +60,7 @@ export type {
   SurveyTypeConfig,
 } from './survey';
 
-export { SURVEY_TYPE_CONFIGS } from './survey'
+export { SURVEY_TYPE_CONFIGS, BUILDER_TO_SURVEY_TYPE } from './survey'
 
 // Chat & project types (Phase 2 - project=chat migration)
 export type {

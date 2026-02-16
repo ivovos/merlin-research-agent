@@ -1,29 +1,36 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { Plus, Users, FlaskConical, ArrowUp } from 'lucide-react'
+import { Plus, Users, Slash, ArrowUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { MethodsPicker, type PickerMethod } from './MethodsPicker'
+import { AudiencePicker, type PickerAudience } from './AudiencePicker'
 
 interface ChatInputBarProps {
   onSend: (text: string) => void
-  onAddStudy?: () => void
-  onAddAudience?: () => void
+  onSelectMethod?: (method: PickerMethod) => void
+  onAddAudience?: (audience: PickerAudience) => void
   onAttach?: () => void
   placeholder?: string
   className?: string
   /** Whether this is the home-screen variant (larger, centered) */
   variant?: 'home' | 'chat'
+  /** Current brand — used to filter audiences in the picker */
+  brand?: string
 }
 
 export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   onSend,
-  onAddStudy,
+  onSelectMethod,
   onAddAudience,
   onAttach,
   placeholder = 'What do you want to research?',
   className,
   variant = 'chat',
+  brand,
 }) => {
   const [text, setText] = useState('')
+  const [methodsOpen, setMethodsOpen] = useState(false)
+  const [audienceOpen, setAudienceOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSend = useCallback(() => {
@@ -59,39 +66,66 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   return (
     <div
       className={cn(
-        'border rounded-2xl bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring transition-shadow',
+        'relative border rounded-2xl bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring transition-shadow',
         isHome && 'shadow-md',
         className,
       )}
     >
-      {/* Text input + send */}
-      <div className="flex items-end gap-2 px-3 pt-2.5 pb-1">
+      {/* Methods picker lightbox — portaled to body */}
+      <MethodsPicker
+        open={methodsOpen}
+        onClose={() => setMethodsOpen(false)}
+        onSelect={(method) => {
+          onSelectMethod?.(method)
+          setMethodsOpen(false)
+        }}
+      />
+
+      {/* Audience picker lightbox — portaled to body */}
+      <AudiencePicker
+        open={audienceOpen}
+        onClose={() => setAudienceOpen(false)}
+        brand={brand}
+        onSelect={(audience) => {
+          // Insert @audience-id into text if triggered by typing @
+          let newText = text
+          if (newText.endsWith('@')) {
+            newText = newText.slice(0, -1)
+          }
+          setText(newText + `@${audience.id} `)
+          onAddAudience?.(audience)
+          setAudienceOpen(false)
+          textareaRef.current?.focus()
+        }}
+      />
+
+      {/* Text input */}
+      <div className="px-3 pt-2.5 pb-1">
         <textarea
           ref={textareaRef}
           value={text}
           onChange={e => {
-            setText(e.target.value)
+            const val = e.target.value
+            setText(val)
             handleInput()
+
+            // Trigger audience picker on @ at start or after whitespace
+            if (onAddAudience && /(^|\s)@$/.test(val)) {
+              setAudienceOpen(true)
+              setMethodsOpen(false)
+            }
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           rows={1}
           className={cn(
-            'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed',
-            isHome ? 'min-h-[40px] py-2' : 'min-h-[32px] py-1',
+            'w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed',
+            isHome ? 'min-h-[60px] py-3' : 'min-h-[48px] py-2',
           )}
         />
-        <Button
-          size="icon"
-          className="h-8 w-8 rounded-full flex-shrink-0"
-          onClick={handleSend}
-          disabled={!text.trim()}
-        >
-          <ArrowUp className="w-4 h-4" />
-        </Button>
       </div>
 
-      {/* Action buttons row */}
+      {/* Action buttons row + send */}
       <div className="flex items-center gap-1 px-3 pb-2.5 pt-0">
         {onAttach && (
           <Button
@@ -108,23 +142,31 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             variant="ghost"
             size="sm"
             className="h-7 px-2.5 text-muted-foreground hover:text-foreground text-xs gap-1.5"
-            onClick={onAddAudience}
+            onClick={() => setAudienceOpen(prev => !prev)}
           >
             <Users className="w-3.5 h-3.5" />
             <span>Audience</span>
           </Button>
         )}
-        {onAddStudy && (
+        {onSelectMethod && (
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2.5 text-muted-foreground hover:text-foreground text-xs gap-1.5"
-            onClick={onAddStudy}
+            onClick={() => setMethodsOpen(prev => !prev)}
           >
-            <FlaskConical className="w-3.5 h-3.5" />
-            <span>Add Study</span>
+            <Slash className="w-3.5 h-3.5" />
+            <span>Add Method</span>
           </Button>
         )}
+        <Button
+          size="icon"
+          className="h-8 w-8 rounded-full flex-shrink-0 ml-auto"
+          onClick={handleSend}
+          disabled={!text.trim()}
+        >
+          <ArrowUp className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   )

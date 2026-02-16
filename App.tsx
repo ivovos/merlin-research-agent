@@ -59,7 +59,7 @@ const App: React.FC = () => {
   }, [store])
 
   const handleNewProject = useCallback((text?: string) => {
-    const project = store.createProject(text)
+    const project = store.createProject(text, currentAccount.name)
     setView({ screen: 'project', projectId: project.id })
 
     // If text was provided, add it as the first user message
@@ -71,7 +71,7 @@ const App: React.FC = () => {
         timestamp: Date.now(),
       })
     }
-  }, [store])
+  }, [store, currentAccount])
 
   const handleAccountChange = useCallback((account: Account) => {
     setCurrentAccount(account)
@@ -136,7 +136,7 @@ const App: React.FC = () => {
     }
 
     // Create a project for the launched survey
-    const project = store.createProject(projectName)
+    const project = store.createProject(projectName, currentAccount.name)
     store.addStudy(project.id, survey)
     store.addMessage(project.id, {
       id: `msg_${Date.now()}_sys`,
@@ -157,7 +157,7 @@ const App: React.FC = () => {
 
     setShowBuilder(false)
     setView({ screen: 'project', projectId: project.id })
-  }, [store])
+  }, [store, currentAccount])
 
   // ── Render ──
 
@@ -171,7 +171,7 @@ const App: React.FC = () => {
         projects={store.projects}
         onSelectProject={handleSelectProject}
         onGoHome={handleGoHome}
-        onNewProject={() => handleNewProject()}
+        onNewProject={handleGoHome}
         onAudiencesClick={handleAudiencesClick}
         onDeleteProject={handleDeleteProject}
       />
@@ -214,7 +214,8 @@ const App: React.FC = () => {
             projects={store.projects}
             onSelectProject={handleSelectProject}
             onCreateProject={(text) => handleNewProject(text)}
-            onOpenBuilder={handleOpenBuilder}
+            onSelectMethod={() => handleOpenBuilder()}
+            brand={currentAccount.name}
           />
         )}
       </SidebarInset>
