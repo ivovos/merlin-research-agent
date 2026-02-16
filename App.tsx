@@ -40,6 +40,10 @@ const App: React.FC = () => {
   // Survey builder overlay
   const [showBuilder, setShowBuilder] = useState(false)
 
+  // Sidebar state — collapse when builder is open
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const sidebarOpenBeforeBuilder = React.useRef(true)
+
   // ── Navigation handlers ──
 
   const handleGoHome = useCallback(() => {
@@ -73,6 +77,14 @@ const App: React.FC = () => {
     setCurrentAccount(account)
   }, [])
 
+  const handleDeleteProject = useCallback((id: string) => {
+    store.deleteProject(id)
+    // If we were viewing this project, go home
+    if (view.screen === 'project' && view.projectId === id) {
+      setView({ screen: 'home' })
+    }
+  }, [store, view])
+
   const handleAudiencesClick = useCallback(() => {
     setAudienceOverlay({ mode: 'list' })
   }, [])
@@ -92,11 +104,14 @@ const App: React.FC = () => {
   // ── Builder handlers ──
 
   const handleOpenBuilder = useCallback(() => {
+    sidebarOpenBeforeBuilder.current = sidebarOpen
+    setSidebarOpen(false)
     setShowBuilder(true)
-  }, [])
+  }, [sidebarOpen])
 
   const handleCloseBuilder = useCallback(() => {
     setShowBuilder(false)
+    setSidebarOpen(sidebarOpenBeforeBuilder.current)
   }, [])
 
   const handleBuilderLaunch = useCallback((builderState: BuilderState) => {
@@ -147,7 +162,7 @@ const App: React.FC = () => {
   // ── Render ──
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar
         currentAccount={currentAccount}
         accounts={mockAccounts}
@@ -158,6 +173,7 @@ const App: React.FC = () => {
         onGoHome={handleGoHome}
         onNewProject={() => handleNewProject()}
         onAudiencesClick={handleAudiencesClick}
+        onDeleteProject={handleDeleteProject}
       />
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Survey Builder — full page overlay */}

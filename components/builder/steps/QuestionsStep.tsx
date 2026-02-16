@@ -24,11 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from '@/components/ui/resizable'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import type { SurveyType, SurveyQuestion, Stimulus, QuestionType } from '@/types'
@@ -98,13 +93,6 @@ function generateMockQuestions(surveyType: SurveyType): SurveyQuestion[] {
       { id: id(), type: 'single_select', text: 'After seeing this ad, how likely are you to find out more?', options: ['Very likely', 'Somewhat likely', 'Neither likely nor unlikely', 'Somewhat unlikely', 'Very unlikely'], required: true },
       { id: id(), type: 'single_select', text: 'Which brand do you think this ad is for?', options: ['Brand A', 'Brand B', 'Brand C', 'Don\'t know'], required: true, aiSuggestion: 'Unbranded first exposure measures spontaneous brand attribution.' },
       { id: id(), type: 'open_text', text: 'What, if anything, would you change about this ad?', required: false },
-    ],
-    brand_tracking: [
-      { id: id(), type: 'multi_select', text: 'Which of the following brands are you aware of?', options: ['Brand A', 'Brand B', 'Brand C', 'Brand D', 'None of these'], required: true, aiSuggestion: 'Prompted awareness — list main competitors.' },
-      { id: id(), type: 'single_select', text: 'Which brand would you consider purchasing next?', options: ['Brand A', 'Brand B', 'Brand C', 'Brand D', 'None'], required: true },
-      { id: id(), type: 'likert', text: 'How favourably do you view Brand A?', required: true, scale: { min: 1, max: 5, minLabel: 'Very unfavourably', maxLabel: 'Very favourably' } },
-      { id: id(), type: 'nps', text: 'How likely are you to recommend Brand A?', required: true, scale: { min: 0, max: 10, minLabel: 'Not at all likely', maxLabel: 'Extremely likely' } },
-      { id: id(), type: 'single_select', text: 'Have you purchased from Brand A in the last 3 months?', options: ['Yes', 'No', 'Don\'t remember'], required: true },
     ],
     audience_exploration: [
       { id: id(), type: 'multi_select', text: 'Which of the following activities do you regularly engage in?', options: ['Online shopping', 'Social media', 'Streaming TV', 'Podcasts', 'Gaming', 'Fitness'], required: true },
@@ -538,78 +526,73 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
 
   // Editor phase - two-panel layout
   return (
-    <div className="h-full">
-      <ResizablePanelGroup orientation="horizontal" className="h-full">
-        {/* Left panel: question list */}
-        <ResizablePanel defaultSize={28} minSize={22} maxSize={40}>
-          <div className="h-full flex flex-col border-r">
-            <div className="px-3 py-3 border-b">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Questions ({questions.length})
-              </p>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="p-2 space-y-0.5">
-                {questions.map((q, index) => (
-                  <button
-                    key={q.id}
-                    onClick={() => onSetActiveQuestion(q.id)}
-                    className={cn(
-                      'w-full flex items-center gap-2 px-2 py-2 rounded-md text-left transition-colors text-sm',
-                      q.id === activeQuestionId
-                        ? 'bg-accent text-foreground'
-                        : 'hover:bg-accent/50 text-muted-foreground',
-                    )}
-                  >
-                    {/* Number badge */}
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-muted text-[10px] font-semibold shrink-0">
-                      {index + 1}
-                    </span>
-
-                    {/* Question text preview */}
-                    <span className="flex-1 truncate text-xs">
-                      {q.text || 'Untitled question'}
-                    </span>
-
-                    {/* Reorder arrows */}
-                    <span className="flex flex-col shrink-0">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleMoveQuestion(index, 'up') }}
-                        disabled={index === 0}
-                        className="p-0.5 hover:bg-muted rounded disabled:opacity-25"
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleMoveQuestion(index, 'down') }}
-                        disabled={index === questions.length - 1}
-                        className="p-0.5 hover:bg-muted rounded disabled:opacity-25"
-                      >
-                        <ChevronDown className="w-3 h-3" />
-                      </button>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="p-2 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full h-7 text-xs"
-                onClick={() => onAddQuestion(createEmptyQuestion())}
+    <div className="h-full flex">
+      {/* Left panel: question list — fixed width */}
+      <div className="w-[240px] shrink-0 h-full flex flex-col border-r">
+        <div className="px-3 py-3 border-b">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Questions ({questions.length})
+          </p>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 space-y-0.5">
+            {questions.map((q, index) => (
+              <button
+                key={q.id}
+                onClick={() => onSetActiveQuestion(q.id)}
+                className={cn(
+                  'w-full flex items-center gap-2 px-2 py-2 rounded-md text-left transition-colors text-sm',
+                  q.id === activeQuestionId
+                    ? 'bg-accent text-foreground'
+                    : 'hover:bg-accent/50 text-muted-foreground',
+                )}
               >
-                <Plus className="w-3 h-3 mr-1" />
-                Add Question
-              </Button>
-            </div>
+                {/* Number badge */}
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-muted text-[10px] font-semibold shrink-0">
+                  {index + 1}
+                </span>
+
+                {/* Question text preview */}
+                <span className="flex-1 truncate text-xs">
+                  {q.text || 'Untitled question'}
+                </span>
+
+                {/* Reorder arrows */}
+                <span className="flex flex-col shrink-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleMoveQuestion(index, 'up') }}
+                    disabled={index === 0}
+                    className="p-0.5 hover:bg-muted rounded disabled:opacity-25"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleMoveQuestion(index, 'down') }}
+                    disabled={index === questions.length - 1}
+                    className="p-0.5 hover:bg-muted rounded disabled:opacity-25"
+                  >
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </span>
+              </button>
+            ))}
           </div>
-        </ResizablePanel>
+        </ScrollArea>
+        <div className="p-2 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-xs"
+            onClick={() => onAddQuestion(createEmptyQuestion())}
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Add Question
+          </Button>
+        </div>
+      </div>
 
-        <ResizableHandle withHandle />
-
-        {/* Right panel: question editor */}
-        <ResizablePanel defaultSize={70}>
+      {/* Right panel: question editor */}
+      <div className="flex-1 h-full overflow-hidden">
           <ScrollArea className="h-full">
             {activeQuestion ? (
               <QuestionEditor
@@ -640,8 +623,7 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
               </div>
             )}
           </ScrollArea>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      </div>
     </div>
   )
 }

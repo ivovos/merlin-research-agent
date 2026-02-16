@@ -4,7 +4,6 @@ import {
   Lightbulb,
   MessageCircle,
   Image,
-  TrendingUp,
   Users,
   Check,
 } from 'lucide-react'
@@ -19,7 +18,6 @@ const ICON_MAP: Record<string, ElementType> = {
   Lightbulb,
   MessageCircle,
   Image,
-  TrendingUp,
   Users,
 }
 
@@ -41,7 +39,7 @@ export const TypeStep: React.FC<TypeStepProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {SURVEY_TYPE_CONFIGS.map((config) => {
           const Icon = ICON_MAP[config.icon] || ClipboardList
           const isSelected = selectedType === config.key

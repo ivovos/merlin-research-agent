@@ -4,7 +4,6 @@ export const candyCrushProject: SurveyProject = {
   id: 'proj_candycrush_ip',
   name: 'Candy Crush Saga — IP Partnership Mapping',
   brand: 'King / Activision Blizzard',
-  icon: '🍬',
   surveyType: 'audience_exploration',
   description: 'Evaluate which gaming IPs would be the best fit for Candy Crush Saga partnership events — to heighten engagement with current players, re-engage lapsed players, and recruit new players.',
   status: 'completed',

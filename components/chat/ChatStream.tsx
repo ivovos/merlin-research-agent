@@ -46,7 +46,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
     <div className={`flex-1 flex flex-col h-full bg-background relative overflow-hidden ${className ?? ''}`}>
       {/* Scrollable message area */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="py-6 space-y-6 px-[100px]">
+        <div className="py-6 space-y-6 max-w-3xl mx-auto px-6">
           {/* Messages */}
           <div className="space-y-6">
             {messages.map(msg => {
@@ -93,8 +93,8 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
       </div>
 
       {/* Floating input bar */}
-      <div className="absolute bottom-0 left-0 right-0 py-6 px-[100px] z-10 pointer-events-none">
-        <div className="pointer-events-auto">
+      <div className="absolute bottom-0 left-0 right-0 py-6 z-10 pointer-events-none">
+        <div className="max-w-3xl mx-auto px-6 pointer-events-auto">
           <ChatInputBar
             onSend={onSendMessage}
             onAddStudy={onAddStudy}

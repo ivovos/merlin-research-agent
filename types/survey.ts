@@ -7,7 +7,6 @@ export type SurveyType =
   | 'concept'
   | 'message'
   | 'creative'
-  | 'brand_tracking'
   | 'audience_exploration'
 
 export type SurveyStatus = 'draft' | 'active' | 'completed'
@@ -136,10 +135,9 @@ export interface SurveyTypeConfig {
 }
 
 export const SURVEY_TYPE_CONFIGS: SurveyTypeConfig[] = [
-  { key: 'simple', label: 'Simple Survey', description: 'Quick poll or feedback form', needsStimulus: false, icon: 'ClipboardList' },
-  { key: 'concept', label: 'Concept Testing', description: 'Test product concepts or propositions', needsStimulus: true, icon: 'Lightbulb' },
-  { key: 'message', label: 'Message Testing', description: 'Test messaging and copy', needsStimulus: true, icon: 'MessageCircle' },
-  { key: 'creative', label: 'Creative Testing', description: 'Test ads, designs, and creative assets', needsStimulus: true, icon: 'Image' },
-  { key: 'brand_tracking', label: 'Brand Tracking', description: 'Monitor brand health metrics over time', needsStimulus: false, icon: 'TrendingUp' },
+  { key: 'simple', label: 'Quick Poll', description: 'Fast feedback on a single topic or question', needsStimulus: false, icon: 'ClipboardList' },
   { key: 'audience_exploration', label: 'Audience Exploration', description: 'Deep-dive into audience attitudes and behaviours', needsStimulus: false, icon: 'Users' },
+  { key: 'concept', label: 'Proposition Testing', description: 'Test product concepts, ideas, or propositions', needsStimulus: true, icon: 'Lightbulb' },
+  { key: 'message', label: 'Message Testing', description: 'Test messaging, claims, and copy', needsStimulus: true, icon: 'MessageCircle' },
+  { key: 'creative', label: 'Creative Testing', description: 'Test ads, designs, and creative assets', needsStimulus: true, icon: 'Image' },
 ]

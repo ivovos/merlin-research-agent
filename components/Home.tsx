@@ -39,8 +39,8 @@ export const Home: React.FC<HomeProps> = ({
 }) => {
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Hero section with prompt */}
-      <div className="flex flex-col items-center pt-16 pb-10 px-6">
+      {/* Hero section with prompt — centered vertically */}
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-6">
         <h1 className="text-3xl font-display font-bold tracking-tight text-center">
           Electric Twin
         </h1>
@@ -61,11 +61,8 @@ export const Home: React.FC<HomeProps> = ({
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t mx-6" />
-
       {/* Project grid */}
-      <div className="px-6 pt-6 pb-8">
+      <div className="px-6 pt-4 pb-8">
         <div className="flex items-baseline justify-between mb-4">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Your Projects
@@ -122,9 +119,6 @@ function HomeProjectCard({
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          <span className="text-2xl leading-none flex-shrink-0">
-            {project.icon ?? '📊'}
-          </span>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold leading-tight line-clamp-2">
               {project.name}

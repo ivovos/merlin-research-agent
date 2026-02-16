@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -6,10 +6,12 @@ import { useSurveyBuilder } from '@/hooks/useSurveyBuilder'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
 import { BuilderSidebar } from './BuilderSidebar'
 import { BuilderActionBar } from './BuilderActionBar'
+import { ProcessingOverlay } from './ProcessingOverlay'
 import { TypeStep } from './steps/TypeStep'
 import { AudienceStep } from './steps/AudienceStep'
 import { StimulusStep } from './steps/StimulusStep'
 import { QuestionsStep } from './steps/QuestionsStep'
+import { ReviewStep } from './steps/ReviewStep'
 
 interface SurveyBuilderProps {
   onClose: () => void
@@ -33,16 +35,30 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     reset,
   } = useSurveyBuilder()
 
+  const [isProcessing, setIsProcessing] = useState(false)
+  // Capture state at launch time so it persists through processing
+  const [launchState, setLaunchState] = useState<BuilderState | null>(null)
+
   const handleClose = useCallback(() => {
     reset()
     onClose()
   }, [reset, onClose])
 
   const handleLaunch = useCallback(() => {
-    onLaunch?.(state)
+    // Capture state and start processing animation
+    setLaunchState(state)
+    setIsProcessing(true)
+  }, [state])
+
+  const handleProcessingComplete = useCallback(() => {
+    if (launchState) {
+      onLaunch?.(launchState)
+    }
+    setIsProcessing(false)
+    setLaunchState(null)
     reset()
     onClose()
-  }, [state, reset, onLaunch, onClose])
+  }, [launchState, onLaunch, reset, onClose])
 
   const handleStepClick = useCallback((index: number) => {
     dispatch({ type: 'GO_TO_STEP', payload: index })
@@ -66,6 +82,8 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
             selectedAudiences={state.selectedAudiences}
             onSetMode={(mode) => dispatch({ type: 'SET_AUDIENCE_MODE', payload: mode })}
             onToggleAudience={(id) => dispatch({ type: 'TOGGLE_AUDIENCE', payload: id })}
+            onToggleSegment={(id) => dispatch({ type: 'TOGGLE_SEGMENT', payload: id })}
+            onToggleAllSegments={(id) => dispatch({ type: 'TOGGLE_ALL_SEGMENTS', payload: id })}
           />
         )
       case 'stimulus':
@@ -96,9 +114,36 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
             onGenerateQuestions={(qs) => dispatch({ type: 'GENERATE_QUESTIONS', payload: qs })}
           />
         )
+      case 'review':
+        return (
+          <ReviewStep
+            surveyType={state.selectedType!}
+            selectedAudiences={state.selectedAudiences}
+            stimuli={state.stimuli}
+            questions={state.questions}
+            flowSteps={state.flowSteps}
+            onGoToStep={handleStepClick}
+          />
+        )
       default:
         return null
     }
+  }
+
+  // Processing overlay replaces the entire builder body
+  if (isProcessing) {
+    return (
+      <div className="flex-1 flex flex-col bg-background animate-in fade-in duration-200">
+        {/* Simplified header during processing */}
+        <div className="shrink-0 border-b px-6 py-3 flex items-center">
+          <h1 className="text-sm font-semibold font-display">
+            Launching survey...
+          </h1>
+        </div>
+
+        <ProcessingOverlay onComplete={handleProcessingComplete} />
+      </div>
+    )
   }
 
   return (

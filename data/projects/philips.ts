@@ -4,7 +4,6 @@ export const philipsProject: SurveyProject = {
   id: 'proj_philips_painrelief',
   name: 'Philips Pain Relief Device — Concept Test',
   brand: 'Philips',
-  icon: '💊',
   surveyType: 'concept',
   description: 'Evaluate consumer response to a new pain relief device concept. Measure relevance, distinctiveness, advantages, brand fit, purchase intent, and value perception.',
   status: 'completed',

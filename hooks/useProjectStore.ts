@@ -22,11 +22,10 @@ function generateStudyName(study: Partial<Survey>): string {
   const parts: string[] = []
   if (study.type) {
     const labels: Record<string, string> = {
-      simple: 'Survey',
-      concept: 'Concept Test',
+      simple: 'Quick Poll',
+      concept: 'Proposition Test',
       message: 'Message Test',
       creative: 'Creative Test',
-      brand_tracking: 'Brand Tracker',
       audience_exploration: 'Audience Exploration',
     }
     parts.push(labels[study.type] ?? study.type)
@@ -55,7 +54,6 @@ export function useProjectStore() {
     const newProject: ProjectState = {
       id,
       name,
-      icon: '🔬',
       messages: [],
       studies: [],
       audiences: [],
@@ -134,6 +132,12 @@ export function useProjectStore() {
     )
   }, [])
 
+  const deleteProject = useCallback((projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId))
+    // If we're deleting the active project, clear selection
+    setActiveProjectId(prev => (prev === projectId ? null : prev))
+  }, [])
+
   return {
     projects,
     activeProject,
@@ -145,6 +149,7 @@ export function useProjectStore() {
     addAttachment,
     renameProject,
     renameStudy,
+    deleteProject,
     generateStudyName,
   }
 }

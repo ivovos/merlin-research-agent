@@ -4,7 +4,6 @@ export const bpProject: SurveyProject = {
   id: 'proj_bp_360',
   name: 'BP 360 Fuels Campaign — Ad Pre-Testing',
   brand: 'BP',
-  icon: '⛽',
   surveyType: 'creative',
   description: 'Pre-test OOH advertising for BP Ultimate\'s F1 partnership campaign with Audi. Evaluate creative impact, branding, message cut-through, and persuasion across 4 variants.',
   status: 'completed',

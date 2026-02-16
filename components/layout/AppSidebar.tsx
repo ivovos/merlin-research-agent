@@ -5,9 +5,11 @@ import {
   Folder,
   LayoutDashboard,
   MessageSquare,
+  PanelLeft,
   Plus,
   Settings,
   Users,
+  X,
 } from "lucide-react"
 
 import {
@@ -53,6 +55,7 @@ interface AppSidebarProps {
   onGoHome: () => void
   onNewProject: () => void
   onAudiencesClick?: () => void
+  onDeleteProject?: (id: string) => void
 }
 
 export function AppSidebar({
@@ -65,8 +68,9 @@ export function AppSidebar({
   onGoHome,
   onNewProject,
   onAudiencesClick,
+  onDeleteProject,
 }: AppSidebarProps) {
-  const { state, setOpen } = useSidebar()
+  const { state, toggleSidebar, setOpen } = useSidebar()
   const isCollapsed = state === "collapsed"
   const [isProjectsOpen, setIsProjectsOpen] = React.useState(true)
 
@@ -86,72 +90,39 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon">
-      {/* Header with Account Switcher */}
+      {/* Header — Logo left, collapse toggle right */}
       <SidebarHeader className={cn(
         "h-14 flex-row items-center border-b",
-        isCollapsed ? "justify-center px-2" : "justify-start pl-2 pr-4"
+        isCollapsed ? "justify-center px-2" : "justify-between pl-2 pr-2"
       )}>
-        {currentAccount && onAccountChange ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-3 rounded-lg transition-colors hover:bg-sidebar-accent w-full",
-                  isCollapsed ? "justify-center p-0" : "p-1"
-                )}
-              >
-                <MonoIcon
-                  text={currentAccount.icon}
-                  src={currentAccount.logo}
-                  size="base"
-                  className="rounded-md"
-                />
-                {!isCollapsed && (
-                  <>
-                    <span className="text-sm font-semibold flex-1 text-left">
-                      {currentAccount.name}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {accounts.map((account) => (
-                <DropdownMenuItem
-                  key={account.id}
-                  onClick={() => onAccountChange(account)}
-                  className="flex items-center gap-3"
-                >
-                  <MonoIcon
-                    text={account.icon}
-                    src={account.logo}
-                    size="sm"
-                    className="rounded-md"
-                  />
-                  <span className="text-sm font-medium">{account.name}</span>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span>Account settings</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className={cn(
-            "flex items-center gap-2",
-            isCollapsed ? "justify-center pl-1 pr-1" : "pl-1"
-          )}>
-            <MonoIcon
+        {isCollapsed ? (
+          <button
+            onClick={toggleSidebar}
+            className="flex items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors p-1"
+          >
+            <img
               src="/assets/ElectricTwin-Logo-Black.png"
               alt="Electric Twin"
-              size="base"
+              className="w-6 h-6 rounded-sm"
             />
-            {!isCollapsed && (
+          </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-2.5 pl-1">
+              <img
+                src="/assets/ElectricTwin-Logo-Black.png"
+                alt="Electric Twin"
+                className="w-6 h-6 rounded-sm"
+              />
               <span className="text-sm font-semibold">Electric Twin</span>
-            )}
-          </div>
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="flex items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors p-1.5 text-muted-foreground hover:text-foreground"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
+          </>
         )}
       </SidebarHeader>
 
@@ -216,14 +187,26 @@ export function AppSidebar({
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {pinnedProjects.map((project) => (
-                          <SidebarMenuSubItem key={project.id}>
+                          <SidebarMenuSubItem key={project.id} className="group/project">
                             <SidebarMenuSubButton
                               onClick={() => onSelectProject(project.id)}
                               isActive={activeProjectId === project.id}
+                              className="pr-1"
                             >
-                              <span className="truncate">
-                                {project.icon ?? '📊'} {project.name}
+                              <span className="truncate flex-1">
+                                {project.name}
                               </span>
+                              {onDeleteProject && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDeleteProject(project.id)
+                                  }}
+                                  className="opacity-0 group-hover/project:opacity-100 ml-auto flex-shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -253,7 +236,7 @@ export function AppSidebar({
                 </SidebarMenuItem>
               ) : (
                 recentProjects.map((project) => (
-                  <SidebarMenuItem key={project.id}>
+                  <SidebarMenuItem key={project.id} className="group/recent">
                     <SidebarMenuButton
                       onClick={() => onSelectProject(project.id)}
                       isActive={activeProjectId === project.id}
@@ -261,8 +244,19 @@ export function AppSidebar({
                       className="pl-2 pr-1"
                     >
                       <span className="truncate flex-1">
-                        {project.icon ?? '📊'} {project.name}
+                        {project.name}
                       </span>
+                      {onDeleteProject && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteProject(project.id)
+                          }}
+                          className="opacity-0 group-hover/recent:opacity-100 ml-auto flex-shrink-0 rounded-sm p-0.5 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))
@@ -272,8 +266,56 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
+      {/* Footer — Account switcher + Settings */}
       <SidebarFooter className="border-t">
         <SidebarMenu>
+          {/* Account switcher */}
+          {currentAccount && onAccountChange ? (
+            <SidebarMenuItem>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton
+                    tooltip={currentAccount.name}
+                    className="w-full"
+                  >
+                    <MonoIcon
+                      text={currentAccount.icon}
+                      src={currentAccount.logo}
+                      size="sm"
+                      className="rounded-md"
+                    />
+                    <span className="flex-1 text-left truncate">
+                      {currentAccount.name}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="start" className="w-56">
+                  {accounts.map((account) => (
+                    <DropdownMenuItem
+                      key={account.id}
+                      onClick={() => onAccountChange(account)}
+                      className="flex items-center gap-3"
+                    >
+                      <MonoIcon
+                        text={account.icon}
+                        src={account.logo}
+                        size="sm"
+                        className="rounded-md"
+                      />
+                      <span className="text-sm font-medium">{account.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuItem className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Account settings</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
+          ) : null}
+
+          {/* Settings */}
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings">
               <Settings className="h-4 w-4" />

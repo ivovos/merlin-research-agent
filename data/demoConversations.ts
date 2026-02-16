@@ -24,7 +24,6 @@ function projectFromSurveyProject(sp: SurveyProject, messages: ChatMessage[]): P
     id: sp.id,
     name: sp.name,
     brand: sp.brand,
-    icon: sp.icon,
     surveyType: sp.surveyType,
     description: sp.description,
     messages,

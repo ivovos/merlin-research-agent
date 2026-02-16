@@ -9,8 +9,6 @@ import { selectResearchTool, executeSelectedTool } from '@/services'
 import { createPlanningSteps, createExecutionSteps } from '@/constants/processSteps'
 import { TIMING } from '@/constants/timing'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
 
 interface ProjectChatProps {
   project: ProjectState
@@ -271,11 +269,9 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   )
 
   return (
-    <>
-      {/* Header */}
-      <header className="flex items-center gap-3 h-14 px-4 border-b bg-background flex-shrink-0">
-        <SidebarTrigger />
-        <Separator orientation="vertical" className="h-5" />
+    <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+      {/* Header — full width */}
+      <header className="flex items-center gap-3 h-14 px-6 border-b bg-background flex-shrink-0 w-full">
         <h1 className="text-sm font-semibold truncate">{project.name}</h1>
       </header>
 
@@ -297,6 +293,6 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           />
         </div>
       )}
-    </>
+    </div>
   )
 }

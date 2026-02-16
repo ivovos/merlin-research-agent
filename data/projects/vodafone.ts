@@ -4,7 +4,6 @@ export const vodafoneProject: SurveyProject = {
   id: 'proj_vodafone_propositions',
   name: 'Vodafone Broadband Propositions',
   brand: 'Vodafone',
-  icon: '📡',
   surveyType: 'concept',
   description: 'Identify which of 10 broadband service propositions would most likely drive customer consideration and switching intent to Vodafone.',
   status: 'completed',

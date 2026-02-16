@@ -64,8 +64,35 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         className,
       )}
     >
+      {/* Text input + send */}
+      <div className="flex items-end gap-2 px-3 pt-2.5 pb-1">
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={e => {
+            setText(e.target.value)
+            handleInput()
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          rows={1}
+          className={cn(
+            'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed',
+            isHome ? 'min-h-[40px] py-2' : 'min-h-[32px] py-1',
+          )}
+        />
+        <Button
+          size="icon"
+          className="h-8 w-8 rounded-full flex-shrink-0"
+          onClick={handleSend}
+          disabled={!text.trim()}
+        >
+          <ArrowUp className="w-4 h-4" />
+        </Button>
+      </div>
+
       {/* Action buttons row */}
-      <div className="flex items-center gap-1 px-3 pt-2.5 pb-0">
+      <div className="flex items-center gap-1 px-3 pb-2.5 pt-0">
         {onAttach && (
           <Button
             variant="ghost"
@@ -98,33 +125,6 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             <span>Add Study</span>
           </Button>
         )}
-      </div>
-
-      {/* Text input + send */}
-      <div className="flex items-end gap-2 px-3 pb-2.5 pt-1">
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={e => {
-            setText(e.target.value)
-            handleInput()
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          rows={1}
-          className={cn(
-            'flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed',
-            isHome ? 'min-h-[40px] py-2' : 'min-h-[32px] py-1',
-          )}
-        />
-        <Button
-          size="icon"
-          className="h-8 w-8 rounded-full flex-shrink-0"
-          onClick={handleSend}
-          disabled={!text.trim()}
-        >
-          <ArrowUp className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   )

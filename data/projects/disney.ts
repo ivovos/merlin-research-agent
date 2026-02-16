@@ -4,7 +4,6 @@ export const disneyProject: SurveyProject = {
   id: 'proj_disney_keyart',
   name: 'Disney+ Alice & Steve — Key Art Testing',
   brand: 'Disney+',
-  icon: '🎬',
   surveyType: 'creative',
   description: 'Evaluate 3 key art options for the Disney+ original "Alice & Steve" to determine which artwork best communicates the show\'s tone, drives viewing intent, and supports subscription consideration.',
   status: 'completed',
