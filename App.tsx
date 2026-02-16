@@ -28,6 +28,7 @@ const App: React.FC = () => {
   // ── Core state ──
   const [currentAccount, setCurrentAccount] = useState<Account>(mubiAccount)
   const [view, setView] = useState<AppView>({ screen: 'home' })
+  const [pendingQuery, setPendingQuery] = useState<string | undefined>()
 
   const store = useProjectStore()
 
@@ -42,9 +43,8 @@ const App: React.FC = () => {
   const [showBuilder, setShowBuilder] = useState(false)
   const [showQuickPoll, setShowQuickPoll] = useState(false)
 
-  // Sidebar state — collapse when builder is open
+  // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const sidebarOpenBeforeBuilder = React.useRef(true)
 
   // ── Navigation handlers ──
 
@@ -64,14 +64,9 @@ const App: React.FC = () => {
     const project = store.createProject(text, currentAccount.name)
     setView({ screen: 'project', projectId: project.id })
 
-    // If text was provided, add it as the first user message
+    // Pass the query to ProjectChat so it triggers the full simulation
     if (text?.trim()) {
-      store.addMessage(project.id, {
-        id: `msg_${Date.now()}`,
-        type: 'user',
-        text: text.trim(),
-        timestamp: Date.now(),
-      })
+      setPendingQuery(text.trim())
     }
   }, [store, currentAccount])
 
@@ -106,14 +101,11 @@ const App: React.FC = () => {
   // ── Builder handlers ──
 
   const handleOpenBuilder = useCallback(() => {
-    sidebarOpenBeforeBuilder.current = sidebarOpen
-    setSidebarOpen(false)
     setShowBuilder(true)
-  }, [sidebarOpen])
+  }, [])
 
   const handleCloseBuilder = useCallback(() => {
     setShowBuilder(false)
-    setSidebarOpen(sidebarOpenBeforeBuilder.current)
   }, [])
 
   const handleBuilderLaunch = useCallback((builderState: BuilderState) => {
@@ -164,14 +156,11 @@ const App: React.FC = () => {
   // ── Quick Poll handlers ──
 
   const handleOpenQuickPoll = useCallback(() => {
-    sidebarOpenBeforeBuilder.current = sidebarOpen
-    setSidebarOpen(false)
     setShowQuickPoll(true)
-  }, [sidebarOpen])
+  }, [])
 
   const handleCloseQuickPoll = useCallback(() => {
     setShowQuickPoll(false)
-    setSidebarOpen(sidebarOpenBeforeBuilder.current)
   }, [])
 
   const handleQuickPollLaunch = useCallback((survey: Survey) => {
@@ -195,9 +184,8 @@ const App: React.FC = () => {
     })
 
     setShowQuickPoll(false)
-    setSidebarOpen(sidebarOpenBeforeBuilder.current)
     setView({ screen: 'project', projectId: project.id })
-  }, [store, currentAccount, sidebarOpen])
+  }, [store, currentAccount])
 
   // ── Render ──
 
@@ -249,6 +237,8 @@ const App: React.FC = () => {
             onAddMessage={(msg) => store.addMessage(store.activeProject!.id, msg)}
             onAddStudy={(study) => store.addStudy(store.activeProject!.id, study)}
             onRenameProject={(name) => store.renameProject(store.activeProject!.id, name)}
+            pendingQuery={pendingQuery}
+            onPendingQueryConsumed={() => setPendingQuery(undefined)}
           />
         ) : (
           /* Home */

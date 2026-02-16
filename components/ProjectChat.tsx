@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import type { ProjectState, ChatMessage, Finding, Survey, ProcessStep } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import type { PickerMethod } from '@/components/chat/MethodsPicker'
@@ -20,6 +20,8 @@ interface ProjectChatProps {
   onAddMessage: (msg: ChatMessage) => void
   onAddStudy: (study: Survey) => void
   onRenameProject?: (name: string) => void
+  pendingQuery?: string
+  onPendingQueryConsumed?: () => void
 }
 
 export const ProjectChat: React.FC<ProjectChatProps> = ({
@@ -27,6 +29,8 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   onAddMessage,
   onAddStudy,
   onRenameProject,
+  pendingQuery,
+  onPendingQueryConsumed,
 }) => {
   const [showBuilder, setShowBuilder] = useState(false)
   const [showQuickPoll, setShowQuickPoll] = useState(false)
@@ -218,6 +222,14 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     },
     [onAddMessage, onAddStudy, onRenameProject, project.name],
   )
+
+  // ── Auto-trigger simulation for initial query from Home screen ──
+  useEffect(() => {
+    if (pendingQuery && !simulatingRef.current) {
+      onPendingQueryConsumed?.()
+      startSimulation(pendingQuery)
+    }
+  }, [pendingQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Builder launch → create study + findings ──
   const handleBuilderLaunch = useCallback(
