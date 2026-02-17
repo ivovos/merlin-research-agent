@@ -127,19 +127,24 @@ function buildDisneyConversation(): ChatMessage[] {
   return [
     {
       id: msgId('dis'), type: 'user', timestamp: ts(21),
-      text: "Disney+ needs to test key art options for 'Alice & Steve', a new comedy series. Three different visual approaches — character focus, ensemble, and stylised.",
+      text: "Disney+ needs to test key art for 'Alice & Steve' — from the creators of Baby Reindeer. Three poster routes: two split-screen bed concepts (leads only vs full ensemble) and a dinner table scene. Need to know which best communicates the show's tone and drives viewing intent.",
+      attachments: [
+        { id: 'att_dis_v1', name: 'Option 1 — Split-Screen Leads.png', type: 'image', url: '/assets/stimulus/disney/v1_character.png', thumbnailUrl: '/assets/stimulus/disney/v1_character.png' },
+        { id: 'att_dis_v2', name: 'Option 2 — Ensemble Split-Screen.png', type: 'image', url: '/assets/stimulus/disney/v2_ensemble.png', thumbnailUrl: '/assets/stimulus/disney/v2_ensemble.png' },
+        { id: 'att_dis_v3', name: 'Option 3 — Dinner Table.png', type: 'image', url: '/assets/stimulus/disney/v3_stylised.png', thumbnailUrl: '/assets/stimulus/disney/v3_stylised.png' },
+      ],
     },
     {
       id: msgId('dis'), type: 'ai', timestamp: ts(21, 0.1),
-      text: "I'll set up a monadic key art test for the three versions. We'll measure likeability, intent to view, talent recognition, perceived plot, service attribution, and collect attribute associations for each.\n\nThis will help identify which artwork best communicates the show's tone and drives tune-in intent.",
+      text: "I'll set up a monadic key art test across the three options. Each will be shown to n=150 UK adults (must subscribe to at least one streaming service). We'll measure likeability, viewing intent, talent recognition, genre perception, attribute associations, service attribution, and post-synopsis preference.\n\nFieldwork: 5 days via Attest. Results benchmarked against UK scripted average.",
     },
     {
       id: msgId('dis'), type: 'user', timestamp: ts(20, 3),
-      text: 'Perfect. Run it with a broad streaming audience.',
+      text: 'Perfect. Run it nationally — nat rep for age, gender and region.',
     },
     {
       id: msgId('dis'), type: 'system', timestamp: ts(20, 3.1),
-      text: 'Study launched: Key Art Test — 3 versions, 14 metrics, monadic design',
+      text: 'Study launched: Key Art Test — 3 versions, n=150 per asset, monadic design, UK nat rep',
     },
     {
       id: msgId('dis'), type: 'findings', timestamp: ts(20, 3.2),

@@ -81,6 +81,21 @@ export function useProjectStore() {
     )
   }, [])
 
+  const updateMessage = useCallback((projectId: string, messageId: string, updates: Partial<ChatMessage>) => {
+    setProjects(prev =>
+      prev.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              messages: p.messages.map(m =>
+                m.id === messageId ? { ...m, ...updates } as ChatMessage : m,
+              ),
+            }
+          : p,
+      ),
+    )
+  }, [])
+
   const addStudy = useCallback((projectId: string, study: Survey) => {
     setProjects(prev =>
       prev.map(p =>
@@ -146,6 +161,7 @@ export function useProjectStore() {
     setActiveProjectId,
     createProject,
     addMessage,
+    updateMessage,
     addStudy,
     addAttachment,
     renameProject,

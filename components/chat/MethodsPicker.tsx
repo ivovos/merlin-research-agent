@@ -249,7 +249,7 @@ export const PICKER_METHODS: PickerMethod[] = [
 ]
 
 /* ── Icon resolver ── */
-const ICON_MAP: Record<string, LucideIcon> = {
+export const ICON_MAP: Record<string, LucideIcon> = {
   'clipboard-list': ClipboardList,
   'users': Users,
   'message-square': MessageSquare,
@@ -275,6 +275,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   'gauge': Gauge,
   'package': Package,
   'search': Search,
+}
+
+/** Resolve a method icon string to its Lucide component */
+export function resolveMethodIcon(iconName: string): LucideIcon {
+  return ICON_MAP[iconName] || FlaskConical
 }
 
 /* ── Component ── */

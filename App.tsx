@@ -235,6 +235,7 @@ const App: React.FC = () => {
           <ProjectChat
             project={store.activeProject}
             onAddMessage={(msg) => store.addMessage(store.activeProject!.id, msg)}
+            onUpdateMessage={(id, updates) => store.updateMessage(store.activeProject!.id, id, updates)}
             onAddStudy={(study) => store.addStudy(store.activeProject!.id, study)}
             onRenameProject={(name) => store.renameProject(store.activeProject!.id, name)}
             pendingQuery={pendingQuery}

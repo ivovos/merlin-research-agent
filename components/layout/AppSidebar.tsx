@@ -153,7 +153,7 @@ export function AppSidebar({
         {/* Projects — flat list under header */}
         {sortedProjects.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            <SidebarGroupLabel>Recents</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {sortedProjects.map((project) => (

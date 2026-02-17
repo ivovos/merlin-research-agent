@@ -1,5 +1,5 @@
 import { useReducer, useMemo, useCallback } from 'react'
-import type { SurveyType, Stimulus, SurveyQuestion } from '@/types'
+import type { SurveyType, Stimulus, SurveyQuestion, Survey } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 
 // ── Step IDs ──
@@ -201,6 +201,7 @@ export type BuilderAction =
   | { type: 'GO_BACK' }
   | { type: 'GO_TO_STEP'; payload: number }
   | { type: 'RESET' }
+  | { type: 'INIT_FROM_STUDY'; payload: Survey }
 
 // ── Initial state ──
 
@@ -212,7 +213,7 @@ const initialState: BuilderState = {
   audienceMode: null,
   selectedAudiences: [],
   stimuli: [],
-  questionSourceTab: 'templates',
+  questionSourceTab: 'import',
   editingQuestionIndex: -1,
   showQuestionErrors: false,
   selectedTemplate: null,
@@ -406,12 +407,31 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
     case 'GO_TO_STEP': {
       const targetIndex = action.payload
       if (targetIndex < 0 || targetIndex >= state.flowSteps.length) return state
-      if (targetIndex > state.currentStepIndex) return state
+      // Allow navigating to any step — needed for edit mode where all steps are pre-filled
       return { ...state, currentStepIndex: targetIndex }
     }
 
     case 'RESET':
       return initialState
+
+    case 'INIT_FROM_STUDY': {
+      const study = action.payload
+      const surveyType = study.type as SurveyType
+      const flowSteps = computeFlowSteps(surveyType)
+      const hasSegments = study.audiences.some(id => id.includes(':'))
+
+      return {
+        ...initialState,
+        surveyName: study.name,
+        selectedType: surveyType,
+        flowSteps,
+        currentStepIndex: flowSteps.length - 1, // go to review step
+        audienceMode: hasSegments ? 'multi' : 'single',
+        selectedAudiences: study.audiences,
+        stimuli: [], // stimuli IDs can't be resolved back to full objects
+        questions: study.questions,
+      }
+    }
 
     default:
       return state
@@ -420,8 +440,14 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
 // ── Hook ──
 
-export function useSurveyBuilder() {
-  const [state, dispatch] = useReducer(builderReducer, initialState)
+export function useSurveyBuilder(initialStudy?: Survey) {
+  const [state, dispatch] = useReducer(
+    builderReducer,
+    initialStudy,
+    (study) => study
+      ? builderReducer(initialState, { type: 'INIT_FROM_STUDY', payload: study })
+      : initialState,
+  )
 
   const currentStep = state.flowSteps[state.currentStepIndex]
   const stepValidity = useMemo(() => computeStepValidity(state), [state])

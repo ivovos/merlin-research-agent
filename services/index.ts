@@ -15,7 +15,8 @@ export { AGENT_SYSTEM_PROMPT, getAgentPromptWithContext } from './agentPrompt'
 
 // Export new sub-modules for direct access
 export { executeResearchTool } from './toolExecutor'
-export { createStudyPlan, getProcessStepsForTool, detectComparisonSegments } from './toolSelector'
+export { createStudyPlan, getProcessStepsForTool, detectComparisonSegments, assessComplexity, generatePlanDescription } from './toolSelector'
+export type { ComplexityAssessment } from './toolSelector'
 export {
   normalizeOptions,
   normalizeComparisonOptions,

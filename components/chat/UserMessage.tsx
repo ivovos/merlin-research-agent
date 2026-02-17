@@ -13,19 +13,25 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
         {/* Attachment previews */}
         {message.attachments && message.attachments.length > 0 && (
           <div className="flex justify-end gap-2 flex-wrap">
-            {message.attachments.map(att => (
-              <div
-                key={att.id}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 rounded-lg text-xs text-muted-foreground"
-              >
-                {att.type === 'image' ? (
-                  <ImageIcon className="w-3.5 h-3.5" />
-                ) : (
+            {message.attachments.map(att =>
+              att.type === 'image' && (att.thumbnailUrl || att.url) ? (
+                <div key={att.id} className="w-16 h-24 rounded-lg overflow-hidden bg-muted/60 flex-shrink-0">
+                  <img
+                    src={att.thumbnailUrl || att.url}
+                    alt={att.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  key={att.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 rounded-lg text-xs text-muted-foreground"
+                >
                   <FileText className="w-3.5 h-3.5" />
-                )}
-                <span className="truncate max-w-[180px]">{att.name}</span>
-              </div>
-            ))}
+                  <span className="truncate max-w-[180px]">{att.name}</span>
+                </div>
+              )
+            )}
           </div>
         )}
         {/* Message bubble */}

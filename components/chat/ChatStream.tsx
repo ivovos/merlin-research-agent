@@ -8,6 +8,7 @@ import { FindingsMessage } from './FindingsMessage'
 import { SystemMessage } from './SystemMessage'
 import { AttachmentPreview } from './AttachmentPreview'
 import { DeliverableCard } from './DeliverableCard'
+import { PlanCard } from './PlanCard'
 import { ChatInputBar } from './ChatInputBar'
 import { ProcessSteps } from '@/components/ProcessSteps'
 import { Loader2 } from 'lucide-react'
@@ -18,6 +19,8 @@ interface ChatStreamProps {
   onSelectMethod?: (method: PickerMethod) => void
   onAddAudience?: (audience: PickerAudience) => void
   onOpenPlan?: (studyId: string) => void
+  onApprovePlan?: (messageId: string) => void
+  onReviewPlan?: (messageId: string) => void
   /** Processing state — shown as inline indicator at end of stream */
   processing?: {
     steps?: ProcessStep[]
@@ -35,23 +38,36 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
   onSelectMethod,
   onAddAudience,
   onOpenPlan,
+  onApprovePlan,
+  onReviewPlan,
   processing,
   brand,
   className,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const lastMsgRef = useRef<HTMLDivElement>(null)
   const isInitialRef = useRef(true)
 
-  // Scroll to bottom: instant on first render, smooth on subsequent updates
+  // If the last message is findings, scroll to its top; otherwise scroll to bottom
+  const lastMessage = messages[messages.length - 1]
+  const scrollToStart = lastMessage?.type === 'findings'
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: isInitialRef.current ? 'auto' : 'smooth',
-      })
+      if (scrollToStart && lastMsgRef.current) {
+        lastMsgRef.current.scrollIntoView({
+          behavior: isInitialRef.current ? 'auto' : 'smooth',
+          block: 'start',
+        })
+      } else {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: isInitialRef.current ? 'auto' : 'smooth',
+        })
+      }
       isInitialRef.current = false
     }, 100)
     return () => clearTimeout(timeoutId)
-  }, [messages, processing])
+  }, [messages, processing, scrollToStart])
 
   return (
     <div className={`flex-1 flex flex-col h-full bg-background relative overflow-hidden ${className ?? ''}`}>
@@ -60,23 +76,46 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
         <div className="py-6 space-y-6 max-w-3xl mx-auto px-6">
           {/* Messages */}
           <div className="space-y-6">
-            {messages.map(msg => {
+            {messages.map((msg, idx) => {
+              const isLast = idx === messages.length - 1
+              let node: React.ReactNode = null
+
               switch (msg.type) {
                 case 'user':
-                  return <UserMessage key={msg.id} message={msg} />
+                  node = <UserMessage key={msg.id} message={msg} />
+                  break
                 case 'ai':
-                  return <AIMessage key={msg.id} message={msg} />
+                  node = <AIMessage key={msg.id} message={msg} />
+                  break
                 case 'findings':
-                  return <FindingsMessage key={msg.id} message={msg} onOpenPlan={onOpenPlan} />
+                  node = <FindingsMessage key={msg.id} message={msg} onOpenPlan={onOpenPlan} />
+                  break
                 case 'system':
-                  return <SystemMessage key={msg.id} message={msg} />
+                  node = <SystemMessage key={msg.id} message={msg} />
+                  break
                 case 'attachment':
-                  return <AttachmentPreview key={msg.id} attachment={msg.attachment} />
+                  node = <AttachmentPreview key={msg.id} attachment={msg.attachment} />
+                  break
                 case 'deliverable':
-                  return <DeliverableCard key={msg.id} message={msg} />
-                default:
-                  return null
+                  node = <DeliverableCard key={msg.id} message={msg} />
+                  break
+                case 'plan':
+                  node = (
+                    <PlanCard
+                      key={msg.id}
+                      message={msg}
+                      onApprove={onApprovePlan}
+                      onReviewPlan={onReviewPlan}
+                    />
+                  )
+                  break
               }
+
+              // Wrap the last findings message with a ref so we can scroll to its top
+              if (isLast && msg.type === 'findings') {
+                return <div key={msg.id} ref={lastMsgRef}>{node}</div>
+              }
+              return node
             })}
 
             {/* Processing indicator */}

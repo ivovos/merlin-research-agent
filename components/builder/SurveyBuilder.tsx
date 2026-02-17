@@ -15,11 +15,13 @@ import { ReviewStep } from './steps/ReviewStep'
 interface SurveyBuilderProps {
   onClose: () => void
   onLaunch?: (state: BuilderState) => void
+  initialStudy?: import('@/types').Survey
 }
 
 export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   onClose,
   onLaunch,
+  initialStudy,
 }) => {
   const {
     state,
@@ -32,7 +34,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     goNext,
     goBack,
     reset,
-  } = useSurveyBuilder()
+  } = useSurveyBuilder(initialStudy)
 
   const [isProcessing, setIsProcessing] = useState(false)
   // Capture state at launch time so it persists through processing
@@ -139,7 +141,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   // Processing overlay replaces the entire builder body
   if (isProcessing) {
     return (
-      <div className="flex-1 flex flex-col bg-background animate-in fade-in duration-200">
+      <div className="flex-1 flex flex-col bg-background animate-in slide-in-from-bottom-2 fade-in duration-300">
         {/* Simplified header during processing */}
         <div className="shrink-0 border-b px-6 py-3 flex items-center">
           <h1 className="text-sm font-semibold font-display">
@@ -153,7 +155,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-background animate-in fade-in duration-200">
+    <div className="flex-1 flex flex-col bg-background animate-in slide-in-from-bottom-2 fade-in duration-300">
       {/* Header */}
       <div className="shrink-0 border-b px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">

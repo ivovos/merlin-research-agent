@@ -72,6 +72,7 @@ export type {
   ChatMessageAttachment,
   ChatMessageDeliverable,
   ChatMessageSystem,
+  ChatMessagePlan,
   AppView,
   ProjectState,
   Study,

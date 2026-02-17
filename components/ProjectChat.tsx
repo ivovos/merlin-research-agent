@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import type { ProjectState, ChatMessage, Finding, Survey, ProcessStep } from '@/types'
+import type { ProjectState, ChatMessage, ChatMessagePlan, Finding, Survey, ProcessStep } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import type { PickerMethod } from '@/components/chat/MethodsPicker'
 import { ChatStream } from '@/components/chat/ChatStream'
@@ -10,14 +10,16 @@ import { Button } from '@/components/ui/button'
 import { SquareArrowOutUpRight } from 'lucide-react'
 import { generateMockFindings } from '@/lib/generateMockFindings'
 import { canvasToFindings } from '@/lib/canvasToFindings'
-import { selectResearchTool, executeSelectedTool } from '@/services'
-import { createPlanningSteps, createExecutionSteps } from '@/constants/processSteps'
+import { selectResearchTool, executeSelectedTool, assessComplexity, generatePlanDescription } from '@/services'
+import type { ToolSelectionResult } from '@/services'
+import { createPlanningSteps, createPlanCreationSteps, createExecutionSteps } from '@/constants/processSteps'
 import { TIMING } from '@/constants/timing'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
 
 interface ProjectChatProps {
   project: ProjectState
   onAddMessage: (msg: ChatMessage) => void
+  onUpdateMessage?: (messageId: string, updates: Partial<ChatMessage>) => void
   onAddStudy: (study: Survey) => void
   onRenameProject?: (name: string) => void
   pendingQuery?: string
@@ -27,12 +29,14 @@ interface ProjectChatProps {
 export const ProjectChat: React.FC<ProjectChatProps> = ({
   project,
   onAddMessage,
+  onUpdateMessage,
   onAddStudy,
   onRenameProject,
   pendingQuery,
   onPendingQueryConsumed,
 }) => {
   const [showBuilder, setShowBuilder] = useState(false)
+  const [editingStudy, setEditingStudy] = useState<Survey | undefined>(undefined)
   const [showQuickPoll, setShowQuickPoll] = useState(false)
   const [processing, setProcessing] = useState<{
     steps?: ProcessStep[]
@@ -43,79 +47,30 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   // Track whether a simulation is in progress (prevent double-submit)
   const simulatingRef = useRef(false)
 
-  // ── Research simulation ──
-  const startSimulation = useCallback(
-    async (query: string) => {
-      if (simulatingRef.current) return
+  // ── Pending plan approval state ──
+  const [pendingPlan, setPendingPlan] = useState<{
+    selection: ToolSelectionResult
+    query: string
+    startTime: number
+    planMessageId: string
+  } | null>(null)
+
+  // Preview study for plan review overlay (not yet a real study)
+  const [previewStudy, setPreviewStudy] = useState<Survey | null>(null)
+
+  // ── Execution phase (shared by direct-run and post-approval) ──
+  const resumeExecution = useCallback(
+    async (selection: ToolSelectionResult, query: string, startTime: number) => {
       simulatingRef.current = true
 
-      const startTime = Date.now()
-
-      // 1) Add user message
-      const userMsg: ChatMessage = {
-        id: `msg_${Date.now()}_u`,
-        type: 'user',
-        text: query,
-        timestamp: Date.now(),
-      }
-      onAddMessage(userMsg)
-
-      // Rename project from first message if it's still "New Research Project"
-      if (project.name === 'New Research Project' && onRenameProject) {
-        const name = query.length <= 50
-          ? query
-          : query.slice(0, 50).replace(/\s+\S*$/, '') + '...'
-        onRenameProject(name)
-      }
-
-      // 2) Planning phase — show animated steps
-      setProcessing({ steps: createPlanningSteps(1) })
+      const displayTitle = selection.studyPlan.methodId === 'focus-group'
+        ? `Focus Group: ${selection.studyPlan.title}`
+        : selection.studyPlan.title
 
       try {
-        const toolResult = await selectResearchTool(query)
-
-        // Animate to step 2
-        setProcessing({ steps: createPlanningSteps(2) })
-        await new Promise(r => setTimeout(r, TIMING.PHASE_1_COMPLETE))
-
-        // Complete planning
-        setProcessing({ steps: createPlanningSteps('complete') })
-        await new Promise(r => setTimeout(r, TIMING.PHASE_2_METHOD_SELECTION))
-
-        // 3) Handle clarification
-        if (toolResult.type === 'clarification') {
-          const thinkingTime = Math.round((Date.now() - startTime) / 1000)
-          setProcessing(undefined)
-
-          const aiMsg: ChatMessage = {
-            id: `msg_${Date.now()}_ai`,
-            type: 'ai',
-            text: toolResult.clarification.missing_info,
-            thinking: `Thought for ${thinkingTime}s`,
-            timestamp: Date.now(),
-          }
-          onAddMessage(aiMsg)
-          simulatingRef.current = false
-          return
-        }
-
-        // 4) Tool selected — show study design
-        const { selection } = toolResult
-        const displayTitle = selection.studyPlan.methodId === 'focus-group'
-          ? `Focus Group: ${selection.studyPlan.title}`
-          : selection.studyPlan.title
-
-        const designMsg: ChatMessage = {
-          id: `msg_${Date.now()}_design`,
-          type: 'ai',
-          text: `I've created **${displayTitle}** to investigate this. Now conducting the research...`,
-          timestamp: Date.now(),
-        }
-        onAddMessage(designMsg)
-
         await new Promise(r => setTimeout(r, TIMING.PHASE_3_EXECUTION_START))
 
-        // 5) Execution phase — animate steps while API runs
+        // Execution phase — animate steps while API runs
         const executionSteps = createExecutionSteps(selection.processSteps, 0)
         setProcessing({ steps: executionSteps })
 
@@ -144,7 +99,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         await new Promise(r => setTimeout(r, TIMING.PHASE_4_RESULTS))
         setProcessing(undefined)
 
-        // 6) Results
+        // Results
         const canvas = agentResult.canvases?.[0]
         if (!canvas) {
           const errorMsg: ChatMessage = {
@@ -206,7 +161,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         }
         onAddMessage(findingsMsg)
       } catch (err) {
-        console.error('Research simulation failed:', err)
+        console.error('Research execution failed:', err)
         setProcessing(undefined)
 
         const errorMsg: ChatMessage = {
@@ -220,7 +175,228 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         simulatingRef.current = false
       }
     },
-    [onAddMessage, onAddStudy, onRenameProject, project.name],
+    [onAddMessage, onAddStudy],
+  )
+
+  // ── Research simulation ──
+  const startSimulation = useCallback(
+    async (query: string) => {
+      if (simulatingRef.current) return
+      simulatingRef.current = true
+
+      // If there's a pending plan, clear it (user typed a new query)
+      if (pendingPlan) {
+        setPendingPlan(null)
+      }
+
+      const startTime = Date.now()
+
+      // 1) Add user message
+      const userMsg: ChatMessage = {
+        id: `msg_${Date.now()}_u`,
+        type: 'user',
+        text: query,
+        timestamp: Date.now(),
+      }
+      onAddMessage(userMsg)
+
+      // Rename project from first message if it's still "New Research Project"
+      if (project.name === 'New Research Project' && onRenameProject) {
+        const name = query.length <= 50
+          ? query
+          : query.slice(0, 50).replace(/\s+\S*$/, '') + '...'
+        onRenameProject(name)
+      }
+
+      // 2) Planning phase — show animated steps
+      setProcessing({ steps: createPlanningSteps(1) })
+
+      try {
+        const toolResult = await selectResearchTool(query)
+
+        // Animate to step 2
+        setProcessing({ steps: createPlanningSteps(2) })
+        await new Promise(r => setTimeout(r, TIMING.PHASE_1_COMPLETE))
+
+        // Complete planning
+        setProcessing({ steps: createPlanningSteps('complete') })
+        await new Promise(r => setTimeout(r, TIMING.PHASE_2_METHOD_SELECTION))
+
+        // 3) Handle clarification
+        if (toolResult.type === 'clarification') {
+          const thinkingTime = Math.round((Date.now() - startTime) / 1000)
+          setProcessing(undefined)
+
+          const aiMsg: ChatMessage = {
+            id: `msg_${Date.now()}_ai`,
+            type: 'ai',
+            text: toolResult.clarification.missing_info,
+            thinking: `Thought for ${thinkingTime}s`,
+            timestamp: Date.now(),
+          }
+          onAddMessage(aiMsg)
+          simulatingRef.current = false
+          return
+        }
+
+        // 4) Tool selected — assess complexity
+        const { selection } = toolResult
+        const complexity = assessComplexity(query, selection)
+
+        if (complexity.isComplex) {
+          // ── Complex path: show plan-creation steps, then plan card ──
+
+          // Animate plan creation steps
+          setProcessing({ steps: createPlanCreationSteps(2) })
+          await new Promise(r => setTimeout(r, TIMING.PHASE_PLAN_EVAL))
+
+          setProcessing({ steps: createPlanCreationSteps(3) })
+          await new Promise(r => setTimeout(r, TIMING.PHASE_PLAN_DESIGN))
+
+          setProcessing({ steps: createPlanCreationSteps('complete') })
+          await new Promise(r => setTimeout(r, TIMING.PHASE_PLAN_SHOW))
+
+          setProcessing(undefined)
+
+          // Add AI message explaining the plan
+          const aiMsg: ChatMessage = {
+            id: `msg_${Date.now()}_plan_intro`,
+            type: 'ai',
+            text: 'This is a complex study. I\'ve created a research plan for your review before running it.',
+            timestamp: Date.now(),
+          }
+          onAddMessage(aiMsg)
+
+          // Generate plan description
+          const planDesc = generatePlanDescription(selection, complexity)
+
+          // Add plan message
+          const planMessageId = `msg_${Date.now()}_plan`
+          const planMsg: ChatMessagePlan = {
+            id: planMessageId,
+            type: 'plan',
+            planTitle: planDesc.title,
+            planDescription: planDesc.description,
+            bulletPoints: planDesc.bulletPoints,
+            expectedRuntime: complexity.estimatedRuntime,
+            studyPlan: selection.studyPlan,
+            toolSelection: {
+              toolName: selection.toolName,
+              toolInput: selection.toolInput,
+              processSteps: selection.processSteps,
+            },
+            status: 'pending',
+            timestamp: Date.now(),
+          }
+          onAddMessage(planMsg)
+
+          // Store pending plan for approval
+          setPendingPlan({
+            selection,
+            query,
+            startTime,
+            planMessageId,
+          })
+
+          // Re-enable input — user can now approve, review, or send a new message
+          simulatingRef.current = false
+          return
+        }
+
+        // ── Simple path: proceed with execution directly ──
+        const displayTitle = selection.studyPlan.methodId === 'focus-group'
+          ? `Focus Group: ${selection.studyPlan.title}`
+          : selection.studyPlan.title
+
+        const designMsg: ChatMessage = {
+          id: `msg_${Date.now()}_design`,
+          type: 'ai',
+          text: `I've created **${displayTitle}** to investigate this. Now conducting the research...`,
+          timestamp: Date.now(),
+        }
+        onAddMessage(designMsg)
+
+        // Hand off to shared execution flow
+        simulatingRef.current = false // resumeExecution will set it true
+        await resumeExecution(selection, query, startTime)
+      } catch (err) {
+        console.error('Research simulation failed:', err)
+        setProcessing(undefined)
+
+        const errorMsg: ChatMessage = {
+          id: `msg_${Date.now()}_err`,
+          type: 'ai',
+          text: `Something went wrong during research: ${err instanceof Error ? err.message : 'Unknown error'}. You can try again or use **Add Study** to build a survey manually.`,
+          timestamp: Date.now(),
+        }
+        onAddMessage(errorMsg)
+        simulatingRef.current = false
+      }
+    },
+    [onAddMessage, onAddStudy, onRenameProject, project.name, pendingPlan, resumeExecution],
+  )
+
+  // ── Plan approval handler ──
+  const handleApprovePlan = useCallback(
+    (messageId: string) => {
+      if (!pendingPlan) return
+
+      // Update the plan message status to 'approved'
+      onUpdateMessage?.(messageId, { status: 'approved' } as Partial<ChatMessagePlan>)
+
+      // Add execution confirmation
+      const execMsg: ChatMessage = {
+        id: `msg_${Date.now()}_exec`,
+        type: 'ai',
+        text: 'Plan approved. Running the study now...',
+        timestamp: Date.now(),
+      }
+      onAddMessage(execMsg)
+
+      // Resume execution
+      const { selection, query, startTime } = pendingPlan
+      setPendingPlan(null)
+      resumeExecution(selection, query, startTime)
+    },
+    [pendingPlan, onUpdateMessage, onAddMessage, resumeExecution],
+  )
+
+  // ── Plan review handler — opens StudyPlanOverlay ──
+  const handleReviewPlan = useCallback(
+    (_messageId: string) => {
+      if (!pendingPlan) return
+
+      const { selection } = pendingPlan
+      const plan = selection.studyPlan
+      const toolInput = selection.toolInput
+
+      // Construct a preview Survey for the overlay
+      const questions = (toolInput.questions as Array<{ question: string; options?: string[] }>) || []
+      const segments = (toolInput.segments as string[]) || []
+      const audience = (toolInput.audience as string) || 'General Population'
+
+      const preview: Survey = {
+        id: `preview_${Date.now()}`,
+        type: 'simple',
+        name: plan.title,
+        status: 'draft',
+        questions: questions.map((q, i) => ({
+          id: `q_${i}`,
+          type: 'single_select' as const,
+          text: q.question,
+          options: q.options,
+          required: true,
+        })),
+        audiences: segments.length > 0 ? segments : [audience],
+        stimuli: [],
+        sampleSize: (toolInput.sample_size as number) || 500,
+        methodology: plan.methodName,
+        createdAt: new Date().toISOString().slice(0, 10),
+      }
+
+      setPreviewStudy(preview)
+    },
+    [pendingPlan],
   )
 
   // ── Auto-trigger simulation for initial query from Home screen ──
@@ -296,85 +472,19 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     [],
   )
 
-  // Resolve the study for the plan overlay
-  const planStudy = planStudyId
-    ? project.studies?.find(s => s.id === planStudyId) ?? null
-    : null
+  // Resolve the study for the plan overlay — check preview study first
+  const planStudy = previewStudy
+    ?? (planStudyId ? project.studies?.find(s => s.id === planStudyId) ?? null : null)
 
-  // ── Study plan actions ──
-  const handleRerunStudy = useCallback(
-    (studyId: string) => {
-      const study = project.studies?.find(s => s.id === studyId)
-      if (!study) return
-
-      // Re-run overwrites existing results with new mock findings
-      const newFindings: Finding[] = generateMockFindings(study.questions, false)
-      const updatedStudy: Survey = {
-        ...study,
-        findings: newFindings,
-        updatedAt: new Date().toISOString().slice(0, 10),
-      }
-      onAddStudy(updatedStudy)
-
-      const systemMsg: ChatMessage = {
-        id: `msg_${Date.now()}_sys`,
-        type: 'system',
-        text: `Re-ran study: ${study.name}`,
-        timestamp: Date.now(),
-      }
-      onAddMessage(systemMsg)
-
-      const findingsMsg: ChatMessage = {
-        id: `msg_${Date.now()}_f`,
-        type: 'findings',
-        studyId: updatedStudy.id,
-        studyName: updatedStudy.name,
-        findings: newFindings,
-        respondents: updatedStudy.sampleSize,
-        timestamp: Date.now(),
-      }
-      onAddMessage(findingsMsg)
+  // ── Edit study — open builder pre-populated with study data ──
+  const handleEditStudy = useCallback(
+    (study: Survey) => {
+      setPlanStudyId(null)
+      setPreviewStudy(null)
+      setEditingStudy(study)
+      setShowBuilder(true)
     },
-    [project.studies, onAddStudy, onAddMessage],
-  )
-
-  const handleRunNewStudy = useCallback(
-    (studyId: string) => {
-      const study = project.studies?.find(s => s.id === studyId)
-      if (!study) return
-
-      // Run new creates an additional study with fresh findings
-      const newFindings: Finding[] = generateMockFindings(study.questions, false)
-      const newStudy: Survey = {
-        ...study,
-        id: `study_${Date.now()}`,
-        name: `${study.name} (v2)`,
-        findings: newFindings,
-        createdAt: new Date().toISOString().slice(0, 10),
-        updatedAt: new Date().toISOString().slice(0, 10),
-      }
-      onAddStudy(newStudy)
-
-      const systemMsg: ChatMessage = {
-        id: `msg_${Date.now()}_sys`,
-        type: 'system',
-        text: `New survey created: ${newStudy.name}`,
-        timestamp: Date.now(),
-      }
-      onAddMessage(systemMsg)
-
-      const findingsMsg: ChatMessage = {
-        id: `msg_${Date.now()}_f`,
-        type: 'findings',
-        studyId: newStudy.id,
-        studyName: newStudy.name,
-        findings: newFindings,
-        respondents: newStudy.sampleSize,
-        timestamp: Date.now(),
-      }
-      onAddMessage(findingsMsg)
-    },
-    [project.studies, onAddStudy, onAddMessage],
+    [],
   )
 
   const handleSaveAsTemplate = useCallback(
@@ -435,6 +545,11 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     [],
   )
 
+  const handleClosePlanOverlay = useCallback(() => {
+    setPlanStudyId(null)
+    setPreviewStudy(null)
+  }, [])
+
   return (
     <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
       {/* Header — full width */}
@@ -453,6 +568,8 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         onSelectMethod={handleSelectMethod}
         onAddAudience={() => {} /* picker handles display */}
         onOpenPlan={handleOpenPlan}
+        onApprovePlan={handleApprovePlan}
+        onReviewPlan={handleReviewPlan}
         processing={processing}
         brand={project.brand}
       />
@@ -461,8 +578,9 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
       {showBuilder && (
         <div className="fixed inset-0 z-50 bg-background">
           <SurveyBuilder
-            onClose={() => setShowBuilder(false)}
+            onClose={() => { setShowBuilder(false); setEditingStudy(undefined) }}
             onLaunch={handleBuilderLaunch}
+            initialStudy={editingStudy}
           />
         </div>
       )}
@@ -481,9 +599,8 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
       {planStudy && (
         <StudyPlanOverlay
           study={planStudy}
-          onClose={() => setPlanStudyId(null)}
-          onRerun={handleRerunStudy}
-          onRunNew={handleRunNewStudy}
+          onClose={handleClosePlanOverlay}
+          onEdit={handleEditStudy}
           onSaveAsTemplate={handleSaveAsTemplate}
         />
       )}

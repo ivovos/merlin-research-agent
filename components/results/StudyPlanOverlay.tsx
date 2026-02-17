@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import {
   X,
   ClipboardList,
@@ -7,10 +7,8 @@ import {
   Image,
   Users,
   BarChart3,
-  RefreshCw,
   Bookmark,
   Pencil,
-  CopyPlus,
 } from 'lucide-react'
 import type { ElementType } from 'react'
 import { Button } from '@/components/ui/button'
@@ -46,21 +44,16 @@ const QUESTION_TYPE_LABELS: Record<string, string> = {
 interface StudyPlanOverlayProps {
   study: Survey
   onClose: () => void
-  onRerun?: (studyId: string) => void
-  onRunNew?: (studyId: string) => void
+  onEdit?: (study: Survey) => void
   onSaveAsTemplate?: (studyId: string) => void
 }
 
 export const StudyPlanOverlay: React.FC<StudyPlanOverlayProps> = ({
   study,
   onClose,
-  onRerun,
-  onRunNew,
+  onEdit,
   onSaveAsTemplate,
 }) => {
-  const [mode, setMode] = useState<'preview' | 'edit'>('preview')
-  const [hasEdits, setHasEdits] = useState(false)
-
   const typeConfig = SURVEY_TYPE_CONFIGS.find(c => c.key === study.type)
   const TypeIcon = typeConfig ? (ICON_MAP[typeConfig.icon] || ClipboardList) : ClipboardList
 
@@ -70,95 +63,6 @@ export const StudyPlanOverlay: React.FC<StudyPlanOverlayProps> = ({
   const totalRespondents = study.sampleSize ?? getSelectedRespondentCount(study.audiences)
   const isMultiSegment = study.audiences.some(id => id.includes(':'))
 
-  // Handler for section clicks in edit mode
-  const handleSectionClick = (_section: string) => {
-    // Mark as edited — in the future this could open an inline editor
-    setHasEdits(true)
-  }
-
-  // ── Edit mode (full-screen) ──
-  if (mode === 'edit') {
-    return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
-        {/* Header */}
-        <div className="shrink-0 border-b px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="w-4 h-4 text-muted-foreground" />
-            <h1 className="text-sm font-semibold font-display">Edit Study Plan</h1>
-            <span className="text-xs text-muted-foreground">{study.name}</span>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Scrollable content — clickable section cards */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div>
-              <h2 className="text-lg font-display font-semibold">Edit your study</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Click any section to make changes. Once you've made edits you can re-run or create a new survey.
-              </p>
-            </div>
-
-            <EditableStudyPlanContent
-              study={study}
-              typeConfig={typeConfig}
-              TypeIcon={TypeIcon}
-              audiences={audiences}
-              totalRespondents={totalRespondents}
-              isMultiSegment={isMultiSegment}
-              onSectionClick={handleSectionClick}
-            />
-          </div>
-        </div>
-
-        {/* Bottom action bar — edit mode */}
-        <div className="shrink-0 border-t bg-background px-6 py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMode('preview')}
-              className="text-muted-foreground"
-            >
-              Back to preview
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                disabled={!hasEdits}
-                onClick={() => {
-                  onRerun?.(study.id)
-                  onClose()
-                }}
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Re-run Survey
-              </Button>
-              <Button
-                size="sm"
-                className="gap-1.5"
-                disabled={!hasEdits}
-                onClick={() => {
-                  onRunNew?.(study.id)
-                  onClose()
-                }}
-              >
-                <CopyPlus className="w-3.5 h-3.5" />
-                Run New Survey
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Preview mode (slide-in panel) ──
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
@@ -221,7 +125,10 @@ export const StudyPlanOverlay: React.FC<StudyPlanOverlayProps> = ({
             <Button
               size="sm"
               className="gap-1.5 flex-1"
-              onClick={() => setMode('edit')}
+              onClick={() => {
+                onEdit?.(study)
+                onClose()
+              }}
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit Plan
@@ -318,65 +225,6 @@ function ReadOnlyStudyPlanContent({
   )
 }
 
-// ── Editable study plan content (edit mode — clickable sections) ──
-
-interface EditableStudyPlanContentProps extends StudyPlanContentProps {
-  onSectionClick: (section: string) => void
-}
-
-function EditableStudyPlanContent({
-  study,
-  typeConfig,
-  TypeIcon,
-  audiences,
-  totalRespondents,
-  isMultiSegment,
-  onSectionClick,
-}: EditableStudyPlanContentProps) {
-  return (
-    <>
-      {/* Survey Type */}
-      <EditableSectionCard label="Study type" onClick={() => onSectionClick('type')}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <TypeIcon className="w-4.5 h-4.5 text-muted-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{typeConfig?.label ?? study.type}</p>
-            <p className="text-xs text-muted-foreground">{typeConfig?.description}</p>
-          </div>
-        </div>
-      </EditableSectionCard>
-
-      {/* Audience */}
-      {audiences.length > 0 && (
-        <EditableSectionCard label="Audience" onClick={() => onSectionClick('audience')}>
-          <AudienceContent
-            study={study}
-            audiences={audiences}
-            totalRespondents={totalRespondents}
-            isMultiSegment={isMultiSegment}
-          />
-        </EditableSectionCard>
-      )}
-
-      {/* Sample size (when no mock audiences match) */}
-      {audiences.length === 0 && study.sampleSize && (
-        <EditableSectionCard label="Sample" onClick={() => onSectionClick('sample')}>
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <span>n={study.sampleSize.toLocaleString()} respondents</span>
-          </div>
-        </EditableSectionCard>
-      )}
-
-      {/* Questions */}
-      <EditableSectionCard label={`Questions (${study.questions.length})`} onClick={() => onSectionClick('questions')}>
-        <QuestionsContent questions={study.questions} />
-      </EditableSectionCard>
-    </>
-  )
-}
 
 // ── Shared content fragments ──
 
@@ -502,34 +350,3 @@ function ReadOnlySectionCard({ label, children }: { label: string; children: Rea
   )
 }
 
-/** Editable section card (edit mode — click to edit, hover shows pencil) */
-function EditableSectionCard({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full text-left group"
-    >
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
-          <Pencil className="w-3 h-3" />
-          Edit
-        </span>
-      </div>
-      <Card className="p-4 transition-all duration-150 group-hover:bg-accent/50 group-hover:border-foreground/10">
-        {children}
-      </Card>
-    </button>
-  )
-}

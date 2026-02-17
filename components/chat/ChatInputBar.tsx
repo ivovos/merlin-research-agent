@@ -148,7 +148,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             <span>Audience</span>
           </Button>
         )}
-        {onSelectMethod && (
+        {onSelectMethod && variant !== 'home' && (
           <Button
             variant="ghost"
             size="sm"

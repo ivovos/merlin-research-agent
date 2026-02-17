@@ -59,7 +59,7 @@ export const QuickPollPage: React.FC<QuickPollPageProps> = ({ onClose, onLaunch 
   }, [canLaunch, state, selectedAudience, dispatch, onLaunch])
 
   return (
-    <div className="flex-1 flex flex-col bg-background animate-in fade-in duration-200">
+    <div className="flex-1 flex flex-col bg-background animate-in slide-in-from-bottom-2 fade-in duration-300">
       {/* Header */}
       <div className="shrink-0 border-b border-border px-6 py-3 flex items-start justify-between">
         <div>

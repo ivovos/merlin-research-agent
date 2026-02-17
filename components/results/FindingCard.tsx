@@ -33,8 +33,14 @@ const BAR_COLOR = DEFAULT_BRAND_COLORS.primary
  * Pure CSS horizontal bar row.
  *
  * Layout — fixed 3-column grid so every row aligns:
- *   [label ·right-aligned, fixed 40%]  [█████ bar ·fills middle]  [23.6% ·right-aligned, fixed width]
+ *   [label ·right-aligned, fixed 40%]  [█████ bar + 12px + pct%]
+ *
+ * The bar column uses a CSS calc: the bar is barPct% of 75% of the column,
+ * so the widest bar leaves ~25% for the percentage label + gap.
+ * The percentage label sits inline immediately after the bar.
  */
+const MAX_BAR_FRACTION = 0.75 // bar area uses at most 75% of the column
+
 function BarRow({
   label,
   value,
@@ -44,31 +50,31 @@ function BarRow({
   value: number
   maxValue: number
 }) {
-  const barPct = maxValue > 0 ? (value / maxValue) * 100 : 0
+  // barPct is 0–100 relative to maxValue. Scale it into 0–MAX_BAR_FRACTION of
+  // the column so the label always fits.
+  const barPct = maxValue > 0 ? (value / maxValue) * MAX_BAR_FRACTION * 100 : 0
 
   return (
-    <div className="grid items-center" style={{ gridTemplateColumns: '40% 1fr 48px' }}>
+    <div className="grid items-center" style={{ gridTemplateColumns: '40% 1fr' }}>
       {/* Label — right-aligned, consistent column width */}
       <span className="text-sm text-muted-foreground text-right leading-snug pr-3 line-clamp-2">
         {label}
       </span>
 
-      {/* Bar — fills remaining space */}
-      <div className="h-6 relative">
+      {/* Bar + percentage inline — pct sits right after bar end */}
+      <div className="flex items-center h-6">
         <div
-          className="absolute inset-y-0 left-0 rounded-sm"
+          className="h-full rounded-sm shrink-0"
           style={{
             width: `${barPct}%`,
             backgroundColor: BAR_COLOR,
             minWidth: value > 0 ? 4 : 0,
           }}
         />
+        <span className="text-sm font-medium text-foreground tabular-nums shrink-0 pl-3">
+          {value}%
+        </span>
       </div>
-
-      {/* Percentage — right-aligned, fixed column */}
-      <span className="text-sm font-medium text-foreground tabular-nums text-right">
-        {value}%
-      </span>
     </div>
   )
 }
@@ -193,7 +199,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({
 
       {/* Clean horizontal bar chart */}
       {rows.length > 0 && (
-        <div className="space-y-2.5 px-1">
+        <div className="space-y-2.5 p-4">
           {rows.map((row, i) => (
             <BarRow
               key={i}

@@ -145,6 +145,123 @@ export function createStudyPlan(toolName: string, toolInput: Record<string, unkn
 }
 
 // ---------------------------------------------------------------------------
+// Complexity assessment
+// ---------------------------------------------------------------------------
+
+export interface ComplexityAssessment {
+  isComplex: boolean
+  reasons: string[]
+  estimatedRuntime: string
+}
+
+export function assessComplexity(
+  query: string,
+  selection: ToolSelectionResult,
+): ComplexityAssessment {
+  const reasons: string[] = []
+  const toolInput = selection.toolInput
+
+  // Multiple segments
+  const segments = toolInput.segments as string[] | undefined
+  if (segments && segments.length >= 2) {
+    reasons.push(`${segments.length} segments to compare`)
+  }
+
+  // Multiple questions from the LLM
+  const questions = toolInput.questions as unknown[] | undefined
+  if (questions && questions.length >= 3) {
+    reasons.push(`${questions.length} research questions`)
+  }
+
+  // Comparison tool
+  if (selection.toolName === 'run_comparison') {
+    reasons.push('Cross-segment comparison methodology')
+  }
+
+  // Focus group (inherently complex)
+  if (selection.toolName === 'run_focus_group') {
+    reasons.push('Qualitative depth interviews')
+  }
+
+  // Query-level heuristics: mentions of multiple items
+  const multiItemPatterns = [
+    /(\d+)\s+(segments?|audiences?|groups?)/i,
+    /(\d+)\s+(statements?|messages?|concepts?|ads?|creatives?|versions?)/i,
+    /(\d+)\s+different/i,
+    /each\s+of\s+(the\s+)?\d+/i,
+    /across\s+\d+/i,
+  ]
+  for (const pattern of multiItemPatterns) {
+    if (pattern.test(query)) {
+      reasons.push('Multi-item evaluation detected')
+      break
+    }
+  }
+
+  // Large sample size
+  const sampleSize = toolInput.sample_size as number | undefined
+  if (sampleSize && sampleSize > 1000) {
+    reasons.push(`Large sample (n=${sampleSize.toLocaleString()})`)
+  }
+
+  const isComplex = reasons.length >= 1
+  const estimatedRuntime = estimateRuntime(selection, isComplex)
+
+  return { isComplex, reasons, estimatedRuntime }
+}
+
+function estimateRuntime(selection: ToolSelectionResult, isComplex: boolean): string {
+  if (selection.toolName === 'run_focus_group') return '3 minutes'
+  if (selection.toolName === 'run_comparison') return '2 minutes'
+  if (isComplex) return '90 seconds'
+  return '45 seconds'
+}
+
+export function generatePlanDescription(
+  selection: ToolSelectionResult,
+  complexity: ComplexityAssessment,
+): { title: string; description: string; bulletPoints: string[] } {
+  const plan = selection.studyPlan
+  const toolInput = selection.toolInput
+
+  const title = plan.title
+
+  const bulletPoints: string[] = []
+
+  // Segments
+  const segments = toolInput.segments as string[] | undefined
+  if (segments && segments.length > 0) {
+    bulletPoints.push(`${segments.length} segments: ${segments.join(', ')}`)
+  }
+
+  // Sample size
+  const sampleSize = (toolInput.sample_size as number) || 500
+  const perSegment = segments && segments.length > 0
+    ? ` (${Math.round(sampleSize / segments.length)} per segment)`
+    : ''
+  bulletPoints.push(`${sampleSize.toLocaleString()} respondents${perSegment}`)
+
+  // Questions
+  const questions = toolInput.questions as Array<{ question: string }> | undefined
+  if (questions && questions.length > 0) {
+    bulletPoints.push(`${questions.length} survey questions covering key attitudes and perceptions`)
+  }
+
+  // Methodology
+  const methodDesc = plan.methodName + (plan.variantName ? ` (${plan.variantName})` : '')
+  bulletPoints.push(`${methodDesc} exploring ${(toolInput.research_question as string) || 'the research question'}`)
+
+  // Build description
+  const audience = (toolInput.audience as string) || 'General Population'
+  const researchQ = (toolInput.research_question as string) || ''
+  const description = researchQ
+    ? `Deploy synthetic ${plan.methodName.toLowerCase()} to understand ${researchQ.toLowerCase().replace(/\?$/, '')}.`
+    : `Deploy synthetic ${plan.methodName.toLowerCase()} across ${audience}.`
+
+  return { title, description, bulletPoints }
+}
+
+// ---------------------------------------------------------------------------
 // Comparison detection
 // ---------------------------------------------------------------------------
 

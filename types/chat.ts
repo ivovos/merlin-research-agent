@@ -1,4 +1,5 @@
 import type { Finding, Survey, SurveyType, Stimulus } from './survey'
+import type { StudyPlan } from './canvas'
 
 // ── Attachment ──
 
@@ -19,6 +20,7 @@ export type ChatMessage =
   | ChatMessageAttachment
   | ChatMessageDeliverable
   | ChatMessageSystem
+  | ChatMessagePlan
 
 export interface ChatMessageUser {
   id: string
@@ -67,6 +69,23 @@ export interface ChatMessageSystem {
   id: string
   type: 'system'
   text: string
+  timestamp: number
+}
+
+export interface ChatMessagePlan {
+  id: string
+  type: 'plan'
+  planTitle: string
+  planDescription: string
+  bulletPoints: string[]
+  expectedRuntime: string
+  studyPlan: StudyPlan
+  toolSelection: {
+    toolName: string
+    toolInput: Record<string, unknown>
+    processSteps: string[]
+  }
+  status: 'pending' | 'approved'
   timestamp: number
 }
 

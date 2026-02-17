@@ -7,6 +7,10 @@ export const TIMING = {
   PHASE_3_EXECUTION_START: 600,
   PHASE_3_STREAM_INTERVAL: 50,
   PHASE_4_RESULTS: 400,
+  /** Plan approval flow — extra steps for complex queries */
+  PHASE_PLAN_EVAL: 600,
+  PHASE_PLAN_DESIGN: 800,
+  PHASE_PLAN_SHOW: 400,
 } as const;
 
 /** API configuration */
