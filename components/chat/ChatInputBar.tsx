@@ -161,7 +161,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         )}
         <Button
           size="icon"
-          className="h-8 w-8 rounded-full flex-shrink-0 ml-auto"
+          className="h-8 w-8 rounded-xl flex-shrink-0 ml-auto"
           onClick={handleSend}
           disabled={!text.trim()}
         >

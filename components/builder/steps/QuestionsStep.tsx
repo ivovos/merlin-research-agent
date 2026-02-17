@@ -33,6 +33,8 @@ const TABS: { key: QuestionSourceTab; label: string }[] = [
 // ── Props ──
 
 interface QuestionsStepProps {
+  accountId?: string
+  accountName?: string
   surveyType: SurveyType
   questions: SurveyQuestion[]
   questionSourceTab: QuestionSourceTab
@@ -59,6 +61,8 @@ interface QuestionsStepProps {
 // ── Main QuestionsStep ──
 
 export const QuestionsStep: React.FC<QuestionsStepProps> = ({
+  accountId,
+  accountName,
   questions,
   questionSourceTab,
   editingQuestionIndex,
@@ -179,6 +183,8 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
 
       {questionSourceTab === 'templates' && (
         <TemplatesPanel
+          accountId={accountId}
+          accountName={accountName}
           selectedTemplate={selectedTemplate}
           onSelectTemplate={handleTemplateSelect}
           onResetTemplate={handleTemplateReset}

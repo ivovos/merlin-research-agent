@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { ProjectState } from '@/types'
-import { SURVEY_TYPE_CONFIGS } from '@/types'
 import {
   PICKER_METHODS,
   MethodsPicker,
@@ -9,7 +8,7 @@ import {
 } from '@/components/chat/MethodsPicker'
 import { Badge } from '@/components/ui/badge'
 import { ChatInputBar } from '@/components/chat/ChatInputBar'
-import { Search, FileQuestion, Users, BarChart3 } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HomeProps {
@@ -32,27 +31,10 @@ const CURATED_PILLS: HomePill[] = [
   { methodId: 'quick-poll' },
   { methodId: 'survey' },
   { methodId: 'message-test' },
-  { methodId: 'focus-group' },
-  { methodId: 'creative-testing' },
+  { methodId: 'focus-group', isNew: true },
+  { methodId: 'creative-testing', isNew: true },
   { methodId: 'concept-testing' },
-  { methodId: 'packaging-test', isNew: true },
-  { methodId: 'nps-csat', isNew: true },
 ]
-
-// ── Helpers ──
-
-function getTypeLabel(type: string | undefined): string {
-  if (!type) return 'Research'
-  return SURVEY_TYPE_CONFIGS.find(c => c.key === type)?.label ?? type
-}
-
-function getTotalQuestions(p: ProjectState): number {
-  return p.studies.reduce((sum, s) => sum + s.questions.length, 0)
-}
-
-function getTotalFindings(p: ProjectState): number {
-  return p.studies.reduce((sum, s) => sum + (s.findings?.length ?? 0), 0)
-}
 
 // ── Main component ──
 
@@ -106,17 +88,17 @@ export const Home: React.FC<HomeProps> = ({
   )
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 flex flex-col">
       {/* Hero section — vertically centered */}
-      <div className="flex flex-col items-center justify-center px-6 min-h-[70vh]">
+      <div className="flex flex-col items-center justify-center px-6 flex-1">
         <h1 className="text-3xl font-display font-bold tracking-tight text-center">
-          What do you want to find out?
+          Ask them anything
         </h1>
         <p className="text-sm text-muted-foreground mt-2 text-center">
           Ask a question or pick a method below
         </p>
 
-        {/* Input bar — no method button (don't pass onSelectMethod) */}
+        {/* Input bar */}
         <div className="w-full max-w-2xl mt-8">
           <ChatInputBar
             onSend={onCreateProject}
@@ -178,7 +160,7 @@ export const Home: React.FC<HomeProps> = ({
                   {pill.isNew && (
                     <Badge
                       variant="default"
-                      className="text-[9px] px-1.5 py-0 h-4 font-semibold tracking-wide"
+                      className="text-[9px] px-1.5 py-0 h-4 font-semibold tracking-wide bg-[#6366f1] hover:bg-[#6366f1] text-white"
                     >
                       NEW
                     </Badge>
@@ -187,28 +169,6 @@ export const Home: React.FC<HomeProps> = ({
               )
             })}
           </div>
-        </div>
-      </div>
-
-      {/* Studies list — pushed down so ~2.5 rows visible on first fold */}
-      <div className="px-6 pt-16 pb-8 max-w-2xl mx-auto">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Recent Studies
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            {projects.length} {projects.length === 1 ? 'study' : 'studies'}
-          </span>
-        </div>
-
-        <div className="divide-y divide-border border-t border-b">
-          {projects.map(project => (
-            <StudyRow
-              key={project.id}
-              project={project}
-              onClick={() => onSelectProject(project.id)}
-            />
-          ))}
         </div>
       </div>
 
@@ -222,71 +182,5 @@ export const Home: React.FC<HomeProps> = ({
         }}
       />
     </div>
-  )
-}
-
-// ── Study row for home list ──
-
-function StudyRow({
-  project,
-  onClick,
-}: {
-  project: ProjectState
-  onClick: () => void
-}) {
-  const totalQuestions = getTotalQuestions(project)
-  const totalFindings = getTotalFindings(project)
-  const studyCount = project.studies.length
-
-  return (
-    <button
-      type="button"
-      className="w-full text-left flex items-center gap-4 py-3 px-2 hover:bg-muted/50 transition-colors group"
-      onClick={onClick}
-    >
-      {/* Name + brand + type */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium truncate">
-            {project.name}
-          </span>
-          {project.surveyType && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-              {getTypeLabel(project.surveyType)}
-            </Badge>
-          )}
-        </div>
-        {project.brand && (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {project.brand}
-          </p>
-        )}
-      </div>
-
-      {/* Stats */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-        {studyCount > 0 && (
-          <span>{studyCount} {studyCount === 1 ? 'study' : 'studies'}</span>
-        )}
-        {totalQuestions > 0 && (
-          <span className="flex items-center gap-1">
-            <FileQuestion className="w-3 h-3" />
-            {totalQuestions}
-          </span>
-        )}
-        {totalFindings > 0 && (
-          <span className="flex items-center gap-1">
-            <BarChart3 className="w-3 h-3" />
-            {totalFindings}
-          </span>
-        )}
-        {project.audiences.length > 0 && (
-          <span className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {project.audiences.length}
-          </span>
-        )}
-      </div>
-    </button>
   )
 }

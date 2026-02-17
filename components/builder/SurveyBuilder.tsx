@@ -16,12 +16,14 @@ interface SurveyBuilderProps {
   onClose: () => void
   onLaunch?: (state: BuilderState) => void
   initialStudy?: import('@/types').Survey
+  currentAccount?: import('@/types').Account
 }
 
 export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   onClose,
   onLaunch,
   initialStudy,
+  currentAccount,
 }) => {
   const {
     state,
@@ -99,6 +101,8 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
       case 'questions':
         return (
           <QuestionsStep
+            accountId={currentAccount?.id}
+            accountName={currentAccount?.name}
             surveyType={state.selectedType!}
             questions={state.questions}
             questionSourceTab={state.questionSourceTab}

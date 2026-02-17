@@ -208,7 +208,7 @@ const App: React.FC = () => {
         {showQuickPoll ? (
           <QuickPollPage onClose={handleCloseQuickPoll} onLaunch={handleQuickPollLaunch} />
         ) : showBuilder ? (
-          <SurveyBuilder onClose={handleCloseBuilder} onLaunch={handleBuilderLaunch} />
+          <SurveyBuilder onClose={handleCloseBuilder} onLaunch={handleBuilderLaunch} currentAccount={currentAccount} />
         ) : audienceOverlay ? (
           /* Audience overlay */
           <main className="flex flex-1 flex-col overflow-hidden">
