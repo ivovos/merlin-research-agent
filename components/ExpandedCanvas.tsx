@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { SENTIMENT_COLORS } from '@/lib/sentimentColors';
 
 interface ExpandedCanvasProps {
   canvas: Canvas;
@@ -483,13 +484,13 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
             </h2>
 
             {/* Evidence Cards with Left-aligned Section Titles */}
-            <div className="space-y-10">
+            <div className="space-y-6">
               {evidenceItems.map((item, idx) => (
                 <div
                   key={item.id}
                   ref={(el) => setItemRef(item.id, el)}
                   className={cn(
-                    "scroll-mt-32 flex items-start gap-6 pb-10",
+                    "scroll-mt-32 flex items-start gap-6 pb-6",
                     idx < evidenceItems.length - 1 && "border-b border-border"
                   )}
                 >
@@ -579,12 +580,7 @@ export const ExpandedCanvas: React.FC<ExpandedCanvasProps> = ({
 const ExpandedThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => {
   const [showAllQuotes, setShowAllQuotes] = useState(false);
 
-  const sentimentColors = {
-    positive: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    negative: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    mixed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  };
+
 
   const displayedQuotes = showAllQuotes ? theme.quotes : theme.quotes.slice(0, 2);
 
@@ -594,7 +590,7 @@ const ExpandedThemeCard: React.FC<{ theme: QualitativeTheme }> = ({ theme }) => 
         <span
           className={cn(
             'text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full',
-            sentimentColors[theme.sentiment]
+            SENTIMENT_COLORS[theme.sentiment]
           )}
         >
           {theme.sentiment}

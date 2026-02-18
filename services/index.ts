@@ -12,3 +12,15 @@ export type { ResearchResult, ToolSelectionResult } from './researchGenerator'
 // Export tools and agent prompt
 export { researchTools, type ResearchToolName } from './tools'
 export { AGENT_SYSTEM_PROMPT, getAgentPromptWithContext } from './agentPrompt'
+
+// Export new sub-modules for direct access
+export { executeResearchTool } from './toolExecutor'
+export { createStudyPlan, getProcessStepsForTool, detectComparisonSegments, assessComplexity, generatePlanDescription } from './toolSelector'
+export type { ComplexityAssessment } from './toolSelector'
+export {
+  normalizeOptions,
+  normalizeComparisonOptions,
+  generateFallbackSurveyCanvas,
+  generateFallbackFocusGroupCanvas,
+  generateFallbackComparisonCanvas,
+} from './canvasGenerator'

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MessageSquare, Search, Plus, ChevronDown, Check } from 'lucide-react';
+import { MessageSquare, Search, Plus, ChevronDown, Check, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -86,13 +86,6 @@ export const MessageTestingModal: React.FC<MessageTestingModalProps> = ({
     onClose();
   };
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    }
-    onClose();
-  };
-
   const isValid = testName.trim().length > 0;
 
   return (
@@ -108,6 +101,14 @@ export const MessageTestingModal: React.FC<MessageTestingModalProps> = ({
               Compare messages side-by-side
             </SheetDescription>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 rounded-md"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </SheetHeader>
 
         <div className="space-y-6 py-4 flex-1 overflow-y-auto">
@@ -260,10 +261,7 @@ export const MessageTestingModal: React.FC<MessageTestingModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4">
-          <Button variant="outline" onClick={handleBack}>
-            Back
-          </Button>
+        <div className="flex items-center justify-end pt-4">
           <Button
             onClick={handleContinue}
             disabled={!isValid}

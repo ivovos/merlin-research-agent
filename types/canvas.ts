@@ -52,5 +52,5 @@ export interface Canvas {
   studyPlan?: StudyPlan; // Method configuration used to generate this canvas
 }
 
-// Backwards compatibility alias
+/** @deprecated Use `Canvas` instead. Kept for backwards compatibility with mockData. */
 export type Report = Canvas;

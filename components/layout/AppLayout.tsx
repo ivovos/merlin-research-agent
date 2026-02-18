@@ -28,7 +28,13 @@ export function AppLayout({
 }: AppLayoutProps) {
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar
+        view={{ screen: 'home' }}
+        projects={[]}
+        onSelectProject={() => {}}
+        onGoHome={() => {}}
+        onNewProject={() => {}}
+      />
       <SidebarInset className="flex flex-row overflow-hidden">
         {/* Main content area */}
         <main

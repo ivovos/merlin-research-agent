@@ -264,11 +264,11 @@ export const methods: Method[] = [
   },
 
   {
-    id: 'survey',
-    name: 'Survey',
-    description: 'Broad quantitative data',
+    id: 'poll',
+    name: 'Poll',
+    description: 'Quick question to an audience',
     icon: 'clipboard-list',
-    approach: 'survey',
+    approach: 'poll',
     type: 'quantitative',
     complexity: 'medium',
     steps: 1,
@@ -761,7 +761,7 @@ export const methodCommands: Record<string, string> = {
   '/explore-audience': 'explore-audience',
   '/plot': 'explore-audience:plot',
   '/heatmap': 'explore-audience:heatmap',
-  '/survey': 'survey',
+  '/poll': 'poll',
   '/focus-group': 'focus-group',
   '/message-testing': 'message-testing',
 };

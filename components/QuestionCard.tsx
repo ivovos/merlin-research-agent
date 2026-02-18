@@ -13,14 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-// Default brand colors (MUBI)
-const DEFAULT_BRAND_COLORS: BrandColors = {
-  primary: '#2768E3',   // MUBI Blue
-  secondary: '#1BD571', // MUBI Green
-  tertiary: '#E32768',  // MUBI Pink
-  quaternary: '#D5711B', // MUBI Orange
-};
+import { DEFAULT_BRAND_COLORS } from '@/lib/brandDefaults';
+import { parsePercentage } from '@/lib/parseUtils';
 
 interface QuestionCardProps {
   data: QuestionResult;
@@ -99,16 +93,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   };
   
   // Helper to parse percentage values (handles "37.2%" strings)
-  const parsePercentage = (value: unknown): number => {
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const cleaned = value.replace('%', '').trim();
-      const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
-  };
-
   // Normalize and sort options - handle both array and object formats
   const sortedData = useMemo(() => {
     const opts = data.options;

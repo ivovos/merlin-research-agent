@@ -44,3 +44,36 @@ export type {
   ComparisonData,
   CanvasType,
 } from './agentResponse';
+
+// Survey types (Phase 1 - survey builder merge)
+export type {
+  SurveyType,
+  SurveyStatus,
+  QuestionType,
+  BuilderQuestionType,
+  Stimulus,
+  SurveyQuestion,
+  SegmentBreakdown,
+  Finding,
+  Survey,
+  SurveyProject,
+  SurveyTypeConfig,
+} from './survey';
+
+export { SURVEY_TYPE_CONFIGS, BUILDER_TO_SURVEY_TYPE } from './survey'
+
+// Chat & project types (Phase 2 - project=chat migration)
+export type {
+  Attachment,
+  ChatMessage,
+  ChatMessageUser,
+  ChatMessageAI,
+  ChatMessageFindings,
+  ChatMessageAttachment,
+  ChatMessageDeliverable,
+  ChatMessageSystem,
+  ChatMessagePlan,
+  AppView,
+  ProjectState,
+  Study,
+} from './chat';

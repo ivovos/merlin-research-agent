@@ -2,18 +2,12 @@ import React from 'react';
 import type { Conversation, Canvas, SelectedSegment, SelectedSegments, StudyPlan } from '@/types';
 import { ProcessSteps } from './ProcessSteps';
 import { QueryInput } from './QueryInput';
-import { InlineCanvas } from './InlineCanvas';
+import { FindingsCanvas } from './results/FindingsCanvas';
+import { canvasToFindings } from '@/lib/canvasToFindings';
 import { ClarificationMessage } from './ClarificationMessage';
-import { ClipboardList, Users, MessageSquare, BarChart3, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Icon mapping for methods (same as StudyPlanPill)
-const methodIcons: Record<string, React.ElementType> = {
-  'explore-audience': BarChart3,
-  'survey': ClipboardList,
-  'focus-group': Users,
-  'message-testing': MessageSquare,
-};
+import { METHOD_ICONS } from '@/lib/methodIcons';
 
 // Inline method link component
 interface MethodLinkProps {
@@ -23,7 +17,7 @@ interface MethodLinkProps {
 }
 
 const MethodLink: React.FC<MethodLinkProps> = ({ title, methodId, onClick }) => {
-  const Icon = methodIcons[methodId] || Settings2;
+  const Icon = METHOD_ICONS[methodId] || Settings2;
   return (
     <button
       onClick={onClick}
@@ -134,6 +128,10 @@ interface WorkingPaneProps {
   onCanvasTitleChange?: (canvasId: string, newTitle: string) => void;
   /** Callback when opening method creator from slash command */
   onOpenMethodCreator?: (methodId?: string) => void;
+  /** Callback to save a canvas as a project */
+  onSaveToProject?: (canvas: Canvas) => void;
+  /** Callback to open builder for refining results */
+  onRefineInBuilder?: () => void;
   /** Whether the side panel is open (reduces padding) */
   isSidePanelOpen?: boolean;
 }
@@ -156,6 +154,8 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
   onEditStudyPlan,
   onCanvasTitleChange,
   onOpenMethodCreator,
+  onSaveToProject,
+  onRefineInBuilder,
   isSidePanelOpen = false,
 }) => {
   // Auto-scroll to bottom when new messages arrive
@@ -178,12 +178,12 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {/* Main content area with responsive padding */}
         <div className={cn(
-          "py-6 space-y-8 transition-all duration-300",
+          "py-6 space-y-6 transition-all duration-300",
           isSidePanelOpen ? "px-6 lg:px-10" : "px-[100px]"
         )}>
 
           {/* Query History */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {conversation.messages.map((msg) => {
               // Render USER message - right aligned, max 50% width
               if (msg.role === 'user') {
@@ -243,29 +243,18 @@ export const WorkingPane: React.FC<WorkingPaneProps> = ({
                           )}
                         </div>
 
-                        {/* 5. Inline Canvas - centered, full width within padding */}
+                        {/* 5. Findings Canvas - centered, full width within padding */}
                         {msg.canvas && (
                           <>
                             <div className="flex justify-center">
-                              <InlineCanvas
-                                canvas={msg.canvas}
+                              <FindingsCanvas
+                                findings={canvasToFindings(msg.canvas)}
+                                title={msg.canvas.title}
+                                respondents={msg.canvas.respondents}
+                                compact
                                 onExpand={() => onExpandCanvas?.(msg.canvas!)}
-                                selectedSegments={selectedSegments}
-                                isSelectionForThisCanvas={selectionCanvasId === msg.canvas.id}
-                                onBarSelect={onBarSelect}
-                                onClearSegments={onClearSegments}
-                                onRemoveSegment={onRemoveSegment}
-                                onAskSegment={onAskSegment}
-                                onEditQuestion={onEditQuestion}
-                                onEditStudyPlan={onEditStudyPlan}
-                                onTitleChange={
-                                  onCanvasTitleChange
-                                    ? (newTitle) => onCanvasTitleChange(msg.canvas!.id, newTitle)
-                                    : undefined
-                                }
-                                onAskAnotherQuestion={
-                                  msg.canvas.type === 'qualitative' ? handleAskAnotherQuestion : undefined
-                                }
+                                onSaveToProject={() => onSaveToProject?.(msg.canvas!)}
+                                onRefineInBuilder={onRefineInBuilder}
                                 className="w-full max-w-3xl"
                               />
                             </div>

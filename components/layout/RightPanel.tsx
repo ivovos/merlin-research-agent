@@ -1,5 +1,5 @@
 import * as React from "react"
-import { X, Maximize2, Minimize2, Share2 } from "lucide-react"
+import { X, Maximize2, Minimize2, SquareArrowOutUpRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -42,7 +42,7 @@ export function RightPanel({
                   onClick={onShare}
                   className="h-8 w-8"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <SquareArrowOutUpRight className="h-4 w-4" />
                   <span className="sr-only">Share</span>
                 </Button>
               )}
@@ -98,7 +98,7 @@ export function RightPanel({
               onClick={onShare}
               className="h-8 w-8"
             >
-              <Share2 className="h-4 w-4" />
+              <SquareArrowOutUpRight className="h-4 w-4" />
               <span className="sr-only">Share</span>
             </Button>
           )}

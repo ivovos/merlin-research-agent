@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ET – Quick Poll</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fff;
+    color: #09090b;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 40px 24px 120px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .page-header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .page-header p { font-size: 13.5px; color: #71717a; }
+  .close-btn {
+    width: 32px; height: 32px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #a1a1aa; flex-shrink: 0; margin-top: 2px;
+  }
+  .close-btn:hover { border-color: #a1a1aa; color: #3f3f46; }
+  .close-btn svg { width: 16px; height: 16px; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 600; color: #a1a1aa;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+  }
+
+  /* ── Divider ── */
+  .section-divider { border: none; border-top: 1px solid #e4e4e7; margin: 28px 0; }
+
+  /* ── Question card (collapsed) ── */
+  .question-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #fff; border: 1px solid #e4e4e7;
+    border-radius: 8px; padding: 12px 14px;
+    transition: border-color 0.12s; cursor: pointer;
+    margin-bottom: 8px;
+  }
+  .question-item:hover { border-color: #a1a1aa; }
+  .question-item.qi-error { border-color: #fca5a5; background: #fef2f2; }
+
+  .qi-number {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: #f4f4f5; color: #52525b;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .qi-content { flex: 1; }
+  .qi-text { font-size: 13px; font-weight: 500; color: #09090b; margin-bottom: 3px; }
+  .qi-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .qi-type-badge {
+    font-size: 10.5px; background: #f4f4f5; color: #71717a;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .qi-type-badge svg { width: 11px; height: 11px; }
+  .qi-incomplete-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; background: #fefce8; color: #a16207; border: 1px solid #fef08a;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  }
+  .qi-incomplete-badge.error { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+  .qi-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.12s; }
+  .question-item:hover .qi-actions { opacity: 1; }
+
+  .qi-action-btn {
+    width: 26px; height: 26px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #a1a1aa; transition: all 0.1s;
+  }
+  .qi-action-btn svg { width: 13px; height: 13px; }
+  .qi-action-btn.delete:hover { border-color: #fca5a5; color: #ef4444; background: #fef2f2; }
+
+  .qi-expand { color: #a1a1aa; display: flex; align-items: center; flex-shrink: 0; margin-top: 2px; }
+  .qi-expand svg { width: 14px; height: 14px; }
+
+  /* ── Question editor ── */
+  .question-editor {
+    background: #fff; border: 1px solid #d4d4d8;
+    border-radius: 8px; padding: 18px; margin-bottom: 8px;
+    animation: editorIn 0.15s ease;
+  }
+  @keyframes editorIn {
+    from { opacity: 0; transform: scale(0.99); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .qe-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .qe-header-left { display: flex; align-items: center; gap: 8px; }
+  .qe-number {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: #09090b; color: #fafafa;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qe-title { font-size: 13px; font-weight: 600; color: #09090b; }
+  .qe-close {
+    width: 26px; height: 26px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 4px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: #a1a1aa;
+  }
+  .qe-close svg { width: 14px; height: 14px; }
+  .qe-close:hover { border-color: #a1a1aa; color: #3f3f46; background: #f4f4f5; }
+
+  .qe-type-selector { margin-bottom: 14px; }
+  .qe-type-label {
+    font-size: 11px; font-weight: 500; color: #71717a;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+  }
+  .qe-type-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .qe-type-chip {
+    padding: 5px 10px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12px; font-weight: 500; color: #71717a;
+    cursor: pointer; transition: all 0.1s; font-family: inherit;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .qe-type-chip:hover { border-color: #a1a1aa; color: #3f3f46; }
+  .qe-type-chip.active { border-color: #09090b; color: #09090b; background: #f4f4f5; }
+  .qe-type-chip svg { width: 13px; height: 13px; }
+
+  .qe-field { margin-bottom: 14px; }
+  .qe-field-label {
+    font-size: 11px; font-weight: 500; color: #71717a;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px;
+  }
+  .qe-text-input {
+    width: 100%; padding: 9px 12px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 13.5px; font-family: inherit; color: #09090b;
+    transition: border-color 0.12s;
+  }
+  .qe-text-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .qe-text-input::placeholder { color: #a1a1aa; }
+
+  .qe-option-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .qe-option-handle { color: #d4d4d8; display: flex; cursor: grab; }
+  .qe-option-handle svg { width: 12px; height: 12px; }
+  .qe-option-input {
+    flex: 1; padding: 7px 10px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12.5px; font-family: inherit; color: #09090b;
+  }
+  .qe-option-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .qe-option-remove {
+    width: 22px; height: 22px; border: none; background: none;
+    color: #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+  }
+  .qe-option-remove svg { width: 13px; height: 13px; }
+  .qe-option-remove:hover { color: #ef4444; background: #fef2f2; }
+
+  .qe-add-option {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 6px;
+    padding: 5px 10px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 11.5px; font-weight: 500; color: #a1a1aa;
+    cursor: pointer; transition: all 0.1s; font-family: inherit;
+  }
+  .qe-add-option:hover { border-color: #a1a1aa; color: #3f3f46; background: #fafafa; }
+
+  .qe-scale-config { display: flex; gap: 12px; }
+  .qe-scale-field { flex: 1; }
+  .qe-scale-field label { display: block; font-size: 11px; color: #71717a; margin-bottom: 4px; font-weight: 500; }
+  .qe-scale-input {
+    width: 100%; padding: 7px 10px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12.5px; font-family: inherit; color: #09090b;
+  }
+  .qe-scale-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .qe-scale-preview { display: flex; gap: 4px; margin-top: 8px; }
+  .qe-scale-dot {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid #e4e4e7; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #52525b; font-weight: 500;
+  }
+
+  .qe-open-text-note {
+    padding: 10px 12px; background: #fafafa; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12px; color: #71717a; line-height: 1.5;
+  }
+
+  .qe-nps-preview { display: flex; gap: 2px; margin-top: 6px; }
+  .qe-nps-box {
+    width: 26px; height: 26px; border-radius: 4px;
+    border: 1px solid #e4e4e7; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; color: #71717a; font-weight: 500;
+  }
+  .qe-nps-box.detractor { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .qe-nps-box.passive { background: #fefce8; border-color: #fef08a; color: #854d0e; }
+  .qe-nps-box.promoter { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .qe-nps-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .qe-nps-labels span { font-size: 10px; color: #a1a1aa; }
+
+  .qe-done-row {
+    display: flex; justify-content: flex-end;
+    padding-top: 12px; margin-top: 4px;
+  }
+  .qe-btn-done {
+    padding: 5px 12px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12px; font-weight: 500; color: #3f3f46;
+    cursor: pointer; font-family: inherit; transition: all 0.1s;
+  }
+  .qe-btn-done:hover { background: #f4f4f5; border-color: #a1a1aa; }
+
+  /* ── Add question button ── */
+  .add-question-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin-top: 4px;
+    padding: 10px 16px; border: 1px solid #e4e4e7; border-radius: 8px;
+    background: #fff; font-size: 13px; font-weight: 500;
+    color: #3f3f46; cursor: pointer; transition: all 0.12s; font-family: inherit;
+  }
+  .add-question-btn:hover { border-color: #a1a1aa; background: #f4f4f5; }
+  .add-question-btn svg { color: #a1a1aa; }
+
+  /* ── Audience dropdown ── */
+  .audience-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+
+  .audience-select-wrapper {
+    position: relative; flex: 1;
+  }
+
+  .audience-select {
+    width: 100%; padding: 8px 36px 8px 12px;
+    border: 1px solid #e4e4e7; border-radius: 6px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit; color: #09090b;
+    background: #fff; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    transition: border-color 0.12s;
+  }
+  .audience-select:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .audience-select:hover { border-color: #a1a1aa; }
+
+  .audience-select-chevron {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: #a1a1aa;
+  }
+  .audience-select-chevron svg { width: 14px; height: 14px; }
+
+  .audience-size-badge {
+    font-size: 12px; color: #71717a; font-weight: 500;
+    font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0;
+  }
+
+  .audience-sub-row {
+    display: flex; align-items: center; gap: 12px; margin-top: 6px;
+  }
+  .audience-segments-link {
+    font-size: 12px; color: #71717a; cursor: pointer;
+    text-decoration: none; transition: color 0.12s;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .audience-segments-link:hover { color: #09090b; }
+  .audience-segments-link svg { width: 12px; height: 12px; }
+
+  /* ── Footer ── */
+  .footer-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #e4e4e7;
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 100;
+  }
+  .fb-summary { font-size: 12.5px; color: #71717a; display: flex; align-items: center; gap: 6px; }
+  .fb-summary strong { color: #09090b; font-weight: 600; }
+  .fb-dot { color: #d4d4d8; }
+  .fb-warning { color: #dc2626; font-size: 12px; margin-left: 4px; display: none; }
+
+  .btn-primary {
+    padding: 8px 20px; border: none; background: #09090b; color: #fafafa;
+    border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: background 0.12s;
+  }
+  .btn-primary:hover { background: #27272a; }
+  .btn-primary:disabled { background: #d4d4d8; color: #a1a1aa; cursor: not-allowed; }
+
+  /* SVG helpers */
+  .icon { display: inline-flex; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- SVG sprite -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></symbol>
+  <symbol id="i-bar-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></symbol>
+  <symbol id="i-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+</svg>
+
+<div class="page">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>Quick Poll</h1>
+      <p>Fast feedback on a single topic. Pick your audience and add your questions.</p>
+    </div>
+    <button class="close-btn" onclick="alert('Close builder')"><svg><use href="#i-x"/></svg></button>
+  </div>
+
+  <!-- ═══ AUDIENCE SECTION ═══ -->
+  <div class="section-label">Audience</div>
+  <div class="audience-row">
+    <div class="audience-select-wrapper">
+      <select class="audience-select" id="audienceSelect" onchange="selectAudience(this.value)"></select>
+      <span class="audience-select-chevron"><svg style="width:14px;height:14px"><use href="#i-chevron-down"/></svg></span>
+    </div>
+    <span class="audience-size-badge" id="audienceSizeBadge"></span>
+  </div>
+  <div class="audience-sub-row">
+    <a class="audience-segments-link" onclick="showSegments()">
+      Select segments
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- ═══ QUESTIONS SECTION ═══ -->
+  <div class="section-label">Questions</div>
+  <div id="questionList"></div>
+  <button class="add-question-btn" id="addBtn" onclick="addNewQuestion()">
+    <svg style="width:14px;height:14px"><use href="#i-plus"/></svg> Add a question
+  </button>
+</div>
+
+<!-- Footer -->
+<div class="footer-bar">
+  <div class="fb-summary" id="footerSummary">
+    <span id="footerText">Add a question and pick an audience to launch</span>
+    <span class="fb-warning" id="footerWarning"></span>
+  </div>
+  <button class="btn-primary" id="launchBtn" disabled onclick="handleLaunch()">Launch Poll</button>
+</div>
+
+<script>
+  // ── SVG helper ──
+  function svg(href, w, h) {
+    return `<svg style="width:${w}px;height:${h}px"><use href="${href}"/></svg>`;
+  }
+
+  // ── Question types ──
+  const questionTypes = [
+    { id: 'single_choice', label: 'Single Choice', icon: '#i-circle' },
+    { id: 'multiple_choice', label: 'Multiple Choice', icon: '#i-list' },
+    { id: 'ranking', label: 'Ranking', icon: '#i-list' },
+    { id: 'open_text', label: 'Open Text', icon: '#i-type' },
+    { id: 'nps', label: 'NPS', icon: '#i-bar-chart' },
+    { id: 'scale', label: 'Scale', icon: '#i-sliders' },
+  ];
+
+  // ── Audiences ──
+  const audiences = [
+    { id: 'uk-pop', name: 'UK Population', desc: 'Nationally representative UK sample', size: 1000 },
+    { id: 'uk-grocery', name: 'UK Grocery Shoppers', desc: 'Regular grocery buyers in the UK', size: 300 },
+    { id: 'us-health', name: 'US Health-Conscious', desc: 'Health-focused consumers in the US', size: 500 },
+    { id: 'uk-young-urban', name: 'UK Young Urban', desc: 'Urban dwellers aged 18–35 in the UK', size: 250 },
+    { id: 'b2b-decision', name: 'B2B Decision Makers', desc: 'Senior business decision makers', size: 200 },
+    { id: 'uk-parents', name: 'UK Parents', desc: 'Parents with children under 16 in the UK', size: 300 },
+  ];
+
+  // ── State ──
+  let questions = [];
+  let editingIndex = -1;
+  let selectedAudience = 'uk-pop'; // Pre-selected default
+  let showErrors = false;
+
+  // ── Init: start with one question open ──
+  function init() {
+    questions.push({
+      text: '', type: 'single_choice', typeLabel: 'Single Choice',
+      config: { options: ['Option 1', 'Option 2', 'Option 3'] }
+    });
+    editingIndex = 0;
+    renderAudienceDropdown();
+    renderQuestions();
+    updateFooter();
+  }
+
+  // ── Render audience dropdown ──
+  function renderAudienceDropdown() {
+    const sel = document.getElementById('audienceSelect');
+    const options = audiences.map(a =>
+      `<option value="${a.id}"${a.id === selectedAudience ? ' selected' : ''}>${a.name}</option>`
+    ).join('');
+    sel.innerHTML = options + `<option value="__new__" disabled style="color:#a1a1aa">────────────</option><option value="__create__">+ Create new audience</option>`;
+    updateAudienceBadge();
+  }
+
+  function updateAudienceBadge() {
+    const aud = audiences.find(a => a.id === selectedAudience);
+    const badge = document.getElementById('audienceSizeBadge');
+    badge.textContent = aud ? `n=${aud.size.toLocaleString()}` : '';
+  }
+
+  function selectAudience(id) {
+    if (id === '__create__') {
+      alert('Open "Create new audience" flow');
+      // Reset dropdown back to previous selection
+      document.getElementById('audienceSelect').value = selectedAudience;
+      return;
+    }
+    selectedAudience = id;
+    updateAudienceBadge();
+    updateFooter();
+  }
+
+  function showSegments() {
+    alert('Open segment selection for the full survey builder');
+  }
+
+  // ── Render questions ──
+  function renderQuestions() {
+    const el = document.getElementById('questionList');
+    let html = '';
+    for (let i = 0; i < questions.length; i++) {
+      if (editingIndex === i) {
+        html += renderEditor(questions[i], i);
+      } else {
+        html += renderCollapsed(questions[i], i);
+      }
+    }
+    el.innerHTML = html;
+    updateFooter();
+  }
+
+  function isIncomplete(q) {
+    if (!q.text.trim()) return true;
+    if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking') {
+      if (!q.config?.options || q.config.options.length === 0) return true;
+      if (q.config.options.some(o => !o.trim())) return true;
+    }
+    return false;
+  }
+
+  function renderCollapsed(q, i) {
+    const t = questionTypes.find(x => x.id === q.type) || { icon: '#i-circle', label: q.typeLabel };
+    const incomplete = isIncomplete(q);
+    const errorClass = showErrors && incomplete ? ' qi-error' : '';
+    const badge = incomplete
+      ? `<span class="qi-incomplete-badge${showErrors ? ' error' : ''}">Incomplete</span>`
+      : '';
+    return `<div class="question-item${errorClass}" onclick="startEdit(${i})">
+      <span class="qi-number">${i + 1}</span>
+      <div class="qi-content">
+        <div class="qi-text">${q.text || '<span style="color:#a1a1aa;font-style:italic">Untitled question</span>'}</div>
+        <div class="qi-meta">
+          <span class="qi-type-badge">${svg(t.icon, 11, 11)} ${t.label}</span>
+          ${badge}
+        </div>
+      </div>
+      <div class="qi-actions">
+        <button class="qi-action-btn delete" onclick="event.stopPropagation();event.preventDefault();removeQuestion(${i});return false;">${svg('#i-trash', 13, 13)}</button>
+      </div>
+      <span class="qi-expand">${svg('#i-chevron-down', 14, 14)}</span>
+    </div>`;
+  }
+
+  function renderEditor(q, index) {
+    const num = index + 1;
+    let chips = questionTypes.map(t =>
+      `<button class="qe-type-chip ${q.type === t.id ? 'active' : ''}" onclick="changeType(${index},'${t.id}','${t.label}')">${svg(t.icon, 13, 13)} ${t.label}</button>`
+    ).join('');
+
+    let cfg = '';
+    if (q.type === 'scale') {
+      const dots = [];
+      for (let n = (q.config?.min || 1); n <= (q.config?.max || 5); n++) dots.push(`<div class="qe-scale-dot">${n}</div>`);
+      cfg = `<div class="qe-field"><div class="qe-field-label">Scale Configuration</div><div class="qe-scale-config"><div class="qe-scale-field"><label>Low label</label><input class="qe-scale-input" value="${q.config?.minLabel || ''}" placeholder="e.g. Not at all" onchange="updateConfig(${index},'minLabel',this.value)"></div><div class="qe-scale-field"><label>High label</label><input class="qe-scale-input" value="${q.config?.maxLabel || ''}" placeholder="e.g. Extremely" onchange="updateConfig(${index},'maxLabel',this.value)"></div></div><div class="qe-scale-preview">${dots.join('')}</div></div>`;
+    } else if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking') {
+      const canRemove = (q.config?.options || []).length > 2;
+      const opts = (q.config?.options || ['']).map((o, oi) =>
+        `<div class="qe-option-row"><span class="qe-option-handle">${svg('#i-grip', 12, 12)}</span><input class="qe-option-input" value="${o}" placeholder="Option ${oi + 1}" onchange="updateOption(${index},${oi},this.value)">${canRemove ? `<button class="qe-option-remove" onclick="removeOption(${index},${oi})">${svg('#i-x', 13, 13)}</button>` : '<span style="width:22px"></span>'}</div>`
+      ).join('');
+      cfg = `<div class="qe-field"><div class="qe-field-label">Answer Options</div>${opts}</div>`;
+    } else if (q.type === 'nps') {
+      const boxes = [];
+      for (let n = 0; n <= 10; n++) { let c = n <= 6 ? 'detractor' : n <= 8 ? 'passive' : 'promoter'; boxes.push(`<div class="qe-nps-box ${c}">${n}</div>`); }
+      cfg = `<div class="qe-field"><div class="qe-field-label">NPS Scale (0–10)</div><div class="qe-nps-preview">${boxes.join('')}</div><div class="qe-nps-labels"><span>Not at all likely</span><span>Extremely likely</span></div></div>`;
+    } else if (q.type === 'open_text') {
+      cfg = `<div class="qe-field"><div class="qe-open-text-note">Respondents will see a free-text input. Responses are analyzed to identify themes and sentiment.</div></div>`;
+    }
+
+    const needsAddOption = q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking';
+    const addOptBtn = needsAddOption ? `<button class="qe-add-option" onclick="addOption(${index})">${svg('#i-plus', 12, 12)} Add option</button>` : '';
+
+    return `<div class="question-editor"><div class="qe-header"><div class="qe-header-left"><span class="qe-number">${num}</span><span class="qe-title">Question ${num}</span></div><button class="qe-close" onclick="closeEditor()">${svg('#i-chevron-up', 14, 14)}</button></div><div class="qe-type-selector"><div class="qe-type-label">Question Type</div><div class="qe-type-chips">${chips}</div></div><div class="qe-field"><div class="qe-field-label">Question Text</div><input class="qe-text-input" value="${q.text}" placeholder="e.g. How satisfied are you with our service?" oninput="updateText(${index},this.value)"></div>${cfg}<div class="qe-done-row"><button class="qe-btn-done" onclick="closeEditor()">Done</button></div></div>${addOptBtn}`;
+  }
+
+  // ── Actions ──
+  function startEdit(i) {
+    if (editingIndex >= 0) closeEditor();
+    editingIndex = i;
+    renderQuestions();
+  }
+
+  function closeEditor() {
+    editingIndex = -1;
+    renderQuestions();
+  }
+
+  function addNewQuestion() {
+    if (editingIndex >= 0) closeEditor();
+    questions.push({
+      text: '', type: 'single_choice', typeLabel: 'Single Choice',
+      config: { options: ['Option 1', 'Option 2', 'Option 3'] }
+    });
+    editingIndex = questions.length - 1;
+    renderQuestions();
+  }
+
+  function removeQuestion(i) {
+    const q = questions[i];
+    if (!q) return;
+    const textFilled = q.text && q.text.trim().length > 0;
+    const optionsFilled = Array.isArray(q.config?.options) && q.config.options.some(function(o) {
+      return o && o.trim() && o !== 'Option 1' && o !== 'Option 2' && o !== 'Option 3';
+    });
+    const hasContent = textFilled || optionsFilled;
+    if (hasContent) {
+      if (!confirm('Delete this question? This cannot be undone.')) return;
+    }
+    questions.splice(i, 1);
+    if (editingIndex === i) editingIndex = -1;
+    else if (editingIndex > i) editingIndex--;
+    // If no questions left, add an empty one
+    if (questions.length === 0) {
+      questions.push({
+        text: '', type: 'single_choice', typeLabel: 'Single Choice',
+        config: { options: ['Option 1', 'Option 2', 'Option 3'] }
+      });
+      editingIndex = 0;
+    }
+    renderQuestions();
+  }
+
+  function updateText(i, val) { questions[i].text = val; updateFooter(); }
+
+  function changeType(i, tid, tl) {
+    const t = questions[i]; t.type = tid; t.typeLabel = tl;
+    if (tid === 'scale') t.config = { min: 1, max: 5, minLabel: '', maxLabel: '' };
+    else if (tid === 'single_choice' || tid === 'multiple_choice' || tid === 'ranking') t.config = { options: ['Option 1', 'Option 2', 'Option 3'] };
+    else if (tid === 'nps') t.config = {};
+    else t.config = {};
+    renderQuestions();
+  }
+
+  function updateConfig(i, key, val) { questions[i].config[key] = val; }
+  function updateOption(i, oi, val) { questions[i].config.options[oi] = val; updateFooter(); }
+  function addOption(i) {
+    questions[i].config.options.push('');
+    renderQuestions();
+  }
+  function removeOption(i, oi) {
+    if (questions[i].config.options.length <= 2) return;
+    questions[i].config.options.splice(oi, 1);
+    renderQuestions();
+  }
+
+  // ── Footer ──
+  function updateFooter() {
+    const qCount = questions.length;
+    const validQs = questions.filter(q => !isIncomplete(q)).length;
+    const aud = selectedAudience ? audiences.find(a => a.id === selectedAudience) : null;
+    const btn = document.getElementById('launchBtn');
+    const text = document.getElementById('footerText');
+    const warning = document.getElementById('footerWarning');
+
+    if (validQs === 0) {
+      text.innerHTML = `<strong>${aud.name}</strong> <span class="fb-dot">·</span> n=${aud.size.toLocaleString()} <span class="fb-dot">·</span> Complete your first question to launch`;
+      btn.disabled = true;
+      warning.style.display = 'none';
+    } else {
+      text.innerHTML = `<strong>${aud.name}</strong> <span class="fb-dot">·</span> n=${aud.size.toLocaleString()} <span class="fb-dot">·</span> <strong>${validQs}</strong> question${validQs !== 1 ? 's' : ''}`;
+      const allComplete = qCount === validQs;
+      btn.disabled = !allComplete;
+      if (!allComplete) {
+        warning.textContent = `· ${qCount - validQs} incomplete`;
+        warning.style.display = 'inline';
+      } else {
+        warning.style.display = 'none';
+      }
+    }
+  }
+
+  function handleLaunch() {
+    const incompleteCount = questions.filter(q => isIncomplete(q)).length;
+    if (incompleteCount > 0) {
+      showErrors = true;
+      renderQuestions();
+      const first = document.querySelector('.qi-error');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    showErrors = false;
+    const aud = audiences.find(a => a.id === selectedAudience);
+    alert(`Launching poll with ${questions.length} questions to ${aud.name} (n=${aud.size})`);
+  }
+
+  // Go
+  init();
+</script>
+</body>
+</html>

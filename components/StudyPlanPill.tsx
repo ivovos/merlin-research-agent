@@ -1,15 +1,8 @@
 import React from 'react';
-import { ClipboardList, Users, MessageSquare, BarChart3, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StudyPlan } from '@/types';
-
-// Icon mapping for methods
-const methodIcons: Record<string, React.ElementType> = {
-  'explore-audience': BarChart3,
-  'survey': ClipboardList,
-  'focus-group': Users,
-  'message-testing': MessageSquare,
-};
+import { METHOD_ICONS } from '@/lib/methodIcons';
 
 interface StudyPlanPillProps {
   studyPlan: StudyPlan;
@@ -25,7 +18,7 @@ export const StudyPlanPill: React.FC<StudyPlanPillProps> = ({
   className,
   showEdit = true,
 }) => {
-  const Icon = methodIcons[studyPlan.methodId] || Settings2;
+  const Icon = METHOD_ICONS[studyPlan.methodId] || Settings2;
 
   // Build display text
   const displayText = studyPlan.variantName
