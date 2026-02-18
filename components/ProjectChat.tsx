@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { FindingsProvider } from '@/hooks/useFindingsStore'
 import type { ProjectState, ChatMessage, ChatMessagePlan, Finding, Survey, ProcessStep } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import type { PickerMethod } from '@/components/chat/MethodsPicker'
@@ -551,59 +552,61 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   }, [])
 
   return (
-    <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-      {/* Header — full width */}
-      <header className="flex items-center gap-3 h-14 px-6 border-b bg-background flex-shrink-0 w-full">
-        <h1 className="text-sm font-semibold truncate flex-1">{project.name}</h1>
-        <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-          <SquareArrowOutUpRight className="w-3.5 h-3.5" />
-          Share
-        </Button>
-      </header>
+    <FindingsProvider>
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Header — full width */}
+        <header className="flex items-center gap-3 h-14 px-6 border-b bg-background flex-shrink-0 w-full">
+          <h1 className="text-sm font-semibold truncate flex-1">{project.name}</h1>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+            <SquareArrowOutUpRight className="w-3.5 h-3.5" />
+            Share
+          </Button>
+        </header>
 
-      {/* Chat stream */}
-      <ChatStream
-        messages={project.messages}
-        onSendMessage={startSimulation}
-        onSelectMethod={handleSelectMethod}
-        onAddAudience={() => {} /* picker handles display */}
-        onOpenPlan={handleOpenPlan}
-        onApprovePlan={handleApprovePlan}
-        onReviewPlan={handleReviewPlan}
-        processing={processing}
-        brand={project.brand}
-      />
-
-      {/* Builder overlay */}
-      {showBuilder && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <SurveyBuilder
-            onClose={() => { setShowBuilder(false); setEditingStudy(undefined) }}
-            onLaunch={handleBuilderLaunch}
-            initialStudy={editingStudy}
-          />
-        </div>
-      )}
-
-      {/* Quick Poll overlay */}
-      {showQuickPoll && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <QuickPollPage
-            onClose={() => setShowQuickPoll(false)}
-            onLaunch={handleQuickPollLaunch}
-          />
-        </div>
-      )}
-
-      {/* Study plan overlay */}
-      {planStudy && (
-        <StudyPlanOverlay
-          study={planStudy}
-          onClose={handleClosePlanOverlay}
-          onEdit={handleEditStudy}
-          onSaveAsTemplate={handleSaveAsTemplate}
+        {/* Chat stream */}
+        <ChatStream
+          messages={project.messages}
+          onSendMessage={startSimulation}
+          onSelectMethod={handleSelectMethod}
+          onAddAudience={() => {} /* picker handles display */}
+          onOpenPlan={handleOpenPlan}
+          onApprovePlan={handleApprovePlan}
+          onReviewPlan={handleReviewPlan}
+          processing={processing}
+          brand={project.brand}
         />
-      )}
-    </div>
+
+        {/* Builder overlay */}
+        {showBuilder && (
+          <div className="fixed inset-0 z-50 bg-background">
+            <SurveyBuilder
+              onClose={() => { setShowBuilder(false); setEditingStudy(undefined) }}
+              onLaunch={handleBuilderLaunch}
+              initialStudy={editingStudy}
+            />
+          </div>
+        )}
+
+        {/* Quick Poll overlay */}
+        {showQuickPoll && (
+          <div className="fixed inset-0 z-50 bg-background">
+            <QuickPollPage
+              onClose={() => setShowQuickPoll(false)}
+              onLaunch={handleQuickPollLaunch}
+            />
+          </div>
+        )}
+
+        {/* Study plan overlay */}
+        {planStudy && (
+          <StudyPlanOverlay
+            study={planStudy}
+            onClose={handleClosePlanOverlay}
+            onEdit={handleEditStudy}
+            onSaveAsTemplate={handleSaveAsTemplate}
+          />
+        )}
+      </div>
+    </FindingsProvider>
   )
 }

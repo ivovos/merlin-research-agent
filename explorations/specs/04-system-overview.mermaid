@@ -1,0 +1,65 @@
+---
+title: Electric Twin — System Overview
+---
+
+flowchart TD
+    subgraph STUDY["Study (= Chat)"]
+        direction TB
+        RQ["Research Question"]
+        RQ --> M1["Method: Survey"]
+        RQ --> M2["Method: Interviews"]
+        RQ --> M3["Method: Focus Group"]
+
+        M1 --> DC1["Data Card\n(raw, immutable)\n🔖 Save · ↗ Share"]
+        M2 --> DC2["Data Card\n(raw, immutable)\n🔖 Save · ↗ Share"]
+        M3 --> DC3["Data Card\n(raw, immutable)\n🔖 Save · ↗ Share"]
+
+        DC1 --> AI1["AI Interpretation\n(provisional, challengeable)\n🔖 Save · ↗ Share"]
+        DC2 --> AI2["AI Interpretation\n(provisional, challengeable)\n🔖 Save · ↗ Share"]
+        DC3 --> AI3["AI Interpretation\n(provisional, challengeable)\n🔖 Save · ↗ Share"]
+    end
+
+    subgraph FINDINGS["Findings (🔖 badge → popover)"]
+        direction TB
+        F1["Finding 1\nEditable · Shareable"]
+        F2["Finding 2\nEditable · Shareable"]
+        F3["Finding 3\nEditable · Shareable"]
+    end
+
+    DC1 -->|"🔖 Bookmark\non data card"| F1
+    AI1 -.->|"💡 AI suggests"| F1
+    AI2 -.->|"Ask in chat"| F2
+    DC3 -->|"🔖 Bookmark\non data card"| F3
+
+    F1 -->|"Compose"| R1["Report A\n(Exec Summary)"]
+    F2 -->|"Compose"| R1
+    F2 -->|"Compose"| R2["Report B\n(Research Readout)"]
+    F3 -->|"Compose"| R2
+
+    subgraph SHARE["Inline Sharing (↗ from anywhere)"]
+        direction TB
+        S1["Snapshot\n(read-only finding/report)"]
+        S2["With Context\n(+ view conversation)"]
+        S3["Full Handoff\n(continue the study)"]
+    end
+
+    DC1 -.->|"↗ Share\nraw data"| S1
+    F1 -.->|"↗ Share"| S1
+    R1 -.->|"↗ Share"| S1
+    R2 -.->|"↗ Share"| S2
+    STUDY -.->|"Share study"| S3
+
+    subgraph LABELS["Labels (cross-cutting)"]
+        L1["Onboarding"]
+        L2["Enterprise"]
+        L3["Q1 Priorities"]
+    end
+
+    LABELS -.-> STUDY
+    LABELS -.-> F1
+    LABELS -.-> R1
+
+    style STUDY fill:#f0f4ff,stroke:#4a6fa5
+    style FINDINGS fill:#f0fff4,stroke:#27ae60
+    style SHARE fill:#fff4f0,stroke:#c46a3a
+    style LABELS fill:#f0fff4,stroke:#3ac46a

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ET – Define Your Questions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fff;
+    color: #09090b;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Config bar ── */
+  .config-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #09090b; color: #fafafa;
+    padding: 8px 24px;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    font-size: 12px;
+    border-bottom: 1px solid #27272a;
+  }
+
+  .config-bar .config-label {
+    color: #71717a; text-transform: uppercase; letter-spacing: 0.6px; font-size: 10px; font-weight: 500;
+  }
+
+  .config-bar .config-toggle {
+    display: flex; background: #27272a; border-radius: 6px; padding: 2px; gap: 1px;
+  }
+
+  .config-bar .config-opt {
+    padding: 5px 12px; border: none; background: transparent;
+    border-radius: 4px; font-size: 11.5px; font-weight: 500;
+    color: #71717a; cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .config-bar .config-opt.active { background: #fafafa; color: #09090b; }
+  .config-bar .config-opt:hover:not(.active) { color: #a1a1aa; }
+
+  .config-bar .config-divider { width: 1px; height: 16px; background: #27272a; }
+  .config-bar .config-mode-desc { color: #52525b; font-size: 11px; font-weight: 400; }
+
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 24px 100px;
+  }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .page-header p { font-size: 13.5px; color: #71717a; }
+
+  /* ── Segmented Control ── */
+  .method-tabs {
+    display: inline-flex; background: #f4f4f5; border-radius: 8px;
+    padding: 3px; margin-bottom: 24px; gap: 1px;
+    border: 1px solid #e4e4e7;
+  }
+
+  .method-tab {
+    padding: 7px 14px; border: none; background: transparent;
+    border-radius: 6px; font-size: 13px; font-weight: 500; color: #71717a;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    font-family: inherit;
+  }
+
+  .method-tab:hover { color: #3f3f46; }
+
+  .method-tab.active {
+    background: #fff; color: #09090b;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .method-tab svg { width: 14px; height: 14px; stroke-width: 2; }
+
+  /* ── Panels ── */
+  .method-panel { display: none; animation: fadeIn 0.2s ease; }
+  .method-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Import panel ── */
+  .import-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
+
+  .import-toggle-btn {
+    padding: 6px 12px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12.5px; font-weight: 500; color: #71717a;
+    cursor: pointer; transition: all 0.12s; font-family: inherit;
+  }
+
+  .import-toggle-btn.active { border-color: #09090b; color: #09090b; }
+  .import-toggle-btn:hover:not(.active) { border-color: #a1a1aa; }
+
+  .import-content { display: none; }
+  .import-content.active { display: block; }
+
+  .drop-zone {
+    border: 1px dashed #d4d4d8; border-radius: 8px; padding: 36px 24px;
+    text-align: center; background: #fafafa; transition: all 0.15s; cursor: pointer;
+  }
+
+  .drop-zone:hover { border-color: #a1a1aa; background: #f4f4f5; }
+  .drop-zone .dz-icon { margin-bottom: 8px; color: #a1a1aa; }
+  .drop-zone .dz-icon svg { width: 28px; height: 28px; stroke-width: 1.5; }
+  .drop-zone .dz-title { font-size: 13.5px; font-weight: 500; color: #3f3f46; margin-bottom: 3px; }
+  .drop-zone .dz-sub { font-size: 12px; color: #a1a1aa; }
+
+  .uploaded-file {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid #e4e4e7; border-radius: 8px; padding: 12px 14px; background: #fafafa;
+  }
+
+  .uploaded-file .uf-icon { color: #71717a; }
+  .uploaded-file .uf-icon svg { width: 18px; height: 18px; }
+  .uploaded-file .uf-info { flex: 1; }
+  .uploaded-file .uf-name { font-size: 13px; font-weight: 500; color: #09090b; }
+  .uploaded-file .uf-size { font-size: 11.5px; color: #a1a1aa; }
+  .uploaded-file .uf-remove {
+    background: none; border: none; color: #a1a1aa; cursor: pointer;
+    padding: 4px; border-radius: 4px; display: flex;
+  }
+  .uploaded-file .uf-remove:hover { color: #ef4444; background: #fef2f2; }
+  .uploaded-file .uf-remove svg { width: 14px; height: 14px; }
+
+  .paste-area {
+    width: 100%; min-height: 120px; border: 1px solid #e4e4e7; border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; font-family: inherit; color: #09090b;
+    resize: vertical; background: #fff; transition: border-color 0.12s;
+    line-height: 1.5;
+  }
+
+  .paste-area:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .paste-area::placeholder { color: #a1a1aa; }
+
+  .extract-btn {
+    margin-top: 14px; padding: 8px 16px; background: #09090b; color: #fafafa;
+    border: none; border-radius: 6px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background 0.12s; font-family: inherit;
+  }
+
+  .extract-btn:hover { background: #27272a; }
+
+  .import-source-collapsed {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    background: #fafafa; border: 1px solid #e4e4e7; border-radius: 6px; margin-bottom: 16px;
+  }
+
+  .import-source-collapsed .isc-icon { color: #a1a1aa; display: flex; }
+  .import-source-collapsed .isc-icon svg { width: 14px; height: 14px; }
+  .import-source-collapsed .isc-text { flex: 1; font-size: 12px; color: #71717a; }
+  .import-source-collapsed .isc-change {
+    font-size: 12px; color: #09090b; background: none; border: none;
+    cursor: pointer; font-weight: 500; font-family: inherit; text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* ── Templates panel ── */
+  .template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .template-card {
+    background: #fff; border: 1px solid #e4e4e7; border-radius: 8px;
+    padding: 14px 16px; cursor: pointer; transition: all 0.12s;
+  }
+
+  .template-card:hover { border-color: #a1a1aa; }
+  .template-card.selected { border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+
+  .template-card .tc-icon {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: #f4f4f5; border: 1px solid #e4e4e7;
+    display: flex; align-items: center; justify-content: center;
+    color: #52525b; margin-bottom: 10px;
+  }
+
+  .template-card .tc-icon svg { width: 15px; height: 15px; stroke-width: 1.75; }
+  .template-card.selected .tc-icon { background: #09090b; border-color: #09090b; color: #fafafa; }
+
+  .template-card .tc-name {
+    font-size: 13px; font-weight: 600; margin-bottom: 3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .template-card .tc-badge {
+    font-size: 10.5px; background: #f4f4f5; color: #52525b;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  }
+
+  .template-card.selected .tc-badge { background: #27272a; color: #d4d4d8; }
+
+  .template-card .tc-desc { font-size: 12px; color: #71717a; line-height: 1.4; }
+
+  /* ── Divider ── */
+  .section-divider { border: none; border-top: 1px solid #e4e4e7; margin: 28px 0 20px; }
+
+  /* ── Questions section ── */
+  .questions-section { transition: opacity 0.2s; }
+  .questions-section.hidden { display: none; }
+  .questions-section h2 { font-size: 14px; font-weight: 600; margin-bottom: 2px; letter-spacing: -0.2px; }
+  .questions-section .qs-sub { font-size: 12.5px; color: #a1a1aa; margin-bottom: 14px; }
+
+  .question-list { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── Collapsed card ── */
+  .question-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #fff; border: 1px solid #e4e4e7;
+    border-radius: 8px; padding: 12px 14px;
+    transition: border-color 0.12s; cursor: pointer;
+  }
+
+  .question-item:hover { border-color: #a1a1aa; }
+  .question-item.qi-error { border-color: #fca5a5; background: #fef2f2; opacity: 1; }
+
+  .qi-number {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: #f4f4f5; color: #52525b;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  .qi-content { flex: 1; }
+  .qi-text { font-size: 13px; font-weight: 500; color: #09090b; margin-bottom: 3px; }
+  .qi-meta { display: flex; align-items: center; gap: 6px; }
+  .qi-type-badge {
+    font-size: 10.5px; background: #f4f4f5; color: #71717a;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  }
+
+  .qi-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.12s; }
+  .question-item:hover .qi-actions { opacity: 1; }
+
+  .qi-action-btn {
+    width: 26px; height: 26px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 4px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #a1a1aa; transition: all 0.1s;
+  }
+
+  .qi-action-btn svg { width: 13px; height: 13px; }
+  .qi-action-btn:hover { border-color: #a1a1aa; color: #3f3f46; }
+  .qi-action-btn.delete:hover { border-color: #fca5a5; color: #ef4444; background: #fef2f2; }
+
+  .qi-drag { cursor: grab; color: #d4d4d8; display: flex; margin-top: 2px; }
+  .qi-drag svg { width: 14px; height: 14px; }
+
+  .qi-expand { color: #a1a1aa; display: flex; align-items: center; flex-shrink: 0; margin-top: 2px; }
+  .qi-expand svg { width: 14px; height: 14px; }
+
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; background: #f4f4f5; color: #71717a;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500; margin-left: 4px;
+  }
+
+  .qi-incomplete-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; background: #fefce8; color: #a16207; border: 1px solid #fef08a;
+    padding: 1px 6px; border-radius: 4px; font-weight: 500;
+  }
+
+  .qi-incomplete-badge.error {
+    background: #fef2f2; color: #dc2626; border-color: #fecaca;
+  }
+
+  /* ── Editor (shared between inline & lightbox) ── */
+  .question-editor {
+    background: #fff; border: 1px solid #d4d4d8;
+    border-radius: 8px; padding: 18px;
+    animation: editorIn 0.15s ease;
+  }
+
+  @keyframes editorIn {
+    from { opacity: 0; transform: scale(0.99); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .qe-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .qe-header-left { display: flex; align-items: center; gap: 8px; }
+
+  .qe-number {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: #09090b; color: #fafafa;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .qe-title { font-size: 13px; font-weight: 600; color: #09090b; }
+
+  .qe-close {
+    width: 26px; height: 26px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 4px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: #a1a1aa;
+  }
+  .qe-close svg { width: 14px; height: 14px; }
+  .qe-close:hover { border-color: #a1a1aa; color: #3f3f46; background: #f4f4f5; }
+
+  .qe-type-selector { margin-bottom: 14px; }
+
+  .qe-type-label {
+    font-size: 11px; font-weight: 500; color: #71717a;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+  }
+
+  .qe-type-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .qe-type-chip {
+    padding: 5px 10px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12px; font-weight: 500; color: #71717a;
+    cursor: pointer; transition: all 0.1s; font-family: inherit;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .qe-type-chip:hover { border-color: #a1a1aa; color: #3f3f46; }
+  .qe-type-chip.active { border-color: #09090b; color: #09090b; background: #f4f4f5; }
+  .qe-type-chip svg { width: 13px; height: 13px; }
+
+  .qe-field { margin-bottom: 14px; }
+
+  .qe-field-label {
+    font-size: 11px; font-weight: 500; color: #71717a;
+    text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px;
+  }
+
+  .qe-text-input {
+    width: 100%; padding: 9px 12px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 13.5px; font-family: inherit; color: #09090b;
+    transition: border-color 0.12s;
+  }
+
+  .qe-text-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .qe-text-input::placeholder { color: #a1a1aa; }
+
+  .qe-option-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .qe-option-handle { color: #d4d4d8; display: flex; cursor: grab; }
+  .qe-option-handle svg { width: 12px; height: 12px; }
+
+  .qe-option-input {
+    flex: 1; padding: 7px 10px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12.5px; font-family: inherit; color: #09090b;
+  }
+
+  .qe-option-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+
+  .qe-option-remove {
+    width: 22px; height: 22px; border: none; background: none;
+    color: #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+  }
+
+  .qe-option-remove svg { width: 13px; height: 13px; }
+  .qe-option-remove:hover { color: #ef4444; background: #fef2f2; }
+
+  .qe-add-option {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 6px;
+    padding: 5px 10px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 11.5px; font-weight: 500; color: #a1a1aa;
+    cursor: pointer; transition: all 0.1s; font-family: inherit;
+  }
+
+  .qe-add-option:hover { border-color: #a1a1aa; color: #3f3f46; background: #fafafa; }
+
+  .qe-scale-config { display: flex; gap: 12px; }
+  .qe-scale-field { flex: 1; }
+  .qe-scale-field label { display: block; font-size: 11px; color: #71717a; margin-bottom: 4px; font-weight: 500; }
+
+  .qe-scale-input {
+    width: 100%; padding: 7px 10px; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12.5px; font-family: inherit; color: #09090b;
+  }
+
+  .qe-scale-input:focus { outline: none; border-color: #09090b; box-shadow: 0 0 0 1px #09090b; }
+  .qe-scale-preview { display: flex; gap: 4px; margin-top: 8px; }
+
+  .qe-scale-dot {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid #e4e4e7; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #52525b; font-weight: 500;
+  }
+
+  .qe-open-text-note {
+    padding: 10px 12px; background: #fafafa; border: 1px solid #e4e4e7;
+    border-radius: 6px; font-size: 12px; color: #71717a; line-height: 1.5;
+  }
+
+  .qe-nps-preview { display: flex; gap: 2px; margin-top: 6px; }
+
+  .qe-nps-box {
+    width: 26px; height: 26px; border-radius: 4px;
+    border: 1px solid #e4e4e7; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; color: #71717a; font-weight: 500;
+  }
+
+  .qe-nps-box.detractor { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .qe-nps-box.passive { background: #fefce8; border-color: #fef08a; color: #854d0e; }
+  .qe-nps-box.promoter { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+  .qe-nps-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .qe-nps-labels span { font-size: 10px; color: #a1a1aa; }
+
+  .qe-error {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px; background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 6px; font-size: 12px; color: #991b1b; font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .qe-error svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .qe-done-row {
+    display: flex; justify-content: flex-end;
+    padding-top: 12px; margin-top: 4px;
+  }
+
+  .qe-btn-done {
+    padding: 5px 12px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12px; font-weight: 500; color: #3f3f46;
+    cursor: pointer; font-family: inherit; transition: all 0.1s;
+  }
+
+  .qe-btn-done:hover { background: #f4f4f5; border-color: #a1a1aa; }
+
+  .add-question-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin-top: 12px;
+    padding: 10px 16px; border: 1px solid #e4e4e7; border-radius: 8px;
+    background: #fff; font-size: 13px; font-weight: 500;
+    color: #3f3f46; cursor: pointer; transition: all 0.12s; font-family: inherit;
+  }
+
+  .add-question-btn:hover { border-color: #a1a1aa; background: #f4f4f5; }
+  .add-question-btn svg { color: #a1a1aa; }
+
+  /* ── Lightbox ── */
+  .lightbox-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 900;
+    display: flex; align-items: center; justify-content: center;
+    animation: overlayIn 0.15s ease;
+    backdrop-filter: blur(3px);
+  }
+
+  @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .lightbox-panel {
+    background: #fff; border-radius: 12px;
+    width: 540px; max-height: 85vh;
+    overflow-y: auto; padding: 24px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+    animation: panelIn 0.2s ease;
+    border: 1px solid #e4e4e7;
+  }
+
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .lightbox-panel .qe-header { margin-bottom: 18px; }
+  .lightbox-panel .qe-number { width: 24px; height: 24px; }
+  .lightbox-panel .qe-title { font-size: 14px; }
+  .lightbox-panel .qe-close { width: 28px; height: 28px; }
+  .lightbox-panel .qe-text-input { padding: 10px 14px; font-size: 14px; }
+  .lightbox-panel .qe-field { margin-bottom: 18px; }
+  /* ── Footer ── */
+  .footer-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #e4e4e7;
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 100;
+  }
+
+  .footer-bar .fb-count { font-size: 12.5px; color: #71717a; }
+  .footer-bar .fb-count strong { color: #09090b; }
+  .footer-actions { display: flex; gap: 8px; }
+
+  .btn-secondary {
+    padding: 7px 14px; border: 1px solid #e4e4e7; background: #fff;
+    border-radius: 6px; font-size: 12.5px; font-weight: 500; color: #3f3f46;
+    cursor: pointer; font-family: inherit;
+  }
+
+  .btn-primary {
+    padding: 7px 18px; border: none; background: #09090b; color: #fafafa;
+    border-radius: 6px; font-size: 12.5px; font-weight: 500; cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-primary:hover { background: #27272a; }
+  .btn-primary:disabled { background: #d4d4d8; color: #a1a1aa; cursor: not-allowed; }
+  .btn-secondary:hover { background: #f4f4f5; }
+
+  /* ── Loading ── */
+  .extracting-state {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 24px; text-align: center;
+  }
+
+  .spinner {
+    width: 24px; height: 24px; border: 2px solid #e4e4e7;
+    border-top-color: #09090b; border-radius: 50%;
+    animation: spin 0.6s linear infinite; margin-bottom: 10px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .extracting-state .ext-text { font-size: 13px; color: #3f3f46; font-weight: 500; }
+  .extracting-state .ext-sub { font-size: 12px; color: #a1a1aa; margin-top: 3px; }
+
+  /* SVG icon inline helpers */
+  .icon { display: inline-flex; align-items: center; }
+</style>
+</head>
+<body>
+
+<!-- SVG sprite (hidden) -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></symbol>
+  <symbol id="i-layout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></symbol>
+  <symbol id="i-bar-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+  <symbol id="i-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+</svg>
+
+<!-- Config Bar -->
+<div class="config-bar">
+  <span class="config-label">Editor mode</span>
+  <div class="config-toggle">
+    <button class="config-opt active" onclick="setEditorMode('inline')">Inline</button>
+    <button class="config-opt" onclick="setEditorMode('lightbox')">Lightbox</button>
+  </div>
+  <div class="config-divider"></div>
+  <span class="config-mode-desc" id="modeDesc">Expands in-place within the list</span>
+</div>
+
+<!-- Lightbox -->
+<div id="lightboxOverlay" class="lightbox-overlay" style="display:none;" onclick="lightboxBackdropClick(event)">
+  <div class="lightbox-panel" id="lightboxPanel"></div>
+</div>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Define Your Questions</h1>
+    <p>Import from your brief, use a template, or build from scratch.</p>
+  </div>
+
+  <div class="method-tabs">
+    <button class="method-tab active" data-tab="import">
+      <svg><use href="#i-file-text"/></svg> Import from Brief
+    </button>
+    <button class="method-tab" data-tab="templates">
+      <svg><use href="#i-layout"/></svg> Templates
+    </button>
+    <button class="method-tab" data-tab="scratch">
+      <svg><use href="#i-edit"/></svg> From Scratch
+    </button>
+  </div>
+
+  <!-- Import -->
+  <div class="method-panel active" id="panel-import">
+    <div id="importInput">
+      <div class="import-toggle">
+        <button class="import-toggle-btn active" data-import="upload">Upload file</button>
+        <button class="import-toggle-btn" data-import="paste">Paste text</button>
+      </div>
+      <div class="import-content active" id="import-upload">
+        <div id="uploadDropZone">
+          <div class="drop-zone" onclick="simulateFileUpload()">
+            <div class="dz-icon"><svg style="width:28px;height:28px"><use href="#i-upload"/></svg></div>
+            <div class="dz-title">Drop your brief, survey, or document here</div>
+            <div class="dz-sub">PDF, DOCX, TXT — or click to browse</div>
+          </div>
+        </div>
+        <div id="uploadedFileState" style="display:none;">
+          <div class="uploaded-file">
+            <span class="uf-icon"><svg style="width:18px;height:18px"><use href="#i-file-text"/></svg></span>
+            <div class="uf-info">
+              <div class="uf-name">Brand_Concept_Brief_v3.pdf</div>
+              <div class="uf-size">142 KB</div>
+            </div>
+            <button class="uf-remove" onclick="removeFile()"><svg style="width:14px;height:14px"><use href="#i-x"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="import-content" id="import-paste">
+        <textarea class="paste-area" placeholder="Paste your questions, brief, or survey content here..."></textarea>
+      </div>
+      <button class="extract-btn" onclick="startExtraction()">Extract Questions</button>
+    </div>
+    <div id="importExtracting" style="display:none;">
+      <div class="extracting-state">
+        <div class="spinner"></div>
+        <div class="ext-text">Extracting questions from your brief...</div>
+        <div class="ext-sub">This usually takes a few seconds</div>
+      </div>
+    </div>
+    <div id="importCollapsed" style="display:none;">
+      <div class="import-source-collapsed">
+        <span class="isc-icon"><svg style="width:14px;height:14px"><use href="#i-file-text"/></svg></span>
+        <span class="isc-text" id="importSourceLabel">Imported from Brand_Concept_Brief_v3.pdf</span>
+        <button class="isc-change" onclick="resetImport()">Change source</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates -->
+  <div class="method-panel" id="panel-templates">
+    <div id="templateGrid" class="template-grid">
+      <div class="template-card" onclick="loadTemplate('concept', this)">
+        <div class="tc-icon"><svg><use href="#i-clipboard"/></svg></div>
+        <div class="tc-name">Standard Concept Test <span class="tc-badge">5 Qs</span></div>
+        <div class="tc-desc">Purchase intent, appeal, uniqueness, relevance, and value perception.</div>
+      </div>
+      <div class="template-card" onclick="loadTemplate('brand', this)">
+        <div class="tc-icon"><svg><use href="#i-heart"/></svg></div>
+        <div class="tc-name">Quick Brand Pulse <span class="tc-badge">3 Qs</span></div>
+        <div class="tc-desc">Awareness, consideration, and brand sentiment.</div>
+      </div>
+      <div class="template-card" onclick="loadTemplate('csat', this)">
+        <div class="tc-icon"><svg><use href="#i-smile"/></svg></div>
+        <div class="tc-name">Customer Satisfaction <span class="tc-badge">4 Qs</span></div>
+        <div class="tc-desc">Overall satisfaction, NPS, effort score, and open feedback.</div>
+      </div>
+      <div class="template-card" onclick="loadTemplate('pricing', this)">
+        <div class="tc-icon"><svg><use href="#i-dollar"/></svg></div>
+        <div class="tc-name">Pricing Sensitivity <span class="tc-badge">4 Qs</span></div>
+        <div class="tc-desc">Van Westendorp price points and willingness to pay.</div>
+      </div>
+    </div>
+    <div id="templateCollapsed" style="display:none;">
+      <div class="import-source-collapsed">
+        <span class="isc-icon"><svg style="width:14px;height:14px"><use href="#i-layout"/></svg></span>
+        <span class="isc-text" id="templateSourceLabel">Using Standard Concept Test</span>
+        <button class="isc-change" onclick="resetTemplate()">Change template</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="method-panel" id="panel-scratch"></div>
+
+  <hr class="section-divider" id="divider">
+  <div class="questions-section" id="questionsSection">
+    <h2>Your Questions</h2>
+    <p class="qs-sub" id="qsSub">Add questions one at a time below.</p>
+    <div class="question-list" id="questionList"></div>
+    <button class="add-question-btn" id="addBtn" onclick="addNewQuestion()">
+      <svg style="width:14px;height:14px"><use href="#i-plus"/></svg> Add a question
+    </button>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <div class="fb-count"><strong id="qCount">0</strong> questions <span id="footerWarning" style="color:#dc2626;font-size:12px;margin-left:8px;display:none"></span></div>
+  <div class="footer-actions">
+    <button class="btn-secondary">Preview</button>
+    <button class="btn-primary" id="continueBtn" disabled onclick="handleContinue()">Continue</button>
+  </div>
+</div>
+
+<script>
+  let questions = [];
+  let currentTab = 'import';
+  let fileUploaded = false;
+  let hasExtracted = false;
+  let editingIndex = -1;
+  let editorMode = 'inline';
+  let showErrors = false;
+
+  const questionTypes = [
+    { id: 'single_choice', label: 'Single Choice', icon: '#i-circle' },
+    { id: 'multiple_choice', label: 'Multiple Choice', icon: '#i-list' },
+    { id: 'ranking', label: 'Ranking', icon: '#i-list' },
+    { id: 'open_text', label: 'Open Text', icon: '#i-type' },
+    { id: 'nps', label: 'NPS', icon: '#i-bar-chart' },
+    { id: 'scale', label: 'Scale', icon: '#i-sliders' },
+  ];
+
+  function svg(id, w=13, h=13) {
+    return `<svg style="width:${w}px;height:${h}px"><use href="${id}"/></svg>`;
+  }
+
+  function setEditorMode(mode) {
+    editorMode = mode;
+    document.querySelectorAll('.config-opt').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.config-opt[onclick="setEditorMode('${mode}')"]`).classList.add('active');
+    document.getElementById('modeDesc').textContent =
+      mode === 'inline' ? 'Expands in-place within the list' : 'Opens in a centered modal';
+    editingIndex = -1; closeLightbox(); renderQuestions();
+  }
+
+  document.querySelectorAll('.method-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const t = tab.dataset.tab;
+      if (t === currentTab) return;
+      document.querySelectorAll('.method-tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.method-panel').forEach(x => x.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + t).classList.add('active');
+      if (questions.length > 0 && !confirm(`You have ${questions.length} question${questions.length > 1 ? 's' : ''}. Switching will start over. Continue?`)) return;
+      questions = []; editingIndex = -1; showErrors = false; currentTab = t; closeLightbox();
+      document.getElementById('footerWarning').style.display = 'none';
+      if (t !== 'import') resetImportUI();
+      if (t !== 'templates') { resetTemplateUI(); }
+      updateVisibility();
+      if (t === 'scratch') {
+        addNewQuestion();
+      } else {
+        renderQuestions();
+      }
+    });
+  });
+
+  function updateVisibility() {
+    const s = document.getElementById('questionsSection');
+    const d = document.getElementById('divider');
+    let show = currentTab === 'scratch' || (currentTab === 'import' && hasExtracted) || (currentTab === 'templates' && questions.length > 0);
+    s.classList.toggle('hidden', !show);
+    d.style.display = show ? '' : 'none';
+    document.getElementById('continueBtn').disabled = questions.length === 0;
+  }
+
+  document.querySelectorAll('.import-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.import-toggle-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.import-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('import-' + btn.dataset.import).classList.add('active');
+    });
+  });
+
+  function simulateFileUpload() {
+    fileUploaded = true;
+    document.getElementById('uploadDropZone').style.display = 'none';
+    document.getElementById('uploadedFileState').style.display = 'block';
+  }
+
+  function removeFile() {
+    fileUploaded = false;
+    document.getElementById('uploadDropZone').style.display = 'block';
+    document.getElementById('uploadedFileState').style.display = 'none';
+  }
+
+  function startExtraction() {
+    document.getElementById('importInput').style.display = 'none';
+    document.getElementById('importExtracting').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('importExtracting').style.display = 'none';
+      document.getElementById('importCollapsed').style.display = 'block';
+      const ai = document.querySelector('.import-toggle-btn.active');
+      document.getElementById('importSourceLabel').textContent =
+        (ai && ai.dataset.import === 'paste') ? 'Imported from pasted text' : 'Imported from Brand_Concept_Brief_v3.pdf';
+      hasExtracted = true;
+      questions = [
+        { text:"How appealing is this concept to you?", type:"single_choice", typeLabel:"Single Choice", config:{options:["Very appealing","Somewhat appealing","Neutral","Not appealing"]}, ai:true },
+        { text:"What features do you value most?", type:"multiple_choice", typeLabel:"Multiple Choice", config:{options:["Price","Quality","Convenience","Brand reputation"]}, ai:true },
+        { text:"How likely are you to recommend this?", type:"nps", typeLabel:"NPS", config:{}, ai:true },
+        { text:"What would make you switch?", type:"open_text", typeLabel:"Open Text", config:{}, ai:true },
+      ];
+      updateVisibility(); renderQuestions();
+      setTimeout(() => { document.getElementById('divider').scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+    }, 1500);
+  }
+
+  function resetImport() {
+    hasExtracted = false; questions = []; editingIndex = -1;
+    document.getElementById('importCollapsed').style.display = 'none';
+    document.getElementById('importInput').style.display = 'block';
+    closeLightbox(); updateVisibility(); renderQuestions();
+  }
+
+  function resetImportUI() {
+    hasExtracted = false;
+    document.getElementById('importCollapsed').style.display = 'none';
+    document.getElementById('importExtracting').style.display = 'none';
+    document.getElementById('importInput').style.display = 'block';
+  }
+
+  function resetTemplateUI() {
+    selectedTemplate = null;
+    document.getElementById('templateCollapsed').style.display = 'none';
+    document.getElementById('templateGrid').style.display = '';
+    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  }
+
+  const templates = {
+    concept: [
+      { text:"How appealing is this concept to you?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not at all",maxLabel:"Extremely"} },
+      { text:"How unique or different does this feel?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not unique",maxLabel:"Very unique"} },
+      { text:"How relevant is this to your needs?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not relevant",maxLabel:"Very relevant"} },
+      { text:"How likely are you to purchase?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not likely",maxLabel:"Extremely likely"} },
+      { text:"Does this feel like good value?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Poor value",maxLabel:"Great value"} },
+    ],
+    brand: [
+      { text:"How familiar are you with [Brand]?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not familiar",maxLabel:"Very familiar"} },
+      { text:"How likely are you to consider [Brand]?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Not likely",maxLabel:"Very likely"} },
+      { text:"What is your overall impression?", type:"multiple_choice", typeLabel:"Multiple Choice", config:{options:["Very positive","Positive","Neutral","Negative","Very negative"]} },
+    ],
+    csat: [
+      { text:"How satisfied are you overall?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Very dissatisfied",maxLabel:"Very satisfied"} },
+      { text:"How likely to recommend us?", type:"nps", typeLabel:"NPS", config:{} },
+      { text:"How easy was it?", type:"scale", typeLabel:"Scale", config:{min:1,max:5,minLabel:"Very difficult",maxLabel:"Very easy"} },
+      { text:"Anything we could improve?", type:"open_text", typeLabel:"Open Text", config:{} },
+    ],
+    pricing: [
+      { text:"At what price is this a bargain?", type:"open_text", typeLabel:"Open Text", config:{} },
+      { text:"At what price does this seem expensive?", type:"open_text", typeLabel:"Open Text", config:{} },
+      { text:"At what price is this too expensive?", type:"open_text", typeLabel:"Open Text", config:{} },
+      { text:"At what price would you question quality?", type:"open_text", typeLabel:"Open Text", config:{} },
+    ]
+  };
+
+  const templateNames = {
+    concept: 'Standard Concept Test',
+    brand: 'Quick Brand Pulse',
+    csat: 'Customer Satisfaction',
+    pricing: 'Pricing Sensitivity'
+  };
+
+  let selectedTemplate = null;
+
+  function loadTemplate(key, el) {
+    editingIndex = -1; closeLightbox();
+    selectedTemplate = key;
+    questions = templates[key].map(q => ({...q, config:{...q.config}}));
+    document.getElementById('templateGrid').style.display = 'none';
+    document.getElementById('templateCollapsed').style.display = 'block';
+    document.getElementById('templateSourceLabel').textContent = 'Using ' + templateNames[key];
+    updateVisibility(); renderQuestions();
+    setTimeout(() => { document.getElementById('divider').scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+  }
+
+  function resetTemplate() {
+    selectedTemplate = null; questions = []; editingIndex = -1;
+    document.getElementById('templateCollapsed').style.display = 'none';
+    document.getElementById('templateGrid').style.display = '';
+    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+    closeLightbox(); updateVisibility(); renderQuestions();
+  }
+
+  function openLightbox(html) {
+    document.getElementById('lightboxPanel').innerHTML = html;
+    document.getElementById('lightboxOverlay').style.display = 'flex';
+    const i = document.querySelector('#lightboxPanel .qe-text-input');
+    if (i && !i.value) setTimeout(() => i.focus(), 50);
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightboxOverlay').style.display = 'none';
+    document.getElementById('lightboxPanel').innerHTML = '';
+  }
+
+  function lightboxBackdropClick(e) {
+    if (e.target === document.getElementById('lightboxOverlay')) closeEditor();
+  }
+
+  function renderQuestions() {
+    const list = document.getElementById('questionList');
+    const sub = document.getElementById('qsSub');
+    const count = document.getElementById('qCount');
+    const addBtn = document.getElementById('addBtn');
+    count.textContent = questions.length;
+
+    addBtn.style.display = (editingIndex >= 0) ? 'none' : '';
+
+    if (questions.length === 0) {
+      list.innerHTML = '';
+      sub.textContent = currentTab === 'scratch' ? 'Add questions one at a time below.' : 'No questions yet.';
+      return;
+    }
+    sub.textContent = 'Click a question to edit it.';
+    let html = '';
+    questions.forEach((q, i) => {
+      html += (editorMode === 'inline' && editingIndex === i) ? renderEditor(q, i) : renderCollapsed(q, i);
+    });
+    list.innerHTML = html;
+    if (editorMode === 'inline') {
+      const input = list.querySelector('.qe-text-input');
+      if (input && !input.value) input.focus();
+    }
+  }
+
+  function isIncomplete(q) {
+    if (!q.text.trim()) return true;
+    if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking') {
+      if (!q.config?.options || q.config.options.length === 0) return true;
+      if (q.config.options.some(o => !o.trim())) return true;
+    }
+    return false;
+  }
+
+  function renderCollapsed(q, i) {
+    const t = questionTypes.find(x => x.id === q.type) || {icon:'#i-circle', label:q.typeLabel};
+    const incomplete = isIncomplete(q);
+    const errorClass = showErrors && incomplete ? ' qi-error' : '';
+    const badge = incomplete
+      ? `<span class="qi-incomplete-badge${showErrors ? ' error' : ''}">Incomplete</span>`
+      : '';
+    return `<div class="question-item${errorClass}" onclick="startEdit(${i})">
+      <span class="qi-drag" onclick="event.stopPropagation()">${svg('#i-grip',14,14)}</span>
+      <span class="qi-number">${i+1}</span>
+      <div class="qi-content">
+        <div class="qi-text">${q.text || '<span style="color:#a1a1aa;font-style:italic">Untitled question</span>'}${q.ai ? '<span class="ai-badge">extracted</span>' : ''}</div>
+        <div class="qi-meta">
+          <span class="qi-type-badge">${svg(t.icon,11,11)} ${t.label}</span>
+          ${badge}
+        </div>
+      </div>
+      <div class="qi-actions">
+        <button class="qi-action-btn delete" onclick="event.stopPropagation();event.preventDefault();removeQuestion(${i});return false;">${svg('#i-trash',13,13)}</button>
+      </div>
+      <span class="qi-expand">${svg('#i-chevron-down',14,14)}</span>
+    </div>`;
+  }
+
+  function renderEditor(q, index) {
+    const num = index + 1;
+    let chips = questionTypes.map(t => `<button class="qe-type-chip ${q.type===t.id?'active':''}" onclick="changeType(${index},'${t.id}','${t.label}')">${svg(t.icon,13,13)} ${t.label}</button>`).join('');
+    let cfg = '';
+    if (q.type === 'scale') {
+      const dots = []; for (let n=(q.config?.min||1);n<=(q.config?.max||5);n++) dots.push(`<div class="qe-scale-dot">${n}</div>`);
+      cfg = `<div class="qe-field"><div class="qe-field-label">Scale Configuration</div><div class="qe-scale-config"><div class="qe-scale-field"><label>Low label</label><input class="qe-scale-input" value="${q.config?.minLabel||''}" placeholder="e.g. Not at all" onchange="updateConfig(${index},'minLabel',this.value)"></div><div class="qe-scale-field"><label>High label</label><input class="qe-scale-input" value="${q.config?.maxLabel||''}" placeholder="e.g. Extremely" onchange="updateConfig(${index},'maxLabel',this.value)"></div></div><div class="qe-scale-preview">${dots.join('')}</div></div>`;
+    } else if (q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking') {
+      const canRemove = (q.config?.options||[]).length > 2;
+      const opts = (q.config?.options||['']).map((o,oi) => `<div class="qe-option-row"><span class="qe-option-handle">${svg('#i-grip',12,12)}</span><input class="qe-option-input" value="${o}" placeholder="Option ${oi+1}" onchange="updateOption(${index},${oi},this.value)">${canRemove ? `<button class="qe-option-remove" onclick="removeOption(${index},${oi})">${svg('#i-x',13,13)}</button>` : '<span style="width:22px"></span>'}</div>`).join('');
+      cfg = `<div class="qe-field"><div class="qe-field-label">Answer Options</div>${opts}</div>`;
+    } else if (q.type === 'nps') {
+      const boxes = []; for (let n=0;n<=10;n++) { let c=n<=6?'detractor':n<=8?'passive':'promoter'; boxes.push(`<div class="qe-nps-box ${c}">${n}</div>`); }
+      cfg = `<div class="qe-field"><div class="qe-field-label">NPS Scale (0–10)</div><div class="qe-nps-preview">${boxes.join('')}</div><div class="qe-nps-labels"><span>Not at all likely</span><span>Extremely likely</span></div></div>`;
+    } else if (q.type === 'open_text') {
+      cfg = `<div class="qe-field"><div class="qe-open-text-note">Respondents will see a free-text input. Responses are analyzed to identify themes and sentiment.</div></div>`;
+    }
+    const needsAddOption = q.type === 'single_choice' || q.type === 'multiple_choice' || q.type === 'ranking';
+    const addOptBtn = needsAddOption ? `<button class="qe-add-option" onclick="addOption(${index})">${svg('#i-plus',12,12)} Add option</button>` : '';
+    return `<div class="question-editor"><div class="qe-header"><div class="qe-header-left"><span class="qe-number">${num}</span><span class="qe-title">Question ${num}</span></div><button class="qe-close" onclick="closeEditor()">${svg('#i-chevron-up',14,14)}</button></div><div class="qe-type-selector"><div class="qe-type-label">Question Type</div><div class="qe-type-chips">${chips}</div></div><div class="qe-field"><div class="qe-field-label">Question Text</div><input class="qe-text-input" value="${q.text}" placeholder="e.g. How likely are you to purchase this product?" oninput="updateText(${index},this.value)"></div>${cfg}<div class="qe-done-row"><button class="qe-btn-done" onclick="closeEditor()">Done</button></div></div>${addOptBtn}`;
+  }
+
+  function startEdit(i) {
+    if (editingIndex >= 0) closeEditor();
+    clearErrors();
+    editingIndex = i;
+    if (editorMode === 'lightbox') openLightbox(renderEditor(questions[i],i)); else renderQuestions();
+  }
+
+  function addNewQuestion() {
+    if (editingIndex >= 0) closeEditor();
+    questions.push({text:'',type:'single_choice',typeLabel:'Single Choice',config:{options:['Option 1','Option 2','Option 3']}});
+    editingIndex = questions.length - 1;
+    updateVisibility();
+    if (editorMode === 'lightbox') openLightbox(renderEditor(questions[editingIndex],editingIndex)); else renderQuestions();
+  }
+
+  function closeEditor() {
+    editingIndex = -1; closeLightbox(); updateVisibility(); renderQuestions();
+  }
+
+  function changeType(i, tid, tl) {
+    const t = questions[i]; t.type = tid; t.typeLabel = tl;
+    if (tid === 'scale') t.config = {min:1,max:5,minLabel:'',maxLabel:''};
+    else if (tid === 'single_choice' || tid === 'multiple_choice' || tid === 'ranking') t.config = {options:['Option 1','Option 2','Option 3']};
+    else t.config = {};
+    if (editorMode === 'lightbox') openLightbox(renderEditor(t,i)); else renderQuestions();
+  }
+
+  function updateText(i,v) { questions[i].text=v; }
+  function updateConfig(i,k,v) { questions[i].config[k]=v; }
+  function updateOption(i,oi,v) { questions[i].config.options[oi]=v; }
+
+  function addOption(i) {
+    questions[i].config.options.push('');
+    if (editorMode==='lightbox') openLightbox(renderEditor(questions[i],i)); else renderQuestions();
+  }
+
+  function removeOption(i,oi) {
+    if (questions[i].config.options.length <= 2) return;
+    questions[i].config.options.splice(oi,1);
+    if (editorMode==='lightbox') openLightbox(renderEditor(questions[i],i)); else renderQuestions();
+  }
+
+  function removeQuestion(i) {
+    const q = questions[i];
+    if (!q) return;
+    const textFilled = q.text && q.text.trim().length > 0;
+    const optionsFilled = Array.isArray(q.config?.options) && q.config.options.some(function(o) { return o && o.trim() && o !== 'Option 1' && o !== 'Option 2' && o !== 'Option 3'; });
+    const hasContent = textFilled || optionsFilled;
+    if (hasContent) {
+      if (!confirm('Delete this question? This cannot be undone.')) return;
+    }
+    questions.splice(i,1);
+    if (editingIndex===i) {editingIndex=-1;closeLightbox();} else if(editingIndex>i) editingIndex--;
+    renderQuestions(); updateVisibility();
+  }
+
+  function handleContinue() {
+    if (editingIndex >= 0) closeEditor();
+    const incompleteCount = questions.filter(q => isIncomplete(q)).length;
+    if (incompleteCount > 0) {
+      showErrors = true;
+      const w = document.getElementById('footerWarning');
+      w.textContent = `· ${incompleteCount} incomplete question${incompleteCount > 1 ? 's' : ''}`;
+      w.style.display = 'inline';
+      renderQuestions();
+      const first = document.querySelector('.qi-error');
+      if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    showErrors = false;
+    document.getElementById('footerWarning').style.display = 'none';
+    alert('All questions valid — continuing!');
+  }
+
+  function clearErrors() {
+    if (showErrors) {
+      showErrors = false;
+      document.getElementById('footerWarning').style.display = 'none';
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key==='Escape'&&editingIndex>=0) closeEditor(); });
+  updateVisibility(); renderQuestions();
+</script>
+</body>
+</html>

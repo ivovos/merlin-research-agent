@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { MoreHorizontal, Copy, Download, Trash2, Bookmark, BookmarkCheck, SquareArrowOutUpRight } from 'lucide-react'
 import type { Finding, Stimulus } from '@/types'
 import { cn } from '@/lib/utils'
@@ -16,18 +16,22 @@ interface FindingCardProps {
   finding: Finding
   index: number
   respondents?: number
-  /** Per-finding stimuli (shown as bigger thumbnails when findings have different stimulus sets) */
+  /** Stimuli associated with this finding (shown as small clickable thumbnails) */
   stimuli?: Stimulus[]
-  /** Shared stimulus names (shown as small text indicator when all findings share same set) */
-  sharedStimuliNames?: string[]
   compact?: boolean
   onInsightEdit?: (questionId: string, newText: string) => void
   onDelete?: (questionId: string) => void
+  /** Save this finding to the findings store */
+  onSave?: (finding: Finding) => void
+  /** Remove this finding from the findings store */
+  onUnsave?: (questionId: string) => void
+  /** Whether this finding is currently saved */
+  isSaved?: boolean
   className?: string
 }
 
 /** Primary brand colour used for bars and audience dot */
-const BAR_COLOR = DEFAULT_BRAND_COLORS.primary
+export const BAR_COLOR = DEFAULT_BRAND_COLORS.primary
 
 /**
  * Pure CSS horizontal bar row.
@@ -41,7 +45,7 @@ const BAR_COLOR = DEFAULT_BRAND_COLORS.primary
  */
 const MAX_BAR_FRACTION = 0.75 // bar area uses at most 75% of the column
 
-function BarRow({
+export function BarRow({
   label,
   value,
   maxValue,
@@ -84,10 +88,12 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   index: _index,
   respondents,
   stimuli,
-  sharedStimuliNames,
   compact: _compact = false,
   onInsightEdit: _onInsightEdit,
   onDelete,
+  onSave,
+  onUnsave,
+  isSaved: isSavedProp = false,
   className,
 }) => {
   // Extract chart rows from chartData
@@ -109,7 +115,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   const audienceLabel =
     finding.segmentBreakdowns?.[0]?.segmentName ?? 'General Population'
 
-  const [saved, setSaved] = useState(false)
+  const saved = isSavedProp
 
   return (
     <div
@@ -142,7 +148,15 @@ export const FindingCard: React.FC<FindingCardProps> = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setSaved(prev => !prev)}>
+            <DropdownMenuItem
+              onSelect={() => {
+                if (saved) {
+                  onUnsave?.(finding.questionId)
+                } else {
+                  onSave?.(finding)
+                }
+              }}
+            >
               {saved ? (
                 <BookmarkCheck className="w-4 h-4 mr-2" />
               ) : (
@@ -184,17 +198,9 @@ export const FindingCard: React.FC<FindingCardProps> = ({
         {finding.questionText || finding.headline}
       </h3>
 
-      {/* Per-finding stimulus thumbnails (when findings have different stimulus sets) */}
+      {/* Collapsible stimulus section */}
       {stimuli && stimuli.length > 0 && (
-        <StimulusThumbnails stimuli={stimuli} className="pt-1" />
-      )}
-
-      {/* Shared stimulus indicator (small text when all findings share same set) */}
-      {sharedStimuliNames && sharedStimuliNames.length > 0 && (
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <span className="opacity-60">Stimulus:</span>
-          <span>{sharedStimuliNames.join(' · ')}</span>
-        </div>
+        <StimulusThumbnails stimuli={stimuli} />
       )}
 
       {/* Clean horizontal bar chart */}

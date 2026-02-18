@@ -1,9 +1,39 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Plus, Users, Slash, ArrowUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { MethodsPicker, type PickerMethod } from './MethodsPicker'
 import { AudiencePicker, type PickerAudience } from './AudiencePicker'
+
+// ── Helper: parse placeholder text into styled segments ──
+
+interface PlaceholderSegment {
+  text: string
+  highlighted: boolean
+}
+
+/** Split text so that `@token` and `/token` runs are marked as highlighted. */
+function parsePlaceholderTokens(raw: string): PlaceholderSegment[] {
+  const segments: PlaceholderSegment[] = []
+  // Match @word or /word at start-of-string or after whitespace
+  const regex = /((?:^|\s)[/@]\S+)/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = regex.exec(raw)) !== null) {
+    // Text before this token
+    if (match.index > lastIndex) {
+      segments.push({ text: raw.slice(lastIndex, match.index), highlighted: false })
+    }
+    segments.push({ text: match[1], highlighted: true })
+    lastIndex = match.index + match[1].length
+  }
+  // Trailing text
+  if (lastIndex < raw.length) {
+    segments.push({ text: raw.slice(lastIndex), highlighted: false })
+  }
+  return segments
+}
 
 interface ChatInputBarProps {
   onSend: (text: string) => void
@@ -11,6 +41,8 @@ interface ChatInputBarProps {
   onAddAudience?: (audience: PickerAudience) => void
   onAttach?: () => void
   placeholder?: string
+  /** Rotating placeholder phrases with typewriter animation. Overrides static placeholder. */
+  animatedPlaceholders?: string[]
   className?: string
   /** Whether this is the home-screen variant (larger, centered) */
   variant?: 'home' | 'chat'
@@ -24,6 +56,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   onAddAudience,
   onAttach,
   placeholder = 'What do you want to research?',
+  animatedPlaceholders,
   className,
   variant = 'chat',
   brand,
@@ -32,6 +65,62 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   const [methodsOpen, setMethodsOpen] = useState(false)
   const [audienceOpen, setAudienceOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // ── Animated placeholder (typewriter cycle) ──
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('')
+  const cancelledRef = useRef(false)
+
+  useEffect(() => {
+    if (!animatedPlaceholders || animatedPlaceholders.length === 0) return
+
+    cancelledRef.current = false
+    const phrases = animatedPlaceholders
+
+    let phraseIdx = 0
+    let charIdx = 0
+    let isDeleting = false
+    let timer: ReturnType<typeof setTimeout>
+
+    const schedule = (fn: () => void, ms: number) => {
+      timer = setTimeout(() => {
+        if (!cancelledRef.current) fn()
+      }, ms)
+    }
+
+    const tick = () => {
+      if (cancelledRef.current) return
+      const current = phrases[phraseIdx]
+
+      if (!isDeleting) {
+        charIdx++
+        setDisplayedPlaceholder(current.slice(0, charIdx))
+
+        if (charIdx >= current.length) {
+          schedule(() => { isDeleting = true; tick() }, 2400)
+          return
+        }
+        schedule(tick, 38 + Math.random() * 28)
+      } else {
+        charIdx--
+        setDisplayedPlaceholder(current.slice(0, charIdx))
+
+        if (charIdx <= 0) {
+          isDeleting = false
+          phraseIdx = (phraseIdx + 1) % phrases.length
+          schedule(tick, 400)
+          return
+        }
+        schedule(tick, 18)
+      }
+    }
+
+    schedule(tick, 600)
+
+    return () => {
+      cancelledRef.current = true
+      clearTimeout(timer)
+    }
+  }, [animatedPlaceholders])
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim()
@@ -62,6 +151,14 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   }, [])
 
   const isHome = variant === 'home'
+
+  // Parse animated placeholder into styled segments (memoised on the string value)
+  const placeholderSegments = useMemo(
+    () => (animatedPlaceholders ? parsePlaceholderTokens(displayedPlaceholder) : []),
+    [animatedPlaceholders, displayedPlaceholder],
+  )
+
+  const showAnimatedOverlay = !!animatedPlaceholders && text.length === 0
 
   return (
     <div
@@ -100,7 +197,27 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       />
 
       {/* Text input */}
-      <div className="px-3 pt-2.5 pb-1">
+      <div className="relative px-3 pt-2.5 pb-1">
+        {/* Animated placeholder overlay with styled tokens */}
+        {showAnimatedOverlay && (
+          <div
+            aria-hidden
+            className={cn(
+              'absolute inset-0 px-3 pt-2.5 pointer-events-none text-sm leading-relaxed whitespace-pre-wrap',
+              isHome ? 'py-[calc(0.625rem+0.75rem)]' : 'py-[calc(0.625rem+0.5rem)]',
+            )}
+          >
+            {placeholderSegments.map((seg, i) => (
+              <span
+                key={i}
+                className={seg.highlighted ? 'text-foreground/70 font-medium' : 'text-muted-foreground'}
+              >
+                {seg.text}
+              </span>
+            ))}
+            <span className="text-muted-foreground animate-pulse">|</span>
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           value={text}
@@ -116,10 +233,10 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             }
           }}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={animatedPlaceholders ? undefined : placeholder}
           rows={1}
           className={cn(
-            'w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed',
+            'w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10',
             isHome ? 'min-h-[60px] py-3' : 'min-h-[48px] py-2',
           )}
         />

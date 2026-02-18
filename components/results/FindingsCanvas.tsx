@@ -8,9 +8,11 @@ import {
   MoreVertical,
   BarChart3,
   FileText,
+  Bookmark,
 } from 'lucide-react'
 import type { Finding, Stimulus } from '@/types'
 import { FindingCard } from './FindingCard'
+import { FindingsLightbox } from './FindingsLightbox'
 import { StimulusStrip } from './StimulusStrip'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,12 +22,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { useFindingsContext } from '@/hooks/useFindingsStore'
 
 interface FindingsCanvasProps {
   findings: Finding[]
   title: string
   typeBadge?: string
   respondents?: number
+  /** Study ID — used to scope saved findings */
+  studyId?: string
   /** All stimuli from the project — used to resolve finding.stimuliIds */
   stimuli?: Stimulus[]
   compact?: boolean
@@ -42,12 +47,28 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
   findings,
   title,
   respondents,
+  studyId,
   stimuli = [],
   onOpenPlan,
   defaultCollapsed = false,
   className,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
+  const [findingsOpen, setFindingsOpen] = useState(false)
+
+  // Findings store (null if no FindingsProvider in tree — save/unsave will be no-ops)
+  const store = useFindingsContext()
+
+  const savedCount = studyId && store ? store.getCount(studyId) : 0
+
+  // Callbacks for FindingCard save/unsave
+  const handleSave = (finding: Finding) => {
+    if (studyId && store) store.saveFinding(studyId, finding)
+  }
+
+  const handleUnsave = (questionId: string) => {
+    if (studyId && store) store.removeFinding(studyId, questionId)
+  }
 
   // Determine if all findings share the same stimulus set
   const { sharedStimuli, isShared } = useMemo(() => {
@@ -89,6 +110,8 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
     navigator.clipboard.writeText(`${title}\n\n${text}`)
   }
 
+  const hasStore = !!(studyId && store)
+
   return (
     <div
       className={cn(
@@ -112,6 +135,19 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
         </div>
 
         <div className="flex items-center gap-0.5 shrink-0">
+          {/* Findings badge — only visible when 1+ saved */}
+          {savedCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 font-semibold text-foreground hover:bg-accent"
+              onClick={() => setFindingsOpen(true)}
+            >
+              <Bookmark className="w-3.5 h-3.5" />
+              <span>{savedCount}</span>
+            </Button>
+          )}
+
           {/* Open Plan */}
           {onOpenPlan && (
             <Button
@@ -185,11 +221,10 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
               finding={finding}
               index={i}
               respondents={respondents}
-              stimuli={!isShared ? resolveFindingStimuli(finding) : undefined}
-              sharedStimuliNames={isShared && sharedStimuli.length > 0
-                ? sharedStimuli.map(s => s.name)
-                : undefined
-              }
+              stimuli={isShared ? sharedStimuli : resolveFindingStimuli(finding)}
+              isSaved={hasStore ? store!.isSaved(studyId!, finding.questionId) : false}
+              onSave={hasStore ? handleSave : undefined}
+              onUnsave={hasStore ? handleUnsave : undefined}
             />
           ))}
 
@@ -213,6 +248,16 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
             )}
           </p>
         </div>
+      )}
+
+      {/* Findings lightbox */}
+      {studyId && (
+        <FindingsLightbox
+          open={findingsOpen}
+          onOpenChange={setFindingsOpen}
+          studyId={studyId}
+          studyName={title}
+        />
       )}
     </div>
   )

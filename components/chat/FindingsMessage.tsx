@@ -13,6 +13,7 @@ export const FindingsMessage: React.FC<FindingsMessageProps> = ({ message, onOpe
       <FindingsCanvas
         findings={message.findings}
         title={message.studyName}
+        studyId={message.studyId}
         typeBadge={message.typeBadge}
         respondents={message.respondents}
         stimuli={message.stimuli}

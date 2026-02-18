@@ -106,6 +106,15 @@ export interface Finding {
   normValue?: number
   /** IDs of stimuli this finding relates to (references Stimulus.id from project) */
   stimuliIds?: string[]
+  /** AI-suggested conclusion, editable by user in the findings lightbox */
+  conclusion?: string
+  /** Timestamp when this finding was bookmarked/saved */
+  savedAt?: number
+  /** Optional verbatim quote from a respondent */
+  sourceQuote?: {
+    text: string
+    attribution: string  // e.g. "Participant 3, Enterprise"
+  }
 }
 
 // ── Survey ──

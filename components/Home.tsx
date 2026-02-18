@@ -20,6 +20,19 @@ interface HomeProps {
   brand?: string
 }
 
+// ── Animated placeholder phrases ──
+
+const PLACEHOLDER_PHRASES = [
+  'Why are @uk-millennials churning after the first month?',
+  '/focus-group What do parents think about our new ad campaign?',
+  'How does @premium-subscribers feel about the latest price increase?',
+  '/creative-testing Which packaging design resonates most with Gen Z?',
+  'What are the top unmet needs for @health-conscious-shoppers?',
+  '/survey How satisfied are customers with our onboarding experience?',
+  'What would make @lapsed-users come back to the platform?',
+  '/concept-testing Does this new product idea have legs with our core audience?',
+]
+
 // ── Curated pill data ──
 
 interface HomePill {
@@ -104,7 +117,7 @@ export const Home: React.FC<HomeProps> = ({
             onSend={onCreateProject}
             onAddAudience={() => {} /* picker handles display */}
             onAttach={() => {}}
-            placeholder="e.g. Why are enterprise users churning in the first 30 days?"
+            animatedPlaceholders={PLACEHOLDER_PHRASES}
             variant="home"
             brand={brand}
           />

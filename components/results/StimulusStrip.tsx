@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { Stimulus } from '@/types'
-import { Image as ImageIcon } from 'lucide-react'
+import { Image as ImageIcon, ChevronDown } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ export const StimulusStrip: React.FC<StimulusStripProps> = ({ stimuli, className
             onClick={() => setLightbox(stim)}
             className="group flex flex-col items-center gap-1 shrink-0 focus:outline-none"
           >
-            <div className="w-16 h-12 rounded-md border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+            <div className="w-40 h-28 rounded-lg border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
               {stim.type === 'image' || stim.type === 'concept' ? (
                 <img
                   src={stim.url}
@@ -49,11 +49,11 @@ export const StimulusStrip: React.FC<StimulusStripProps> = ({ stimuli, className
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                  <ImageIcon className="w-6 h-6 text-muted-foreground" />
                 </div>
               )}
             </div>
-            <span className="text-[10px] text-muted-foreground leading-tight text-center max-w-16 line-clamp-2 group-hover:text-foreground transition-colors">
+            <span className="text-xs text-muted-foreground leading-tight text-center max-w-40 line-clamp-2 group-hover:text-foreground transition-colors">
               {stim.name}
             </span>
           </button>
@@ -127,50 +127,114 @@ export const StimulusIndicator: React.FC<{
 }
 
 /**
- * Larger inline stimulus thumbnails for finding cards
- * when findings have different stimulus sets.
+ * Collapsible stimulus section for finding cards.
+ *
+ * Collapsed (default): compact pill showing count + tiny preview thumbnails + expand chevron.
+ * Expanded: proper-sized thumbnails with names, each clickable for lightbox.
  */
 export const StimulusThumbnails: React.FC<{
   stimuli: Stimulus[]
   className?: string
 }> = ({ stimuli, className }) => {
+  const [expanded, setExpanded] = useState(false)
   const [lightbox, setLightbox] = useState<Stimulus | null>(null)
 
   if (stimuli.length === 0) return null
 
   return (
     <>
-      <div className={cn('flex items-start gap-2 overflow-x-auto', className)}>
-        {stimuli.map(stim => (
-          <button
-            key={stim.id}
-            type="button"
-            onClick={() => setLightbox(stim)}
-            className="group flex flex-col items-center gap-1 shrink-0 focus:outline-none"
-          >
-            <div className="w-24 h-16 rounded-md border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
-              {stim.type === 'image' || stim.type === 'concept' ? (
-                <img
-                  src={stim.url}
-                  alt={stim.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
+      <div className={cn('', className)}>
+        {/* Collapsed — pill trigger */}
+        <button
+          type="button"
+          onClick={() => setExpanded(prev => !prev)}
+          className={cn(
+            'flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-colors text-left w-full',
+            'hover:bg-muted/80',
+            expanded
+              ? 'border-border bg-muted/50'
+              : 'border-border/60 bg-transparent',
+          )}
+        >
+          <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground font-medium shrink-0">
+            {stimuli.length} stimulus{stimuli.length !== 1 ? ' items' : ''}
+          </span>
+
+          {/* Mini preview thumbs (only when collapsed) */}
+          {!expanded && (
+            <div className="flex items-center gap-1 ml-1">
+              {stimuli.slice(0, 4).map(stim => (
+                <div
+                  key={stim.id}
+                  className="w-6 h-6 rounded-sm border border-border/50 overflow-hidden bg-muted shrink-0"
+                >
+                  {(stim.type === 'image' || stim.type === 'concept') ? (
+                    <img
+                      src={stim.url}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-2.5 h-2.5 text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
+              ))}
+              {stimuli.length > 4 && (
+                <span className="text-[10px] text-muted-foreground/60">
+                  +{stimuli.length - 4}
+                </span>
               )}
             </div>
-            <span className="text-[10px] text-muted-foreground leading-tight text-center max-w-24 line-clamp-1 group-hover:text-foreground transition-colors">
-              {stim.name}
-            </span>
-          </button>
-        ))}
+          )}
+
+          <ChevronDown
+            className={cn(
+              'w-3.5 h-3.5 text-muted-foreground/50 ml-auto shrink-0 transition-transform duration-200',
+              expanded && 'rotate-180',
+            )}
+          />
+        </button>
+
+        {/* Expanded — proper-sized thumbnails */}
+        {expanded && (
+          <div className="flex items-start gap-3 overflow-x-auto pt-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200">
+            {stimuli.map(stim => (
+              <button
+                key={stim.id}
+                type="button"
+                onClick={() => setLightbox(stim)}
+                className="group flex flex-col items-center gap-1.5 shrink-0 focus:outline-none"
+              >
+                <div className="w-28 h-20 rounded-md border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+                  {(stim.type === 'image' || stim.type === 'concept') ? (
+                    <img
+                      src={stim.url}
+                      alt={stim.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <span className="text-[11px] text-muted-foreground leading-tight text-center max-w-28 line-clamp-2 group-hover:text-foreground transition-colors">
+                  {stim.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Lightbox */}
       <Dialog open={!!lightbox} onOpenChange={() => setLightbox(null)}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogTitle className="sr-only">{lightbox?.name ?? 'Stimulus'}</DialogTitle>
