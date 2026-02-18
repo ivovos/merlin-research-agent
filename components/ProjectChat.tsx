@@ -85,8 +85,12 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           }
         }, TIMING.PHASE_1_STEP_2)
 
-        const agentResult = await executeSelectedTool(selection, query)
-        clearInterval(stepInterval)
+        let agentResult: Awaited<ReturnType<typeof executeSelectedTool>>
+        try {
+          agentResult = await executeSelectedTool(selection, query)
+        } finally {
+          clearInterval(stepInterval)
+        }
 
         const thinkingTime = Math.round((Date.now() - startTime) / 1000)
 
