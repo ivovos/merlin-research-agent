@@ -61,6 +61,29 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   variant = 'chat',
   brand,
 }) => {
+  const params = {
+    container: {
+      borderRadius: 16,
+      shadowBlur: 4,
+      shadowOpacity: 0.08,
+    },
+    textarea: {
+      minHeight: 48,
+      maxHeight: 160,
+      fontSize: 14,
+    },
+    sendButton: {
+      size: 32,
+      borderRadius: 12,
+    },
+    typewriter: {
+      typeSpeed: 38,
+      deleteSpeed: 18,
+      pauseDuration: 2400,
+      initialDelay: 600,
+    },
+  }
+
   const [text, setText] = useState('')
   const [methodsOpen, setMethodsOpen] = useState(false)
   const [audienceOpen, setAudienceOpen] = useState(false)
@@ -96,10 +119,10 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         setDisplayedPlaceholder(current.slice(0, charIdx))
 
         if (charIdx >= current.length) {
-          schedule(() => { isDeleting = true; tick() }, 2400)
+          schedule(() => { isDeleting = true; tick() }, params.typewriter.pauseDuration)
           return
         }
-        schedule(tick, 38 + Math.random() * 28)
+        schedule(tick, params.typewriter.typeSpeed + Math.random() * 28)
       } else {
         charIdx--
         setDisplayedPlaceholder(current.slice(0, charIdx))
@@ -110,11 +133,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           schedule(tick, 400)
           return
         }
-        schedule(tick, 18)
+        schedule(tick, params.typewriter.deleteSpeed)
       }
     }
 
-    schedule(tick, 600)
+    schedule(tick, params.typewriter.initialDelay)
 
     return () => {
       cancelledRef.current = true
@@ -147,8 +170,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px'
-  }, [])
+    el.style.height = Math.min(el.scrollHeight, params.textarea.maxHeight) + 'px'
+  }, [params.textarea.maxHeight])
 
   const isHome = variant === 'home'
 
@@ -163,10 +186,13 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   return (
     <div
       className={cn(
-        'relative border rounded-2xl bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring transition-shadow',
-        isHome && 'shadow-md',
+        'relative border bg-card focus-within:ring-1 focus-within:ring-ring transition-shadow',
         className,
       )}
+      style={{
+        borderRadius: params.container.borderRadius,
+        boxShadow: `0 2px ${params.container.shadowBlur}px rgba(0,0,0,${params.container.shadowOpacity})`,
+      }}
     >
       {/* Methods picker lightbox — portaled to body */}
       <MethodsPicker
@@ -235,10 +261,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={animatedPlaceholders ? undefined : placeholder}
           rows={1}
-          className={cn(
-            'w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10',
-            isHome ? 'min-h-[60px] py-3' : 'min-h-[48px] py-2',
-          )}
+          className="w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2"
+          style={{
+            fontSize:  params.textarea.fontSize,
+            minHeight: params.textarea.minHeight,
+          }}
         />
       </div>
 
@@ -278,7 +305,12 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         )}
         <Button
           size="icon"
-          className="h-8 w-8 rounded-xl flex-shrink-0 ml-auto"
+          className="flex-shrink-0 ml-auto"
+          style={{
+            height:       params.sendButton.size,
+            width:        params.sendButton.size,
+            borderRadius: params.sendButton.borderRadius,
+          }}
           onClick={handleSend}
           disabled={!text.trim()}
         >

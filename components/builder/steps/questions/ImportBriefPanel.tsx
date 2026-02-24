@@ -178,7 +178,7 @@ export const ImportBriefPanel: React.FC<ImportBriefPanelProps> = ({
   // ── Collapsed state ──
   if (extracted) {
     return (
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-zinc-50 border border-zinc-200">
+      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted border border-border">
         <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
         <span className="text-sm text-foreground flex-1">
           {uploaded ? `Extracted from ${briefText}` : 'Extracted from pasted brief'}
@@ -197,7 +197,7 @@ export const ImportBriefPanel: React.FC<ImportBriefPanelProps> = ({
   // ── Extracting state ──
   if (extracting) {
     return (
-      <div className="flex flex-col items-center gap-3 py-8 rounded-lg border border-dashed border-zinc-300">
+      <div className="flex flex-col items-center gap-3 py-8 rounded-lg border border-dashed border-border">
         <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
         <p className="text-sm text-muted-foreground">Analysing brief and extracting questions…</p>
       </div>
@@ -208,14 +208,14 @@ export const ImportBriefPanel: React.FC<ImportBriefPanelProps> = ({
   return (
     <div className="space-y-3">
       {/* Upload / Paste toggle */}
-      <div className="inline-flex rounded-lg bg-zinc-100 p-1">
+      <div className="inline-flex rounded-lg bg-secondary p-1">
         <button
           type="button"
           onClick={() => setInputMode('upload')}
           className={cn(
             'px-3 py-1 text-xs font-medium rounded-md transition-all',
             inputMode === 'upload'
-              ? 'bg-white text-foreground shadow-sm'
+              ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -227,7 +227,7 @@ export const ImportBriefPanel: React.FC<ImportBriefPanelProps> = ({
           className={cn(
             'px-3 py-1 text-xs font-medium rounded-md transition-all',
             inputMode === 'paste'
-              ? 'bg-white text-foreground shadow-sm'
+              ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground',
           )}
         >
@@ -236,7 +236,7 @@ export const ImportBriefPanel: React.FC<ImportBriefPanelProps> = ({
       </div>
 
       {inputMode === 'upload' ? (
-        <label className="flex flex-col items-center gap-2 py-8 rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50/50 hover:bg-zinc-50 cursor-pointer transition-colors">
+        <label className="flex flex-col items-center gap-2 py-8 rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted cursor-pointer transition-colors">
           <Upload className="w-6 h-6 text-muted-foreground" />
           <div className="text-center">
             {uploaded ? (

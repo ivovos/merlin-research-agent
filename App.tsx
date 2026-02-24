@@ -21,6 +21,7 @@ import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
 import { QuickPollPage } from '@/components/quick-poll/QuickPollPage'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 import type { AudienceDetails, Survey } from '@/types'
 
@@ -190,6 +191,8 @@ const App: React.FC = () => {
   // ── Render ──
 
   return (
+    <>
+    <ThemeToggle />
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar
         currentAccount={currentAccount}
@@ -259,6 +262,7 @@ const App: React.FC = () => {
         )}
       </SidebarInset>
     </SidebarProvider>
+    </>
   )
 }
 

@@ -98,7 +98,7 @@ export const TemplatesPanel: React.FC<TemplatesPanelProps> = ({
     const tpl = allTemplates.find(t => t.key === selectedTemplate)
     const Icon = tpl ? resolveIcon(tpl.icon) : ClipboardList
     return (
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-zinc-50 border border-zinc-200">
+      <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted border border-border">
         <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
         <span className="text-sm text-foreground flex-1">
           Using {tpl?.label ?? selectedTemplate}

@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  /* ════════════════════════════════════════════════
+     Theme 1: Slate Light (default — cool blue-grey)
+     ════════════════════════════════════════════════ */
   :root {
     --background: oklch(1.0000 0 0);
     --foreground: oklch(0.3211 0 0);
@@ -29,13 +32,14 @@
     --chart-4: oklch(0.4244 0.1809 265.6377);
     --chart-5: oklch(0.3791 0.1378 265.5222);
     --sidebar: oklch(0.9846 0.0017 247.8389);
-    --sidebar-foreground: #57534e;
+    --sidebar-foreground: oklch(0.4440 0.0110 73);
     --sidebar-primary: oklch(0.6231 0.1880 259.8145);
     --sidebar-primary-foreground: oklch(1.0000 0 0);
-    --sidebar-accent: #e7e5e4;
-    --sidebar-accent-foreground: #1c1917;
+    --sidebar-accent: oklch(0.9230 0.0030 75);
+    --sidebar-accent-foreground: oklch(0.1470 0.0040 49);
     --sidebar-border: oklch(0.9276 0.0058 264.5313);
     --sidebar-ring: oklch(0.6231 0.1880 259.8145);
+    --user-bubble: oklch(0.9100 0.0080 264);
     --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-serif: Arbutus Slab, ui-serif, serif;
     --font-mono: JetBrains Mono, monospace;
@@ -119,6 +123,36 @@
     --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* ════════════════════════════════════════════════
+     Theme 2: Stone Light (warm brownish-grey)
+     Only overrides neutrals — all other tokens inherit
+     ════════════════════════════════════════════════ */
+  :root[data-theme="stone-light"] {
+    --foreground: oklch(0.3211 0.005 75);
+    --card-foreground: oklch(0.2264 0.004 75);
+    --popover-foreground: oklch(0.3211 0.005 75);
+    --secondary: oklch(0.9670 0.0015 75);
+    --secondary-foreground: oklch(0.4461 0.012 75);
+    --muted: oklch(0.9846 0.0010 75);
+    --muted-foreground: oklch(0.5510 0.0130 58);
+    --border: oklch(0.9276 0.0030 75);
+    --input: oklch(0.9276 0.0030 75);
+    --sidebar: oklch(0.9846 0.0010 75);
+    --sidebar-foreground: oklch(0.4440 0.0110 73);
+    --sidebar-accent: oklch(0.9230 0.0030 75);
+    --sidebar-accent-foreground: oklch(0.1470 0.0040 49);
+    --sidebar-border: oklch(0.9276 0.0030 75);
+    --user-bubble: oklch(0.9100 0.0080 75);
+    --text-muted: oklch(0.6500 0.0040 58);
+    --border-subtle: oklch(0.9500 0.0020 75);
+    --border-strong: oklch(0.8000 0.0050 75);
+  }
+
+  /* ════════════════════════════════════════════════
+     Theme 3: Slate Dark (cool dark)
+     Combined selector: data-theme for new system + .dark for Tailwind dark: variants
+     ════════════════════════════════════════════════ */
+  :root[data-theme="slate-dark"],
   .dark {
     --background: oklch(0.2046 0 0);
     --foreground: oklch(0.9219 0 0);
@@ -152,6 +186,7 @@
     --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
     --sidebar-border: oklch(0.3715 0 0);
     --sidebar-ring: oklch(0.6231 0.1880 259.8145);
+    --user-bubble: oklch(0.3200 0.003 264);
 
     /* ── Semantic surface tokens (dark) ── */
     --surface-primary: var(--background);
@@ -168,6 +203,71 @@
     --border-default: var(--border);
     --border-subtle: oklch(0.3200 0 0);
     --border-strong: oklch(0.5000 0 0);
+
+    --sentiment-positive: oklch(0.7500 0.1500 145);
+    --sentiment-positive-subtle: oklch(0.3000 0.0500 145);
+    --sentiment-negative: oklch(0.7500 0.1500 25);
+    --sentiment-negative-subtle: oklch(0.3000 0.0500 25);
+    --sentiment-neutral: oklch(0.6000 0 0);
+    --sentiment-neutral-subtle: oklch(0.3000 0 0);
+    --sentiment-mixed: oklch(0.8000 0.1200 75);
+    --sentiment-mixed-subtle: oklch(0.3000 0.0400 75);
+  }
+
+  /* ════════════════════════════════════════════════
+     Theme 4: Stone Dark (warm dark)
+     Warm tint on neutrals; accent/brand/chart same as Slate Dark
+     ════════════════════════════════════════════════ */
+  :root[data-theme="stone-dark"] {
+    --background: oklch(0.2046 0.004 56);
+    --foreground: oklch(0.9219 0.002 75);
+    --card: oklch(0.2686 0.004 56);
+    --card-foreground: oklch(0.9219 0.002 75);
+    --popover: oklch(0.2686 0.004 56);
+    --popover-foreground: oklch(0.9219 0.002 75);
+    --primary: oklch(0.6231 0.1880 259.8145);
+    --primary-foreground: oklch(1.0000 0 0);
+    --secondary: oklch(0.2686 0.004 56);
+    --secondary-foreground: oklch(0.9219 0.002 75);
+    --muted: oklch(0.2393 0.004 56);
+    --muted-foreground: oklch(0.7155 0.006 75);
+    --accent: oklch(0.3791 0.1378 265.5222);
+    --accent-foreground: oklch(0.8823 0.0571 254.1284);
+    --destructive: oklch(0.6368 0.2078 25.3313);
+    --destructive-foreground: oklch(1.0000 0 0);
+    --border: oklch(0.3715 0.004 56);
+    --input: oklch(0.3715 0.004 56);
+    --ring: oklch(0.6231 0.1880 259.8145);
+    --chart-1: oklch(0.7137 0.1434 254.6240);
+    --chart-2: oklch(0.6231 0.1880 259.8145);
+    --chart-3: oklch(0.5461 0.2152 262.8809);
+    --chart-4: oklch(0.4882 0.2172 264.3763);
+    --chart-5: oklch(0.4244 0.1809 265.6377);
+    --sidebar: oklch(0.2046 0.004 56);
+    --sidebar-foreground: oklch(0.9219 0.002 75);
+    --sidebar-primary: oklch(0.6231 0.1880 259.8145);
+    --sidebar-primary-foreground: oklch(1.0000 0 0);
+    --sidebar-accent: oklch(0.3791 0.1378 265.5222);
+    --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
+    --sidebar-border: oklch(0.3715 0.004 56);
+    --sidebar-ring: oklch(0.6231 0.1880 259.8145);
+    --user-bubble: oklch(0.3200 0.004 56);
+
+    /* ── Semantic surface tokens (dark) ── */
+    --surface-primary: var(--background);
+    --surface-secondary: var(--muted);
+    --surface-elevated: var(--card);
+    --surface-overlay: oklch(0 0 0 / 0.7);
+
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+    --text-muted: oklch(0.5500 0.004 58);
+    --text-inverse: var(--primary-foreground);
+    --text-link: oklch(0.7137 0.1434 254.6240);
+
+    --border-default: var(--border);
+    --border-subtle: oklch(0.3200 0.003 56);
+    --border-strong: oklch(0.5000 0.004 56);
 
     --sentiment-positive: oklch(0.7500 0.1500 145);
     --sentiment-positive-subtle: oklch(0.3000 0.0500 145);

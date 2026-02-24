@@ -131,17 +131,17 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
   return (
     <div>
       {/* Editor card with grey border */}
-      <div className="border border-zinc-300 rounded-lg overflow-hidden">
+      <div className="border border-border rounded-lg overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200 bg-zinc-50/50">
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-zinc-900 text-white text-xs font-semibold shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/50">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-foreground text-background text-xs font-semibold shrink-0">
             {index + 1}
           </span>
           <span className="text-sm font-medium flex-1">Question {index + 1}</span>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded hover:bg-zinc-200 text-muted-foreground transition-colors"
+            className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
           >
             <ChevronUp className="w-4 h-4" />
           </button>
@@ -162,8 +162,8 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors',
                     active
-                      ? 'bg-zinc-900 text-white border-zinc-900'
-                      : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50',
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'bg-background text-muted-foreground border-border hover:bg-muted',
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -214,7 +214,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 {Array.from({ length: (question.scale?.max ?? 5) - (question.scale?.min ?? 1) + 1 }).map((_, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full border-2 border-zinc-300 flex items-center justify-center text-xs text-muted-foreground"
+                    className="w-8 h-8 rounded-full border-2 border-border flex items-center justify-center text-xs text-muted-foreground"
                   >
                     {(question.scale?.min ?? 1) + i}
                   </div>
@@ -272,7 +272,7 @@ export const QuestionEditor: React.FC<QuestionEditorProps> = ({
           )}
 
           {currentBuilderType === 'open_text' && (
-            <div className="rounded-md bg-zinc-50 border border-zinc-200 p-3 text-xs text-muted-foreground">
+            <div className="rounded-md bg-muted border border-border p-3 text-xs text-muted-foreground">
               Respondents will see a free-text input field to type their answer.
             </div>
           )}

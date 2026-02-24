@@ -117,7 +117,8 @@ module.exports = {
           secondary: 'var(--brand-secondary)',
           tertiary: 'var(--brand-tertiary)',
           quaternary: 'var(--brand-quaternary)',
-        }
+        },
+        'user-bubble': 'var(--user-bubble)'
       },
       borderRadius: {
         lg: 'var(--radius)',

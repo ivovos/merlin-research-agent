@@ -150,7 +150,7 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
       </div>
 
       {/* Segmented tab control */}
-      <div className="inline-flex rounded-lg bg-zinc-100 p-1">
+      <div className="inline-flex rounded-lg bg-secondary p-1">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -159,7 +159,7 @@ export const QuestionsStep: React.FC<QuestionsStepProps> = ({
             className={cn(
               'px-4 py-1.5 text-xs font-medium rounded-md transition-all',
               questionSourceTab === tab.key
-                ? 'bg-white text-foreground shadow-sm'
+                ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
