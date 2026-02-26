@@ -21,7 +21,7 @@ function applyThemeToDOM(theme: ThemeName) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeRaw] = useLocalStorage<ThemeName>('merlin-theme', 'slate-light')
+  const [theme, setThemeRaw] = useLocalStorage<ThemeName>('merlin-theme', 'stone-light')
 
   const setTheme = useCallback((next: ThemeName) => {
     applyThemeToDOM(next)

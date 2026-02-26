@@ -120,7 +120,7 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
       )}
     >
       {/* Header — left-aligned title + right actions */}
-      <div className="flex items-center px-4 py-3 bg-background border-b border-border">
+      <div className="flex items-center px-4 py-3 bg-background-pure border-b border-border">
         {/* Left-aligned title */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <BarChart3 className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -211,7 +211,7 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
           {isShared && sharedStimuli.length > 0 && (
             <StimulusStrip
               stimuli={sharedStimuli}
-              className="px-2 py-2 mb-1 bg-background rounded-lg border border-border"
+              className="px-3 py-3 mb-1 bg-background-pure rounded-lg border border-border"
             />
           )}
 

@@ -1,8 +1,8 @@
 import React from 'react'
-import { MoreHorizontal, Copy, Download, Trash2, Bookmark, BookmarkCheck, SquareArrowOutUpRight } from 'lucide-react'
+import { MoreHorizontal, Copy, Download, Trash2, Bookmark, BookmarkCheck, SquareArrowOutUpRight, Quote } from 'lucide-react'
 import type { Finding, Stimulus } from '@/types'
 import { cn } from '@/lib/utils'
-import { DEFAULT_BRAND_COLORS } from '@/lib/brandDefaults'
+import { DEFAULT_BRAND_COLORS, getBrandColorArray } from '@/lib/brandDefaults'
 import { StimulusThumbnails } from './StimulusStrip'
 import {
   DropdownMenu,
@@ -83,6 +83,50 @@ export function BarRow({
   )
 }
 
+/**
+ * Grouped bar row for multi-segment comparisons.
+ * Shows one bar per segment side-by-side with different colours.
+ */
+function GroupedBarRow({
+  label,
+  segments,
+  colors,
+  maxValue,
+}: {
+  label: string
+  segments: { key: string; value: number }[]
+  colors: string[]
+  maxValue: number
+}) {
+  return (
+    <div className="grid items-center" style={{ gridTemplateColumns: '40% 1fr' }}>
+      <span className="text-sm text-muted-foreground text-right leading-snug pr-3 line-clamp-2">
+        {label}
+      </span>
+      <div className="flex flex-col gap-1">
+        {segments.map((seg, i) => {
+          const barPct = maxValue > 0 ? (seg.value / maxValue) * MAX_BAR_FRACTION * 100 : 0
+          return (
+            <div key={seg.key} className="flex items-center h-5">
+              <div
+                className="h-full rounded-sm shrink-0"
+                style={{
+                  width: `${barPct}%`,
+                  backgroundColor: colors[i % colors.length],
+                  minWidth: seg.value > 0 ? 4 : 0,
+                }}
+              />
+              <span className="text-xs font-medium text-foreground tabular-nums shrink-0 pl-2">
+                {Math.round(seg.value)}%
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export const FindingCard: React.FC<FindingCardProps> = ({
   finding,
   index: _index,
@@ -96,45 +140,81 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   isSaved: isSavedProp = false,
   className,
 }) => {
-  // Extract chart rows from chartData
-  // For grouped_bar charts the data uses segment keys (e.g. techSavvy, general)
-  // instead of a plain `value` — pick the first numeric field that isn't `name`.
-  const rows = (finding.chartData ?? []).map(d => {
+  const isQualitative = finding.chartType === 'qualitative'
+
+  // Detect segment keys for grouped_bar charts
+  const chartData = finding.chartData ?? []
+  const allNumericKeys = finding.chartType === 'grouped_bar' && chartData.length > 0
+    ? Object.keys(chartData[0]).filter(k => k !== 'name' && typeof chartData[0][k] === 'number')
+    : []
+  // If segmentBreakdowns exists, only take matching count of keys (excludes computed cols like "gap")
+  const segmentCount = finding.segmentBreakdowns?.length
+  const segmentKeys = segmentCount ? allNumericKeys.slice(0, segmentCount) : allNumericKeys
+  const isGrouped = segmentKeys.length >= 2
+
+  const brandColors = getBrandColorArray()
+
+  // Extract chart rows — single-segment path (skip for qualitative)
+  const rows = (isGrouped || isQualitative) ? [] : chartData.map(d => {
     let val = Number(d.value ?? 0)
     if (!val) {
-      // Fallback: grab first numeric property (skipping `name`)
       for (const [k, v] of Object.entries(d)) {
         if (k !== 'name' && typeof v === 'number') { val = v; break }
       }
     }
     return { label: String(d.name ?? ''), value: val }
   })
-  const maxValue = Math.max(...rows.map(r => r.value), 1)
+  const maxValue = isGrouped
+    ? Math.max(...chartData.flatMap(d => segmentKeys.map(k => Number(d[k] ?? 0))), 1)
+    : Math.max(...rows.map(r => r.value), 1)
 
-  // Audience + respondent line (from segmentBreakdowns or finding metadata)
-  const audienceLabel =
-    finding.segmentBreakdowns?.[0]?.segmentName ?? 'General Population'
+  // Audience labels — for grouped bars, prefer human-readable names from segmentBreakdowns
+  // (chartData keys like "techSavvy" map to segmentBreakdowns[0].segmentName "Tech-Savvy Families")
+  const audienceLabels = isGrouped
+    ? segmentKeys.map((key, i) =>
+        finding.segmentBreakdowns?.[i]?.segmentName ?? key
+      )
+    : [finding.segmentBreakdowns?.[0]?.segmentName ?? 'General Population']
 
   const saved = isSavedProp
 
   return (
     <div
       className={cn(
-        'bg-background border border-border rounded-xl p-5 space-y-5',
+        'bg-background-pure border border-border rounded-xl p-5 space-y-5',
         className,
       )}
     >
-      {/* Top line: audience dot + respondent count + kebab */}
+      {/* Top line: audience dot(s) + respondent count + kebab */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: BAR_COLOR }}
-          />
-          <span>{audienceLabel}</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+          {isQualitative ? (
+            <>
+              <Quote className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>Focus Group</span>
+            </>
+          ) : isGrouped ? (
+            audienceLabels.map((label, i) => (
+              <span key={label} className="inline-flex items-center gap-1.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: brandColors[i % brandColors.length] }}
+                />
+                <span>{label}</span>
+              </span>
+            ))
+          ) : (
+            <>
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: BAR_COLOR }}
+              />
+              <span>{audienceLabels[0]}</span>
+            </>
+          )}
           {respondents && (
             <span className="text-muted-foreground/60">
-              {respondents.toLocaleString()} Respondents
+              {respondents.toLocaleString()} {isQualitative ? 'Participants' : 'Respondents'}
             </span>
           )}
         </div>
@@ -203,8 +283,33 @@ export const FindingCard: React.FC<FindingCardProps> = ({
         <StimulusThumbnails stimuli={stimuli} />
       )}
 
-      {/* Clean horizontal bar chart */}
-      {rows.length > 0 && (
+      {/* Chart — qualitative quotes, grouped bars, or single bars */}
+      {isQualitative && chartData.length > 0 ? (
+        <div className="space-y-3">
+          {chartData.map((d, i) => (
+            <div key={i} className="relative pl-4 border-l-2 border-primary/30">
+              <p className="text-sm text-foreground leading-relaxed italic">
+                &ldquo;{String(d.quote ?? '')}&rdquo;
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                &mdash; {String(d.name ?? '')}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : isGrouped && chartData.length > 0 ? (
+        <div className="space-y-3 p-4">
+          {chartData.map((d, i) => (
+            <GroupedBarRow
+              key={i}
+              label={String(d.name ?? '')}
+              segments={segmentKeys.map(k => ({ key: k, value: Number(d[k] ?? 0) }))}
+              colors={brandColors}
+              maxValue={maxValue}
+            />
+          ))}
+        </div>
+      ) : rows.length > 0 ? (
         <div className="space-y-2.5 p-4">
           {rows.map((row, i) => (
             <BarRow
@@ -215,6 +320,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({
             />
           ))}
         </div>
+      ) : null}
+
+      {/* Insight text for qualitative findings */}
+      {isQualitative && finding.insight && (
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {finding.insight}
+        </p>
       )}
     </div>
   )

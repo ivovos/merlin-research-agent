@@ -98,7 +98,7 @@ export interface Finding {
   questionText?: string
   headline: string
   insight: string
-  chartType: 'bar' | 'stacked_bar' | 'radar' | 'table' | 'heatmap' | 'line' | 'grouped_bar'
+  chartType: 'bar' | 'stacked_bar' | 'radar' | 'table' | 'heatmap' | 'line' | 'grouped_bar' | 'qualitative'
   chartData: Record<string, unknown>[]
   segmentBreakdowns?: SegmentBreakdown[]
   editable: boolean

@@ -273,6 +273,11 @@ export function detectComparisonSegments(query: string): string[] {
     /(.+?)\s+versus\s+(.+)/i,
     /compar(?:e|ing)\s+(.+?)\s+(?:to|and|with)\s+(.+)/i,
     /(.+?)\s+compared\s+to\s+(.+)/i,
+    /differences?\s+between\s+(.+?)\s+and\s+(.+)/i,
+    /how\s+do\s+(.+?)\s+and\s+(.+?)\s+differ/i,
+    /(.+?)\s+against\s+(.+)/i,
+    /both\s+(.+?)\s+and\s+(.+)/i,
+    /ask\s+(.+?)\s+and\s+(.+)/i,
   ]
 
   for (const pattern of comparisonPatterns) {
@@ -323,7 +328,7 @@ export async function selectResearchTool(
       : AGENT_SYSTEM_PROMPT
 
     const toolSelectionResponse = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userQuery }],
@@ -363,6 +368,14 @@ export async function selectResearchTool(
           suggestions: (toolInput.suggestions as string[]) || []
         }
       }
+    }
+
+    // Safety net: if the LLM missed segments but the query clearly has a comparison,
+    // inject the detected segments so the comparison pipeline kicks in.
+    const detectedSegments = detectComparisonSegments(userQuery)
+    if (detectedSegments.length >= 2 && !(toolInput.segments as string[])?.length) {
+      console.log('[Merlin Agent] Safety net: injecting detected segments:', detectedSegments)
+      toolInput.segments = detectedSegments
     }
 
     const studyPlan = createStudyPlan(toolName, {

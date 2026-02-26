@@ -7,8 +7,8 @@
     <script>
       (function() {
         try {
-          var t = JSON.parse(localStorage.getItem('merlin-theme'));
-          if (t && t !== 'slate-light') {
+          var t = JSON.parse(localStorage.getItem('merlin-theme')) || 'stone-light';
+          if (t !== 'slate-light') {
             document.documentElement.setAttribute('data-theme', t);
             if (t.indexOf('-dark') !== -1) document.documentElement.classList.add('dark');
           }

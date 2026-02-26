@@ -7,7 +7,8 @@
      Theme 1: Slate Light (default — cool blue-grey)
      ════════════════════════════════════════════════ */
   :root {
-    --background: oklch(1.0000 0 0);
+    --background: oklch(0.9900 0 0);
+    --background-pure: oklch(1.0000 0 0);
     --foreground: oklch(0.3211 0 0);
     --card: oklch(1.0000 0 0);
     --card-foreground: oklch(0.2264 0 0);
@@ -155,6 +156,7 @@
   :root[data-theme="slate-dark"],
   .dark {
     --background: oklch(0.2046 0 0);
+    --background-pure: oklch(0.2686 0 0);
     --foreground: oklch(0.9219 0 0);
     --card: oklch(0.2686 0 0);
     --card-foreground: oklch(0.9219 0 0);
@@ -220,6 +222,7 @@
      ════════════════════════════════════════════════ */
   :root[data-theme="stone-dark"] {
     --background: oklch(0.2046 0.004 56);
+    --background-pure: oklch(0.2686 0.004 56);
     --foreground: oklch(0.9219 0.002 75);
     --card: oklch(0.2686 0.004 56);
     --card-foreground: oklch(0.9219 0.002 75);

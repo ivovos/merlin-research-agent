@@ -23,14 +23,16 @@ interface HomeProps {
 // ── Animated placeholder phrases ──
 
 const PLACEHOLDER_PHRASES = [
-  'Why are @uk-millennials churning after the first month?',
-  '/focus-group What do parents think about our new ad campaign?',
-  'How does @premium-subscribers feel about the latest price increase?',
-  '/creative-testing Which packaging design resonates most with Gen Z?',
-  'What are the top unmet needs for @health-conscious-shoppers?',
-  '/survey How satisfied are customers with our onboarding experience?',
-  'What would make @lapsed-users come back to the platform?',
-  '/concept-testing Does this new product idea have legs with our core audience?',
+  'Ask @binge-watchers what makes them abandon a series',
+  'Ask @health-conscious-shoppers what the perfect snack looks like',
+  'Ask @mobile-switchers what made them leave their network',
+  'Ask @lapsed-gym-members what would get them back',
+  'Ask @free-tier-streamers what would make them pay',
+  'Ask @first-time-parents what they wish they\'d known sooner',
+  'Ask @small-business-owners their biggest hiring challenge',
+  'Ask @ad-skippers what kind of ad they\'d choose to watch',
+  'Ask @eco-conscious-consumers what greenwashing looks like to them',
+  'Ask @doom-scrollers what content actually makes them feel good',
 ]
 
 // ── Curated pill data ──
@@ -101,16 +103,12 @@ export const Home: React.FC<HomeProps> = ({
   )
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col bg-background">
       {/* Hero section — vertically centered */}
       <div className="flex flex-col items-center justify-center px-6 flex-1">
         <h1 className="text-3xl font-display font-bold tracking-tight text-center">
           Ask them anything
         </h1>
-        <p className="text-sm text-muted-foreground mt-2 text-center">
-          Ask a question or pick a method below
-        </p>
-
         {/* Input bar */}
         <div className="w-full max-w-2xl mt-8">
           <ChatInputBar
@@ -143,7 +141,7 @@ export const Home: React.FC<HomeProps> = ({
             <button
               type="button"
               onClick={() => setMethodsOpen(true)}
-              className="rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-background text-muted-foreground hover:bg-muted hover:border-muted-foreground/30 transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5"
+              className="rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-background-pure text-muted-foreground hover:bg-muted hover:border-muted-foreground/30 transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-1.5"
             >
               <Search className="w-3.5 h-3.5" />
               <span>All methods</span>
@@ -165,7 +163,7 @@ export const Home: React.FC<HomeProps> = ({
                     'rounded-full px-3 py-1.5 text-xs font-medium border whitespace-nowrap flex-shrink-0 flex items-center gap-1.5 transition-colors',
                     isActive
                       ? 'bg-foreground text-background border-foreground'
-                      : 'border-border bg-muted/50 text-foreground hover:bg-muted hover:border-muted-foreground/30',
+                      : 'border-border bg-background-pure text-foreground hover:bg-muted hover:border-muted-foreground/30',
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />

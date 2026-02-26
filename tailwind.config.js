@@ -27,7 +27,10 @@ module.exports = {
         border: 'var(--border)',
         input: 'var(--input)',
         ring: 'var(--ring)',
-        background: 'var(--background)',
+        background: {
+          DEFAULT: 'var(--background)',
+          pure: 'var(--background-pure)',
+        },
         foreground: 'var(--foreground)',
         primary: {
           DEFAULT: 'var(--primary)',

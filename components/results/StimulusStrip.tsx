@@ -26,38 +26,40 @@ export const StimulusStrip: React.FC<StimulusStripProps> = ({ stimuli, className
 
   return (
     <>
-      <div className={cn('flex items-start gap-3 overflow-x-auto pb-1', className)}>
-        <span className="text-xs font-medium text-muted-foreground shrink-0 pt-2">
-          Stimulus tested:
+      <div className={cn('flex flex-col gap-2 pb-1', className)}>
+        <span className="text-xs font-medium text-muted-foreground">
+          Stimulus
         </span>
-        {stimuli.map(stim => (
-          <button
-            key={stim.id}
-            type="button"
-            onClick={() => setLightbox(stim)}
-            className="group flex flex-col items-center gap-1 shrink-0 focus:outline-none"
-          >
-            <div className="w-40 h-28 rounded-lg border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
-              {stim.type === 'image' || stim.type === 'concept' ? (
-                <img
-                  src={stim.url}
-                  alt={stim.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none'
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                </div>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground leading-tight text-center max-w-40 line-clamp-2 group-hover:text-foreground transition-colors">
-              {stim.name}
-            </span>
-          </button>
-        ))}
+        <div className="flex flex-wrap gap-3">
+          {stimuli.map(stim => (
+            <button
+              key={stim.id}
+              type="button"
+              onClick={() => setLightbox(stim)}
+              className="group flex flex-col items-center gap-1 shrink-0 focus:outline-none"
+            >
+              <div className="w-40 h-28 rounded-lg border border-border overflow-hidden bg-muted group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+                {stim.type === 'image' || stim.type === 'concept' ? (
+                  <img
+                    src={stim.url}
+                    alt={stim.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground leading-tight text-center max-w-40 line-clamp-2 group-hover:text-foreground transition-colors">
+                {stim.name}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Lightbox */}
@@ -158,7 +160,7 @@ export const StimulusThumbnails: React.FC<{
         >
           <ImageIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span className="text-xs text-muted-foreground font-medium shrink-0">
-            {stimuli.length} stimulus{stimuli.length !== 1 ? ' items' : ''}
+            Stimulus ({stimuli.length})
           </span>
 
           {/* Mini preview thumbs (only when collapsed) */}
@@ -201,7 +203,7 @@ export const StimulusThumbnails: React.FC<{
 
         {/* Expanded — proper-sized thumbnails */}
         {expanded && (
-          <div className="flex items-start gap-3 overflow-x-auto pt-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex flex-wrap gap-3 pt-3 pb-1 animate-in fade-in slide-in-from-top-1 duration-200">
             {stimuli.map(stim => (
               <button
                 key={stim.id}

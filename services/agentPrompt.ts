@@ -75,6 +75,18 @@ DON'T ask clarification. Instead:
 **User: "how do iPhone and Android users differ on app spending"**
 → run_survey(audience: "Smartphone users", segments: ["iPhone users", "Android users"], research_question: "Mobile app purchasing behavior")
 
+**User: "What do free trial users think about content quality compared to paying subscribers"**
+→ run_survey(audience: "Streaming subscribers", segments: ["Free trial users", "Paying subscribers"], research_question: "Content quality perceptions and satisfaction")
+
+**User: "Ask both tech-savvy families and general broadband users about their internet needs"**
+→ run_survey(audience: "Broadband customers", segments: ["Tech-savvy families", "General broadband users"], research_question: "Internet service needs and priorities")
+
+**User: "differences between premium and basic tier customers on feature usage"**
+→ run_survey(audience: "SaaS customers", segments: ["Premium tier customers", "Basic tier customers"], research_question: "Feature usage patterns and preferences")
+
+**User: "how do parents and non-parents feel about work-life balance"**
+→ run_survey(audience: "Working professionals", segments: ["Parents", "Non-parents"], research_question: "Work-life balance attitudes and challenges")
+
 ## WHEN TO ASK CLARIFICATION (RARE)
 
 Only use ask_clarification if ALL of these are true:

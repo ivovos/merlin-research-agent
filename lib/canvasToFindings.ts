@@ -1,12 +1,18 @@
-import type { Canvas, QuestionResult } from '@/types/canvas'
+import type { Canvas, QuestionResult, QualitativeTheme } from '@/types/canvas'
 import type { Finding, SegmentBreakdown } from '@/types/survey'
 import { parsePercentage } from './parseUtils'
 
 /**
  * Convert a Canvas (from research generation) into Finding[] (for FindingsCanvas).
- * Each QuestionResult becomes one Finding.
+ * Quantitative: each QuestionResult becomes one Finding.
+ * Qualitative: each QualitativeTheme becomes one Finding.
  */
 export function canvasToFindings(canvas: Canvas): Finding[] {
+  // Qualitative canvas — convert themes to findings
+  if (canvas.type === 'qualitative' && canvas.themes && canvas.themes.length > 0) {
+    return canvas.themes.map((theme) => themeToFinding(theme))
+  }
+
   if (!canvas.questions || canvas.questions.length === 0) return []
 
   return canvas.questions.map((q) => {
@@ -107,4 +113,34 @@ function extractSegmentBreakdowns(
     value: parsePercentage(topOption[seg]),
     label: topOption.label,
   }))
+}
+
+// ---------------------------------------------------------------------------
+// Qualitative theme → Finding conversion
+// ---------------------------------------------------------------------------
+
+const SENTIMENT_LABELS: Record<string, string> = {
+  positive: 'Positive',
+  negative: 'Negative',
+  neutral: 'Neutral',
+  mixed: 'Mixed',
+}
+
+/** Convert a QualitativeTheme into a Finding for display in FindingCard */
+function themeToFinding(theme: QualitativeTheme): Finding {
+  return {
+    questionId: theme.id,
+    headline: theme.topic,
+    insight: theme.summary,
+    chartType: 'qualitative' as const,
+    chartData: theme.quotes.map((q, i) => ({
+      name: q.attribution,
+      quote: q.text,
+      index: i,
+    })),
+    editable: true,
+    sourceQuote: theme.quotes[0]
+      ? { text: theme.quotes[0].text, attribution: theme.quotes[0].attribution }
+      : undefined,
+  }
 }

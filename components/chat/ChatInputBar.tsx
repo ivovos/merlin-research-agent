@@ -77,10 +77,12 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       borderRadius: 12,
     },
     typewriter: {
-      typeSpeed: 38,
-      deleteSpeed: 18,
-      pauseDuration: 2400,
-      initialDelay: 600,
+      typeSpeed: 45,
+      deleteSpeed: 20,
+      pauseDuration: 3000,
+      initialDelay: 800,
+      initialHold: 2400,
+      clearPause: 500,
     },
   }
 
@@ -91,6 +93,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
   // ── Animated placeholder (typewriter cycle) ──
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState('')
+  const [placeholderOpacity, setPlaceholderOpacity] = useState(1)
   const cancelledRef = useRef(false)
 
   useEffect(() => {
@@ -98,6 +101,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
     cancelledRef.current = false
     const phrases = animatedPlaceholders
+    const tw = params.typewriter
 
     let phraseIdx = 0
     let charIdx = 0
@@ -119,10 +123,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         setDisplayedPlaceholder(current.slice(0, charIdx))
 
         if (charIdx >= current.length) {
-          schedule(() => { isDeleting = true; tick() }, params.typewriter.pauseDuration)
+          // Pause to let it land, then delete
+          schedule(() => { isDeleting = true; tick() }, tw.pauseDuration)
           return
         }
-        schedule(tick, params.typewriter.typeSpeed + Math.random() * 28)
+        schedule(tick, tw.typeSpeed + Math.random() * 20)
       } else {
         charIdx--
         setDisplayedPlaceholder(current.slice(0, charIdx))
@@ -130,14 +135,27 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         if (charIdx <= 0) {
           isDeleting = false
           phraseIdx = (phraseIdx + 1) % phrases.length
-          schedule(tick, 400)
+          schedule(tick, tw.clearPause)
           return
         }
-        schedule(tick, params.typewriter.deleteSpeed)
+        schedule(tick, tw.deleteSpeed)
       }
     }
 
-    schedule(tick, params.typewriter.initialDelay)
+    // Start with "Ask them anything", hold, then fade and begin cycling
+    setDisplayedPlaceholder('Ask them anything')
+    setPlaceholderOpacity(1)
+
+    schedule(() => {
+      // Fade out the initial text
+      setPlaceholderOpacity(0)
+      schedule(() => {
+        setDisplayedPlaceholder('')
+        setPlaceholderOpacity(1)
+        // Begin typing the first prompt
+        schedule(tick, 200)
+      }, 400) // matches CSS transition duration
+    }, tw.initialHold)
 
     return () => {
       cancelledRef.current = true
@@ -191,7 +209,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       )}
       style={{
         borderRadius: params.container.borderRadius,
-        boxShadow: `0 2px ${params.container.shadowBlur}px rgba(0,0,0,${params.container.shadowOpacity})`,
+        boxShadow: variant === 'home' ? 'none' : `0 2px ${params.container.shadowBlur}px rgba(0,0,0,${params.container.shadowOpacity})`,
       }}
     >
       {/* Methods picker lightbox — portaled to body */}
@@ -229,14 +247,15 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           <div
             aria-hidden
             className={cn(
-              'absolute inset-0 px-3 pt-2.5 pointer-events-none text-sm leading-relaxed whitespace-pre-wrap',
+              'absolute inset-0 px-3 pt-2.5 pointer-events-none text-sm leading-relaxed whitespace-pre-wrap transition-opacity duration-400',
               isHome ? 'py-[calc(0.625rem+0.75rem)]' : 'py-[calc(0.625rem+0.5rem)]',
             )}
+            style={{ opacity: placeholderOpacity }}
           >
             {placeholderSegments.map((seg, i) => (
               <span
                 key={i}
-                className={seg.highlighted ? 'text-foreground/70 font-medium' : 'text-muted-foreground'}
+                className={seg.highlighted ? 'text-foreground font-semibold' : 'text-muted-foreground'}
               >
                 {seg.text}
               </span>
