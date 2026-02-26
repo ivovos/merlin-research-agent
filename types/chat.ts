@@ -94,6 +94,7 @@ export interface ChatMessagePlan {
 export type AppView =
   | { screen: 'home' }
   | { screen: 'project'; projectId: string }
+  | { screen: 'type-styles' }
 
 // ── Project state ──
 

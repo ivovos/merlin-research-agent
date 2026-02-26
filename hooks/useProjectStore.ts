@@ -22,7 +22,7 @@ function generateStudyName(study: Partial<Survey>): string {
   const parts: string[] = []
   if (study.type) {
     const labels: Record<string, string> = {
-      simple: 'Quick Poll',
+      simple: 'Quick Question',
       concept: 'Proposition Test',
       message: 'Message Test',
       creative: 'Creative Test',

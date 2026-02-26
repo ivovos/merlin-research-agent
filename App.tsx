@@ -22,6 +22,7 @@ import { AudienceDetail } from '@/components/AudienceDetail'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
 import { QuickPollPage } from '@/components/quick-poll/QuickPollPage'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { TypeStyles } from '@/components/TypeStyles'
 
 import type { AudienceDetails, Survey } from '@/types'
 
@@ -165,12 +166,12 @@ const App: React.FC = () => {
   }, [])
 
   const handleQuickPollLaunch = useCallback((survey: Survey) => {
-    const project = store.createProject('Quick Poll', currentAccount.name)
+    const project = store.createProject('Quick Question', currentAccount.name)
     store.addStudy(project.id, survey)
     store.addMessage(project.id, {
       id: `msg_${Date.now()}_sys`,
       type: 'system',
-      text: `Quick Poll launched with ${survey.questions.length} questions.`,
+      text: `Quick Question launched with ${survey.questions.length} questions.`,
       timestamp: Date.now(),
     })
     store.addMessage(project.id, {
@@ -179,7 +180,7 @@ const App: React.FC = () => {
       studyId: survey.id,
       findings: survey.findings!,
       studyName: survey.name,
-      typeBadge: 'Quick Poll',
+      typeBadge: 'Quick Question',
       respondents: survey.sampleSize,
       timestamp: Date.now(),
     })
@@ -192,7 +193,7 @@ const App: React.FC = () => {
 
   return (
     <>
-    <ThemeToggle />
+    <ThemeToggle onTypeStylesClick={() => setView({ screen: 'type-styles' })} />
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <AppSidebar
         currentAccount={currentAccount}
@@ -233,6 +234,8 @@ const App: React.FC = () => {
               />
             )}
           </main>
+        ) : view.screen === 'type-styles' ? (
+          <TypeStyles />
         ) : view.screen === 'project' && store.activeProject ? (
           /* Project chat */
           <ProjectChat

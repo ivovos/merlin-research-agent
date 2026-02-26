@@ -16,6 +16,7 @@ import type { ToolSelectionResult } from '@/services'
 import { createPlanningSteps, createPlanCreationSteps, createExecutionSteps } from '@/constants/processSteps'
 import { TIMING } from '@/constants/timing'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
+import { useSegmentSelection } from '@/hooks/useSegmentSelection'
 
 interface ProjectChatProps {
   project: ProjectState
@@ -44,6 +45,14 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
     isComplete?: boolean
     thinkingTime?: number
   } | undefined>(undefined)
+
+  // Segment selection for follow-up scoping (bar click → pill in input)
+  const {
+    selectedSegments,
+    selectSegment,
+    removeSegment,
+    clearSegments,
+  } = useSegmentSelection()
 
   // Track whether a simulation is in progress (prevent double-submit)
   const simulatingRef = useRef(false)
@@ -197,6 +206,9 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
       if (pendingPlan) {
         setPendingPlan(null)
       }
+
+      // Clear segment pills on send
+      clearSegments()
 
       const startTime = Date.now()
 
@@ -512,7 +524,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
       const systemMsg: ChatMessage = {
         id: `msg_${Date.now()}_sys`,
         type: 'system',
-        text: `Quick Poll launched with ${survey.questions.length} questions.`,
+        text: `Quick Question launched with ${survey.questions.length} questions.`,
         timestamp: Date.now(),
       }
       onAddMessage(systemMsg)
@@ -522,7 +534,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         type: 'findings',
         studyId: survey.id,
         studyName: survey.name,
-        typeBadge: 'Quick Poll',
+        typeBadge: 'Quick Question',
         findings: survey.findings!,
         respondents: survey.sampleSize,
         timestamp: Date.now(),
@@ -574,6 +586,9 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           onReviewPlan={handleReviewPlan}
           processing={processing}
           brand={project.brand}
+          onBarClick={(segment) => selectSegment(segment, 'chat')}
+          selectedSegments={selectedSegments.segments}
+          onRemoveSegment={removeSegment}
         />
 
         {/* Builder overlay */}

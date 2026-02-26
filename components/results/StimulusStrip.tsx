@@ -30,7 +30,7 @@ export const StimulusStrip: React.FC<StimulusStripProps> = ({ stimuli, className
         <span className="text-xs font-medium text-muted-foreground">
           Stimulus
         </span>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           {stimuli.map(stim => (
             <button
               key={stim.id}

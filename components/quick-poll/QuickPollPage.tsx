@@ -45,7 +45,7 @@ export const QuickPollPage: React.FC<QuickPollPageProps> = ({ onClose, onLaunch 
     const survey: Survey = {
       id: `survey_${Date.now()}`,
       type: 'simple',
-      name: 'Quick Poll',
+      name: 'Quick Question',
       status: 'completed',
       questions: state.questions,
       audiences: [state.selectedAudienceId],
@@ -63,7 +63,7 @@ export const QuickPollPage: React.FC<QuickPollPageProps> = ({ onClose, onLaunch 
       {/* Header */}
       <div className="shrink-0 border-b border-border px-6 py-3 flex items-start justify-between">
         <div>
-          <h1 className="text-base font-semibold font-display tracking-tight">Quick Poll</h1>
+          <h1 className="text-base font-semibold font-display tracking-tight">Quick Question</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Fast feedback on a single topic. Pick your audience and add your questions.
           </p>

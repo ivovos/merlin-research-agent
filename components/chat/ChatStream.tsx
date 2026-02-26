@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react'
-import type { ChatMessage, ProcessStep } from '@/types'
+import type { ChatMessage, ProcessStep, SelectedSegment } from '@/types'
 import type { PickerMethod } from './MethodsPicker'
 import type { PickerAudience } from './AudiencePicker'
 import { UserMessage } from './UserMessage'
@@ -27,6 +27,12 @@ interface ChatStreamProps {
     isComplete?: boolean
     thinkingTime?: number
   }
+  /** Called when a bar in a findings card is clicked */
+  onBarClick?: (segment: SelectedSegment) => void
+  /** Currently selected segments for pills in input bar */
+  selectedSegments?: SelectedSegment[]
+  /** Remove a segment pill */
+  onRemoveSegment?: (questionId: string, answerLabel: string) => void
   /** Current brand — used to filter audiences in the picker */
   brand?: string
   className?: string
@@ -41,6 +47,9 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
   onApprovePlan,
   onReviewPlan,
   processing,
+  onBarClick,
+  selectedSegments,
+  onRemoveSegment,
   brand,
   className,
 }) => {
@@ -88,7 +97,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
                   node = <AIMessage key={msg.id} message={msg} />
                   break
                 case 'findings':
-                  node = <FindingsMessage key={msg.id} message={msg} onOpenPlan={onOpenPlan} />
+                  node = <FindingsMessage key={msg.id} message={msg} onOpenPlan={onOpenPlan} onBarClick={onBarClick} selectedSegments={selectedSegments} />
                   break
                 case 'system':
                   node = <SystemMessage key={msg.id} message={msg} />
@@ -153,6 +162,8 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
             placeholder="Ask another question"
             variant="chat"
             brand={brand}
+            selectedSegments={selectedSegments}
+            onRemoveSegment={onRemoveSegment}
           />
         </div>
       </div>

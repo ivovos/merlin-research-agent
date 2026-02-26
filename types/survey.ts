@@ -166,7 +166,7 @@ export interface SurveyTypeConfig {
 }
 
 export const SURVEY_TYPE_CONFIGS: SurveyTypeConfig[] = [
-  { key: 'simple', label: 'Quick Poll', description: 'Fast feedback on a single topic or question', needsStimulus: false, icon: 'ClipboardList' },
+  { key: 'simple', label: 'Quick Question', description: 'Fast feedback on a single topic or question', needsStimulus: false, icon: 'ClipboardList' },
   { key: 'audience_exploration', label: 'Audience Exploration', description: 'Deep-dive into audience attitudes and behaviours', needsStimulus: false, icon: 'Users' },
   { key: 'concept', label: 'Proposition Testing', description: 'Test product concepts, ideas, or propositions', needsStimulus: true, icon: 'Lightbulb' },
   { key: 'message', label: 'Message Testing', description: 'Test messaging, claims, and copy', needsStimulus: true, icon: 'MessageCircle' },

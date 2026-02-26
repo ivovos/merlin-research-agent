@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { Plus, Users, Slash, ArrowUp } from 'lucide-react'
+import { Plus, Users, Slash, ArrowUp, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { MethodsPicker, type PickerMethod } from './MethodsPicker'
 import { AudiencePicker, type PickerAudience } from './AudiencePicker'
+import type { SelectedSegment } from '@/types'
 
 // ── Helper: parse placeholder text into styled segments ──
 
@@ -48,6 +49,10 @@ interface ChatInputBarProps {
   variant?: 'home' | 'chat'
   /** Current brand — used to filter audiences in the picker */
   brand?: string
+  /** Selected segments shown as pills above the textarea */
+  selectedSegments?: SelectedSegment[]
+  /** Remove a segment pill */
+  onRemoveSegment?: (questionId: string, answerLabel: string) => void
 }
 
 export const ChatInputBar: React.FC<ChatInputBarProps> = ({
@@ -60,6 +65,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   className,
   variant = 'chat',
   brand,
+  selectedSegments,
+  onRemoveSegment,
 }) => {
   const params = {
     container: {
@@ -201,6 +208,12 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
   const showAnimatedOverlay = !!animatedPlaceholders && text.length === 0
 
+  // Segment pill state
+  const hasSegments = !!(selectedSegments && selectedSegments.length > 0)
+  const segmentRespondentCount = hasSegments
+    ? Math.round(selectedSegments!.reduce((sum, s) => sum + (s.respondents * s.percentage / 100), 0))
+    : 0
+
   return (
     <div
       className={cn(
@@ -240,10 +253,10 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         }}
       />
 
-      {/* Text input */}
+      {/* Text input with inline segment pill */}
       <div className="relative px-3 pt-2.5 pb-1">
         {/* Animated placeholder overlay with styled tokens */}
-        {showAnimatedOverlay && (
+        {showAnimatedOverlay && !hasSegments && (
           <div
             aria-hidden
             className={cn(
@@ -263,29 +276,47 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             <span className="text-muted-foreground animate-pulse">|</span>
           </div>
         )}
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={e => {
-            const val = e.target.value
-            setText(val)
-            handleInput()
+        <div className="flex items-start gap-2">
+          {/* Inline segment pill */}
+          {hasSegments && (
+            <span className="bg-primary text-primary-foreground text-xs font-medium rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 animate-in fade-in duration-200 shadow-sm shrink-0 mt-1.5">
+              New segment · {segmentRespondentCount.toLocaleString()}
+              <button
+                type="button"
+                onClick={() => {
+                  // Remove all selected segments
+                  selectedSegments!.forEach(s => onRemoveSegment?.(s.questionId, s.answerLabel))
+                }}
+                className="hover:bg-primary-foreground/20 rounded-full p-0.5 transition-colors -mr-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => {
+              const val = e.target.value
+              setText(val)
+              handleInput()
 
-            // Trigger audience picker on @ at start or after whitespace
-            if (onAddAudience && /(^|\s)@$/.test(val)) {
-              setAudienceOpen(true)
-              setMethodsOpen(false)
-            }
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={animatedPlaceholders ? undefined : placeholder}
-          rows={1}
-          className="w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2"
-          style={{
-            fontSize:  params.textarea.fontSize,
-            minHeight: params.textarea.minHeight,
-          }}
-        />
+              // Trigger audience picker on @ at start or after whitespace
+              if (onAddAudience && /(^|\s)@$/.test(val)) {
+                setAudienceOpen(true)
+                setMethodsOpen(false)
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={hasSegments ? 'Ask about this segment...' : (animatedPlaceholders ? undefined : placeholder)}
+            rows={1}
+            className="w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2"
+            style={{
+              fontSize:  params.textarea.fontSize,
+              minHeight: params.textarea.minHeight,
+            }}
+          />
+        </div>
       </div>
 
       {/* Action buttons row + send */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Settings, Sun, Moon, Palette } from 'lucide-react'
+import { Settings, Sun, Moon, Palette, Type } from 'lucide-react'
 import { useTheme, type ThemeName } from '@/hooks/useTheme'
 import { cn } from '@/lib/utils'
 
@@ -12,7 +12,7 @@ const themes: { value: ThemeName; icon: React.ElementType; label: string }[] = [
 
 const HOVER_ZONE = 100 // px from bottom-right corner to trigger reveal
 
-export function ThemeToggle() {
+export function ThemeToggle({ onTypeStylesClick }: { onTypeStylesClick?: () => void }) {
   const { theme, setTheme } = useTheme()
   const [visible, setVisible] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -90,6 +90,22 @@ export function ThemeToggle() {
               <span>{label}</span>
             </button>
           ))}
+          {onTypeStylesClick && (
+            <>
+              <div className="border-t border-border my-1.5" />
+              <button
+                onClick={() => {
+                  onTypeStylesClick()
+                  setPanelOpen(false)
+                  hide()
+                }}
+                className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+              >
+                <Type className="h-3.5 w-3.5 shrink-0" />
+                <span>Type Styles</span>
+              </button>
+            </>
+          )}
         </div>
       )}
 

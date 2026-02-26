@@ -2,7 +2,7 @@ import type { Tool } from '@anthropic-ai/sdk/resources/messages'
 
 export const focusGroupTool: Tool = {
   name: 'run_focus_group',
-  description: 'Conduct qualitative focus groups to understand motivations, feelings, and deeper insights. Use when the user wants to UNDERSTAND something - the "why" behind behaviors, explore feelings, or get rich narrative insights.',
+  description: 'Conduct qualitative focus groups with in-depth participant discussions. ONLY use when the user EXPLICITLY requests a focus group, qualitative research, or "qual" study. Do NOT use just because the question contains "why" or explores motivations — surveys handle those well. Reserve this for when qualitative depth is specifically requested.',
   input_schema: {
     type: 'object',
     properties: {

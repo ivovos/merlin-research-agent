@@ -47,7 +47,7 @@ export const PICKER_METHODS: PickerMethod[] = [
   {
     id: 'quick-poll',
     command: '/quick-poll',
-    label: 'Quick Poll',
+    label: 'Quick Question',
     description: 'Fast single-question pulse check',
     icon: 'zap',
     category: 'Quick & Simple',

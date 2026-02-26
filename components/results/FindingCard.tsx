@@ -1,6 +1,6 @@
 import React from 'react'
 import { MoreHorizontal, Copy, Download, Trash2, Bookmark, BookmarkCheck, SquareArrowOutUpRight, Quote } from 'lucide-react'
-import type { Finding, Stimulus } from '@/types'
+import type { Finding, Stimulus, SelectedSegment } from '@/types'
 import { cn } from '@/lib/utils'
 import { DEFAULT_BRAND_COLORS, getBrandColorArray } from '@/lib/brandDefaults'
 import { StimulusThumbnails } from './StimulusStrip'
@@ -27,6 +27,10 @@ interface FindingCardProps {
   onUnsave?: (questionId: string) => void
   /** Whether this finding is currently saved */
   isSaved?: boolean
+  /** Called when a bar is clicked — provides segment data for follow-up scoping */
+  onBarClick?: (segment: SelectedSegment) => void
+  /** Currently selected segments — used to highlight/dim bars */
+  selectedSegments?: SelectedSegment[]
   className?: string
 }
 
@@ -49,17 +53,33 @@ export function BarRow({
   label,
   value,
   maxValue,
+  onClick,
+  isSelected,
+  isDimmed,
 }: {
   label: string
   value: number
   maxValue: number
+  onClick?: () => void
+  /** This bar is currently selected */
+  isSelected?: boolean
+  /** Another bar in this card is selected — dim this one */
+  isDimmed?: boolean
 }) {
   // barPct is 0–100 relative to maxValue. Scale it into 0–MAX_BAR_FRACTION of
   // the column so the label always fits.
   const barPct = maxValue > 0 ? (value / maxValue) * MAX_BAR_FRACTION * 100 : 0
 
   return (
-    <div className="grid items-center" style={{ gridTemplateColumns: '40% 1fr' }}>
+    <div
+      className={cn(
+        'grid items-center transition-opacity',
+        onClick && 'cursor-pointer rounded-md -mx-1 px-1 hover:bg-muted/60 transition-colors',
+        isDimmed && 'opacity-20',
+      )}
+      style={{ gridTemplateColumns: '40% 1fr' }}
+      onClick={onClick}
+    >
       {/* Label — right-aligned, consistent column width */}
       <span className="text-sm text-muted-foreground text-right leading-snug pr-3 line-clamp-2">
         {label}
@@ -92,11 +112,19 @@ function GroupedBarRow({
   segments,
   colors,
   maxValue,
+  onSegmentClick,
+  selectedSegmentKeys,
+  hasAnySelection,
 }: {
   label: string
-  segments: { key: string; value: number }[]
+  segments: { key: string; value: number; displayName?: string }[]
   colors: string[]
   maxValue: number
+  onSegmentClick?: (segmentKey: string, segmentDisplayName: string, value: number) => void
+  /** Keys of segments in this row that are currently selected */
+  selectedSegmentKeys?: Set<string>
+  /** Whether any segment in the parent card is selected */
+  hasAnySelection?: boolean
 }) {
   return (
     <div className="grid items-center" style={{ gridTemplateColumns: '40% 1fr' }}>
@@ -106,8 +134,19 @@ function GroupedBarRow({
       <div className="flex flex-col gap-1">
         {segments.map((seg, i) => {
           const barPct = maxValue > 0 ? (seg.value / maxValue) * MAX_BAR_FRACTION * 100 : 0
+          const segLabel = `${label} (${seg.displayName ?? seg.key})`
+          const isThisSelected = selectedSegmentKeys?.has(segLabel)
+          const isDimmed = hasAnySelection && !isThisSelected
           return (
-            <div key={seg.key} className="flex items-center h-5">
+            <div
+              key={seg.key}
+              className={cn(
+                'flex items-center h-5 transition-opacity',
+                onSegmentClick && 'cursor-pointer rounded-sm hover:opacity-80 transition-opacity',
+                isDimmed && 'opacity-20',
+              )}
+              onClick={onSegmentClick ? () => onSegmentClick(seg.key, seg.displayName ?? seg.key, seg.value) : undefined}
+            >
               <div
                 className="h-full rounded-sm shrink-0"
                 style={{
@@ -138,9 +177,18 @@ export const FindingCard: React.FC<FindingCardProps> = ({
   onSave,
   onUnsave,
   isSaved: isSavedProp = false,
+  onBarClick,
+  selectedSegments,
   className,
 }) => {
   const isQualitative = finding.chartType === 'qualitative'
+
+  // Compute which bars in THIS card are selected
+  const selectedInThisCard = (selectedSegments ?? []).filter(
+    s => s.questionId === finding.questionId
+  )
+  const selectedLabels = new Set(selectedInThisCard.map(s => s.answerLabel))
+  const hasAnySelection = selectedInThisCard.length > 0
 
   // Detect segment keys for grouped_bar charts
   const chartData = finding.chartData ?? []
@@ -303,9 +351,22 @@ export const FindingCard: React.FC<FindingCardProps> = ({
             <GroupedBarRow
               key={i}
               label={String(d.name ?? '')}
-              segments={segmentKeys.map(k => ({ key: k, value: Number(d[k] ?? 0) }))}
+              segments={segmentKeys.map((k, si) => ({
+                key: k,
+                value: Number(d[k] ?? 0),
+                displayName: audienceLabels[si],
+              }))}
               colors={brandColors}
               maxValue={maxValue}
+              selectedSegmentKeys={selectedLabels}
+              hasAnySelection={hasAnySelection}
+              onSegmentClick={onBarClick ? (_segKey, segDisplayName, value) => onBarClick({
+                questionId: finding.questionId,
+                questionText: finding.questionText || finding.headline,
+                answerLabel: `${String(d.name ?? '')} (${segDisplayName})`,
+                percentage: Math.round(value),
+                respondents: respondents ?? 0,
+              }) : undefined}
             />
           ))}
         </div>
@@ -317,6 +378,15 @@ export const FindingCard: React.FC<FindingCardProps> = ({
               label={row.label}
               value={row.value}
               maxValue={maxValue}
+              isSelected={selectedLabels.has(row.label)}
+              isDimmed={hasAnySelection && !selectedLabels.has(row.label)}
+              onClick={onBarClick ? () => onBarClick({
+                questionId: finding.questionId,
+                questionText: finding.questionText || finding.headline,
+                answerLabel: row.label,
+                percentage: row.value,
+                respondents: respondents ?? 0,
+              }) : undefined}
             />
           ))}
         </div>

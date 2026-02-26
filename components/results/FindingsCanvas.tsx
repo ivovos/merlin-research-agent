@@ -10,7 +10,7 @@ import {
   FileText,
   Bookmark,
 } from 'lucide-react'
-import type { Finding, Stimulus } from '@/types'
+import type { Finding, Stimulus, SelectedSegment } from '@/types'
 import { FindingCard } from './FindingCard'
 import { FindingsLightbox } from './FindingsLightbox'
 import { StimulusStrip } from './StimulusStrip'
@@ -40,6 +40,10 @@ interface FindingsCanvasProps {
   onSaveToProject?: () => void
   onRefineInBuilder?: () => void
   defaultCollapsed?: boolean
+  /** Called when a bar is clicked — provides segment data for follow-up scoping */
+  onBarClick?: (segment: SelectedSegment) => void
+  /** Currently selected segments — used to highlight/dim bars */
+  selectedSegments?: SelectedSegment[]
   className?: string
 }
 
@@ -51,6 +55,8 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
   stimuli = [],
   onOpenPlan,
   defaultCollapsed = false,
+  onBarClick,
+  selectedSegments,
   className,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
@@ -225,6 +231,8 @@ export const FindingsCanvas: React.FC<FindingsCanvasProps> = ({
               isSaved={hasStore ? store!.isSaved(studyId!, finding.questionId) : false}
               onSave={hasStore ? handleSave : undefined}
               onUnsave={hasStore ? handleUnsave : undefined}
+              onBarClick={onBarClick}
+              selectedSegments={selectedSegments}
             />
           ))}
 
