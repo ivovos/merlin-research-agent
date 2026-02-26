@@ -142,17 +142,21 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         }
         onAddStudy(study)
 
-        // Add explanation AI message
-        if (agentResult.explanation) {
-          const explainMsg: ChatMessage = {
-            id: `msg_${Date.now()}_explain`,
-            type: 'ai',
-            text: agentResult.explanation,
-            thinking: `Research completed in ${thinkingTime}s`,
-            timestamp: Date.now(),
-          }
-          onAddMessage(explainMsg)
+        // Add combined AI message: thinking (collapsed) + design intro + explanation
+        const introLine = `I've created **${displayTitle}** to investigate this. Now conducting the research...`
+        const combinedText = agentResult.explanation
+          ? `${introLine}\n\n${agentResult.explanation}`
+          : introLine
+        const explainMsg: ChatMessage = {
+          id: `msg_${Date.now()}_explain`,
+          type: 'ai',
+          text: combinedText,
+          thinking: finalReasoning,
+          timestamp: Date.now(),
         }
+        onAddMessage(explainMsg)
+
+        await new Promise(r => setTimeout(r, 400))
 
         // Add findings message
         const findingsMsg: ChatMessage = {
@@ -309,17 +313,9 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         }
 
         // ── Simple path: proceed with execution directly ──
-        const displayTitle = selection.studyPlan.methodId === 'focus-group'
-          ? `Focus Group: ${selection.studyPlan.title}`
-          : selection.studyPlan.title
-
-        const designMsg: ChatMessage = {
-          id: `msg_${Date.now()}_design`,
-          type: 'ai',
-          text: `I've created **${displayTitle}** to investigate this. Now conducting the research...`,
-          timestamp: Date.now(),
-        }
-        onAddMessage(designMsg)
+        // Clear planning steps before execution begins
+        setProcessing(undefined)
+        await new Promise(r => setTimeout(r, 300))
 
         // Hand off to shared execution flow
         simulatingRef.current = false // resumeExecution will set it true
