@@ -160,7 +160,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           id: `msg_${Date.now()}_explain`,
           type: 'ai',
           text: combinedText,
-          thinking: finalReasoning,
+          thinking: undefined,
           timestamp: Date.now(),
         }
         onAddMessage(explainMsg)
