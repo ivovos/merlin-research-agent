@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import type { ChatMessageAI } from '@/types'
 import { ActionStrip } from './ActionStrip'
+import { ChevronRight, ChevronDown } from 'lucide-react'
 
 // Simple markdown-like renderer for AI messages
 function renderContent(content: string): React.ReactNode[] {
@@ -47,6 +48,55 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
   })
 }
 
+// ── Collapsible thinking section ──
+
+interface ThinkingSectionProps {
+  thinking: string
+  steps?: string[]
+}
+
+const ThinkingSection: React.FC<ThinkingSectionProps> = ({ thinking, steps }) => {
+  const [expanded, setExpanded] = useState(false)
+
+  if (!expanded) {
+    return (
+      <div
+        className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors group"
+        onClick={() => setExpanded(true)}
+      >
+        <div className="flex items-center gap-1 font-medium">
+          <span>{thinking}</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="animate-in fade-in duration-200">
+      <div
+        className="flex items-center gap-2 mb-3 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+        onClick={() => setExpanded(false)}
+      >
+        <span>{thinking}</span>
+        <ChevronDown className="w-4 h-4" />
+      </div>
+      {steps && steps.length > 0 && (
+        <div className="space-y-1.5 pl-1">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── AI Message ──
+
 interface AIMessageProps {
   message: ChatMessageAI
 }
@@ -59,6 +109,12 @@ export const AIMessage: React.FC<AIMessageProps> = ({ message }) => {
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
       <div className="max-w-[80%] lg:max-w-[60%]">
+        {/* Collapsible thinking section */}
+        {message.thinking && (
+          <div className="mb-3">
+            <ThinkingSection thinking={message.thinking} steps={message.thinkingSteps} />
+          </div>
+        )}
         <div className="text-sm space-y-2">
           {renderContent(message.text)}
         </div>

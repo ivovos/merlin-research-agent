@@ -250,6 +250,8 @@ function buildDisneyConversation(): ChatMessage[] {
     {
       id: msgId('dis'), type: 'ai', timestamp: ts(21, 0.1),
       text: "I'll set up a monadic key art test across the three options. Each will be shown to n=150 UK adults (must subscribe to at least one streaming service). We'll measure likeability, viewing intent, talent recognition, genre perception, attribute associations, service attribution, and post-synopsis preference.\n\nFieldwork: 5 days via Attest. Results benchmarked against UK scripted average.",
+      thinking: 'Thought for 4s',
+      thinkingSteps: ['Analysing stimulus materials', 'Designing monadic test methodology', 'Setting up audience targeting', 'Generating questionnaire'],
     },
     {
       id: msgId('dis'), type: 'user', timestamp: ts(20, 3),
@@ -281,6 +283,8 @@ function buildDisneyTrailerConversation(): ChatMessage[] {
     {
       id: msgId('distr'), type: 'ai', timestamp: ts(28, 0.1),
       text: "I'll set up a monadic A/B trailer test. Each respondent watches one cut and responds to the same battery: emotional impact (second-by-second dial), overall likeability, viewing intent, brand attribution, share intent, and genre perception.\n\nAudience: UK adults 18-54, streaming subscribers, with a boost for Star Wars fans (n=100 per cell). Total n=600.",
+      thinking: 'Thought for 5s',
+      thinkingSteps: ['Analysing trailer cuts', 'Designing A/B monadic framework', 'Configuring audience segments', 'Building response battery'],
     },
     {
       id: msgId('distr'), type: 'user', timestamp: ts(27, 2),
@@ -305,6 +309,8 @@ function buildDisneyTrailerConversation(): ChatMessage[] {
     },
     {
       id: msgId('distr'), type: 'ai', timestamp: ts(26, 0.1),
+      thinking: 'Thought for 3s',
+      thinkingSteps: ['Comparing metrics across cuts', 'Analysing audience segment splits', 'Formulating recommendation'],
       text: "The 60-second cut wins on almost every metric.\n\n**Viewing intent** is 12pp higher for the 60s version (78% vs 66%). The character-driven opening gives viewers a reason to care before the action kicks in.\n\n**Share intent** is also significantly higher for 60s (41% vs 28%). People want to share trailers that made them feel something, and the emotional beats in the longer cut deliver that.\n\nThe only metric where the 30s cut wins is **brand attribution** — the Disney+ logo has more relative screen time. But this is a minor advantage.\n\nMy recommendation: Lead with the 60s cut on YouTube and social pre-roll. Use the 30s cut for paid bumper ads where attention spans are shorter.",
     },
   ]
@@ -320,6 +326,8 @@ function buildDisneyContentDiscoveryConversation(): ChatMessage[] {
     {
       id: msgId('discd'), type: 'ai', timestamp: ts(50, 0.1),
       text: "I'll design an audience exploration study covering discovery methods, engagement barriers, and feature preferences. Two parallel samples: UK (n=600) and US (n=600) streaming subscribers.\n\nThe study will map how users currently find content, what stops them watching more, and which potential features would increase engagement — personalised watchlists, social recommendations, curated collections, etc.",
+      thinking: 'Thought for 6s',
+      thinkingSteps: ['Scoping engagement patterns', 'Designing discovery methodology', 'Configuring UK and US samples', 'Building barrier analysis framework'],
     },
     {
       id: msgId('discd'), type: 'system', timestamp: ts(49, 1),

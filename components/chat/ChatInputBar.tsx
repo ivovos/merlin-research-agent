@@ -78,7 +78,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     textarea: {
       minHeight: 48,
       maxHeight: 160,
-      fontSize: 14,
+      fontSize: 16,
     },
     sendButton: {
       size: 32,
@@ -311,8 +311,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         {showAnimatedOverlay && !hasSegments && (
           <div
             aria-hidden
-            className="absolute inset-0 px-3 pt-[calc(0.625rem+0.5rem)] pointer-events-none text-sm leading-relaxed whitespace-pre-wrap transition-opacity duration-400"
-            style={{ opacity: placeholderOpacity }}
+            className="absolute inset-0 px-3 pt-[calc(0.625rem+0.5rem)] pointer-events-none text-sm leading-relaxed whitespace-pre-wrap transition-opacity duration-400 font-medium"
+            style={{ opacity: placeholderOpacity, fontSize: params.textarea.fontSize, letterSpacing: '0.5px' }}
           >
             {placeholderSegments.map((seg, i) => (
               <span
@@ -353,8 +353,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                 className="absolute inset-0 pointer-events-none overflow-hidden"
               >
                 <div
-                  className="text-sm leading-relaxed whitespace-pre-wrap break-words py-2"
-                  style={{ fontSize: params.textarea.fontSize, minHeight: params.textarea.minHeight }}
+                  className="text-sm leading-relaxed whitespace-pre-wrap break-words py-2 font-medium"
+                  style={{ fontSize: params.textarea.fontSize, minHeight: params.textarea.minHeight, letterSpacing: '0.5px' }}
                 >
                   {mentionSegments.map((seg, i) =>
                     seg.type === 'mention' ? (
@@ -385,12 +385,13 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               placeholder={hasSegments ? 'Ask about this segment...' : (animatedPlaceholders ? undefined : placeholder)}
               rows={1}
               className={cn(
-                "w-full resize-none bg-transparent placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2",
+                "w-full resize-none bg-transparent placeholder:text-muted-foreground placeholder:font-medium placeholder:tracking-[0.5px] focus:outline-none leading-relaxed relative z-10 py-2 font-medium",
                 hasMentions ? "text-transparent" : "text-foreground"
               )}
               style={{
                 fontSize:  params.textarea.fontSize,
                 minHeight: params.textarea.minHeight,
+                letterSpacing: '0.5px',
                 caretColor: hasMentions ? 'var(--foreground)' : undefined,
               }}
             />

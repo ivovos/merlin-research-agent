@@ -6,6 +6,8 @@ export const commonTemplates: TemplateConfig[] = [
     key: 'generic-concept',
     label: 'Standard Concept Test',
     icon: 'ClipboardList',
+    surveyType: 'concept',
+    category: 'product',
     questions: [
       { text: 'How appealing is this concept to you?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not at all', maxLabel: 'Extremely' } },
       { text: 'How unique or different does this feel?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not unique', maxLabel: 'Very unique' } },
@@ -18,6 +20,8 @@ export const commonTemplates: TemplateConfig[] = [
     key: 'generic-brand',
     label: 'Quick Brand Pulse',
     icon: 'Heart',
+    surveyType: 'simple',
+    category: 'brand',
     questions: [
       { text: 'How familiar are you with this brand?', type: 'single_select' as QuestionType, options: ['Very familiar', 'Somewhat familiar', 'Heard of it', 'Never heard of it'] },
       { text: 'How would you rate your overall impression?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very negative', maxLabel: 'Very positive' } },
@@ -28,6 +32,8 @@ export const commonTemplates: TemplateConfig[] = [
     key: 'generic-message-review',
     label: 'Message Review',
     icon: 'MessageSquareText',
+    surveyType: 'message',
+    category: 'marketing',
     questions: [
       { text: 'How clear is the main message?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very unclear', maxLabel: 'Very clear' } },
       { text: 'How appealing is this message to you?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not at all', maxLabel: 'Very appealing' } },

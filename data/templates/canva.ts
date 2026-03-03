@@ -6,6 +6,9 @@ export const canvaTemplates: TemplateConfig[] = [
     key: 'canva-workflow',
     label: 'Design Workflow Assessment',
     icon: 'Palette',
+    surveyType: 'audience_exploration',
+    category: 'product',
+    creatorLabel: 'Created by Canva',
     questions: [
       { text: 'How often do you use Canva for work-related design tasks?', type: 'single_select' as QuestionType, options: ['Daily', 'Several times a week', 'Weekly', 'A few times a month', 'Rarely'] },
       { text: 'Which types of content do you create most frequently?', type: 'multi_select' as QuestionType, options: ['Social media posts', 'Presentations', 'Marketing materials', 'Videos', 'Logos & branding', 'Print materials', 'Infographics', 'Whiteboards'] },
@@ -18,6 +21,9 @@ export const canvaTemplates: TemplateConfig[] = [
     key: 'canva-ai',
     label: 'AI Features & Innovation Pulse',
     icon: 'Wand2',
+    surveyType: 'concept',
+    category: 'product',
+    creatorLabel: 'Created by Canva',
     questions: [
       { text: 'How often do you use Canva\'s AI-powered features (Magic Write, Magic Edit, etc.)?', type: 'single_select' as QuestionType, options: ['Every session', 'Most sessions', 'Sometimes', 'Rarely', 'Never or unaware'] },
       { text: 'How would you rate the quality of AI-generated content in Canva?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor', maxLabel: 'Excellent' } },
@@ -29,6 +35,9 @@ export const canvaTemplates: TemplateConfig[] = [
     key: 'canva-collaboration',
     label: 'Team Collaboration & Brand Consistency',
     icon: 'Users',
+    surveyType: 'audience_exploration',
+    category: 'product',
+    creatorLabel: 'Created by Canva',
     questions: [
       { text: 'How many people on your team regularly use Canva?', type: 'single_select' as QuestionType, options: ['Just me', '2–5', '6–15', '16–50', '50+'] },
       { text: 'How well does Canva help your team maintain brand consistency?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poorly', maxLabel: 'Very well' } },

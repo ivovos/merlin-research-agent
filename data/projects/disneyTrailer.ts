@@ -2,7 +2,7 @@ import type { SurveyProject } from '@/types'
 
 export const disneyTrailerProject: SurveyProject = {
   id: 'proj_disney_trailer',
-  name: 'Disney+ — Andor S2 Trailer Cut Testing',
+  name: 'Andor S2 — Trailer Cut Testing',
   brand: 'Disney+',
   surveyType: 'creative',
   description: 'Testing 30-second vs 60-second trailer cuts for Andor Season 2, measuring emotional impact, intent to watch, brand attribution, and share intent',

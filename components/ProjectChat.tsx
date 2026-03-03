@@ -162,7 +162,8 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           id: `msg_${Date.now()}_explain`,
           type: 'ai',
           text: combinedText,
-          thinking: undefined,
+          thinking: `Thought for ${thinkingTime}s`,
+          thinkingSteps: selection.processSteps,
           timestamp: Date.now(),
         }
         onAddMessage(explainMsg)
@@ -426,9 +427,11 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   const handleBuilderLaunch = useCallback(
     (state: BuilderState) => {
       const hasMultipleSegments = state.selectedAudiences.length > 1
+      const stimuliIds = state.stimuli.map(s => s.id)
       const findings: Finding[] = generateMockFindings(
         state.questions,
         hasMultipleSegments,
+        stimuliIds.length > 0 ? stimuliIds : undefined,
       )
 
       const typeConfig = SURVEY_TYPE_CONFIGS.find(c => c.key === state.selectedType)
@@ -443,7 +446,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         status: 'completed',
         questions: state.questions,
         audiences: state.selectedAudiences,
-        stimuli: state.stimuli.map(s => s.id),
+        stimuli: stimuliIds,
         findings,
         sampleSize: hasMultipleSegments ? 600 : 300,
         createdAt: new Date().toISOString().slice(0, 10),
@@ -468,6 +471,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
         typeBadge: typeConfig?.label,
         findings,
         respondents: study.sampleSize,
+        stimuli: state.stimuli.length > 0 ? state.stimuli : undefined,
         timestamp: Date.now(),
       }
       onAddMessage(findingsMsg)

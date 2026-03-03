@@ -115,7 +115,7 @@ export async function generateResearchWithAgent(
     console.log('[Merlin Agent] Calling Claude for tool selection...')
 
     const toolSelectionResponse = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userQuery }],

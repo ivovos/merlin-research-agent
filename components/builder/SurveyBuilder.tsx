@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSurveyBuilder } from '@/hooks/useSurveyBuilder'
-import type { BuilderState } from '@/hooks/useSurveyBuilder'
+import type { BuilderState, BuilderInitConfig } from '@/hooks/useSurveyBuilder'
 import { BuilderSidebar } from './BuilderSidebar'
 import { BuilderActionBar } from './BuilderActionBar'
 import { ProcessingOverlay } from './ProcessingOverlay'
@@ -16,6 +16,7 @@ interface SurveyBuilderProps {
   onClose: () => void
   onLaunch?: (state: BuilderState) => void
   initialStudy?: import('@/types').Survey
+  initialConfig?: BuilderInitConfig
   currentAccount?: import('@/types').Account
 }
 
@@ -23,6 +24,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
   onClose,
   onLaunch,
   initialStudy,
+  initialConfig,
   currentAccount,
 }) => {
   const {
@@ -36,7 +38,7 @@ export const SurveyBuilder: React.FC<SurveyBuilderProps> = ({
     goNext,
     goBack,
     reset,
-  } = useSurveyBuilder(initialStudy)
+  } = useSurveyBuilder(initialStudy, initialConfig)
 
   const [isProcessing, setIsProcessing] = useState(false)
   // Capture state at launch time so it persists through processing

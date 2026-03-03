@@ -6,13 +6,13 @@ import {
 } from '@/components/ui/sidebar'
 import { useProjectStore } from '@/hooks/useProjectStore'
 import type { Account, AppView } from '@/types'
-import type { BuilderState } from '@/hooks/useSurveyBuilder'
+import type { BuilderState, BuilderInitConfig } from '@/hooks/useSurveyBuilder'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import { generateMockFindings } from '@/lib/generateMockFindings'
 import { getAudienceById, pickerToAudienceDetails } from '@/lib/audienceLookup'
 import {
   mockAccounts,
-  etTestAccount,
+  disneyAccount,
 } from '@/data/mockData'
 
 // Feature screens
@@ -21,6 +21,7 @@ import { ProjectChat } from '@/components/ProjectChat'
 import { AudiencesList } from '@/components/AudiencesList'
 import { AudienceDetail } from '@/components/AudienceDetail'
 import { SurveyBuilder } from '@/components/builder/SurveyBuilder'
+import { CreateSurveyModal } from '@/components/builder/CreateSurveyModal'
 import { QuickPollPage } from '@/components/quick-poll/QuickPollPage'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { TypeStyles } from '@/components/TypeStyles'
@@ -29,7 +30,7 @@ import type { AudienceDetails, Survey } from '@/types'
 
 const App: React.FC = () => {
   // ── Core state ──
-  const [currentAccount, setCurrentAccount] = useState<Account>(etTestAccount)
+  const [currentAccount, setCurrentAccount] = useState<Account>(disneyAccount)
   const [view, setView] = useState<AppView>({ screen: 'home' })
   const [pendingQuery, setPendingQuery] = useState<string | undefined>()
 
@@ -43,6 +44,8 @@ const App: React.FC = () => {
   >(null)
 
   // Survey builder / quick poll overlays
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [builderConfig, setBuilderConfig] = useState<BuilderInitConfig | null>(null)
   const [showBuilder, setShowBuilder] = useState(false)
   const [showQuickPoll, setShowQuickPoll] = useState(false)
 
@@ -114,11 +117,18 @@ const App: React.FC = () => {
   // ── Builder handlers ──
 
   const handleOpenBuilder = useCallback(() => {
+    setShowCreateModal(true)
+  }, [])
+
+  const handleModalSelect = useCallback((config: BuilderInitConfig) => {
+    setBuilderConfig(config)
+    setShowCreateModal(false)
     setShowBuilder(true)
   }, [])
 
   const handleCloseBuilder = useCallback(() => {
     setShowBuilder(false)
+    setBuilderConfig(null)
   }, [])
 
   const handleBuilderLaunch = useCallback((builderState: BuilderState) => {
@@ -126,7 +136,8 @@ const App: React.FC = () => {
     const today = new Date().toISOString().slice(0, 10)
     const projectName = builderState.surveyName?.trim() || typeConfig?.label || 'Untitled Survey'
     const hasMultipleSegments = builderState.selectedAudiences.length > 1
-    const findings = generateMockFindings(builderState.questions, hasMultipleSegments)
+    const stimuliIds = builderState.stimuli.map(s => s.id)
+    const findings = generateMockFindings(builderState.questions, hasMultipleSegments, stimuliIds.length > 0 ? stimuliIds : undefined)
 
     const survey: Survey = {
       id: `survey_${Date.now()}`,
@@ -135,7 +146,7 @@ const App: React.FC = () => {
       status: 'completed',
       questions: builderState.questions,
       audiences: builderState.selectedAudiences,
-      stimuli: builderState.stimuli.map(s => s.id),
+      stimuli: stimuliIds,
       findings,
       sampleSize: hasMultipleSegments ? 800 : 400,
       createdAt: today,
@@ -159,6 +170,7 @@ const App: React.FC = () => {
       studyName: projectName,
       typeBadge: typeConfig?.label,
       respondents: hasMultipleSegments ? 800 : 400,
+      stimuli: builderState.stimuli.length > 0 ? builderState.stimuli : undefined,
       timestamp: Date.now(),
     })
 
@@ -223,7 +235,7 @@ const App: React.FC = () => {
         {showQuickPoll ? (
           <QuickPollPage onClose={handleCloseQuickPoll} onLaunch={handleQuickPollLaunch} />
         ) : showBuilder ? (
-          <SurveyBuilder onClose={handleCloseBuilder} onLaunch={handleBuilderLaunch} currentAccount={currentAccount} />
+          <SurveyBuilder onClose={handleCloseBuilder} onLaunch={handleBuilderLaunch} initialConfig={builderConfig ?? undefined} currentAccount={currentAccount} />
         ) : audienceOverlay ? (
           /* Audience overlay */
           <main className="flex flex-1 flex-col overflow-hidden">
@@ -277,6 +289,16 @@ const App: React.FC = () => {
         )}
       </SidebarInset>
     </SidebarProvider>
+
+    {/* Create Survey Modal */}
+    <CreateSurveyModal
+      open={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      onSelect={handleModalSelect}
+      accountId={currentAccount.id}
+      accountName={currentAccount.name}
+      accountLogo={currentAccount.logo}
+    />
     </>
   )
 }

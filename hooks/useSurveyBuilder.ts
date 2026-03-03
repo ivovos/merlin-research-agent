@@ -2,6 +2,15 @@ import { useReducer, useMemo, useCallback } from 'react'
 import type { SurveyType, Stimulus, SurveyQuestion, Survey } from '@/types'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 
+// ── Init config (passed from CreateSurveyModal → SurveyBuilder → hook) ──
+
+export interface BuilderInitConfig {
+  mode: 'scratch' | 'template' | 'import'
+  surveyType: SurveyType
+  templateKey?: string
+  questions?: SurveyQuestion[]
+}
+
 // ── Step IDs ──
 
 export type BuilderStepId = 'type' | 'audience' | 'stimulus' | 'questions' | 'review'
@@ -31,51 +40,75 @@ export interface BuilderAudience {
 }
 
 export const MOCK_AUDIENCES: BuilderAudience[] = [
+  // ── Disney+ Audiences ──
   {
-    id: 'uk-grocery', name: 'UK Grocery Shoppers', size: 300, description: 'Regular grocery buyers in the UK',
+    id: 'disney-uk-subscribers', name: 'UK Subscribers', size: 6200, description: 'Active Disney+ subscribers in the United Kingdom',
     segments: [
-      { id: 'uk-grocery:budget-families', name: 'Budget-Conscious Families', size: 85 },
-      { id: 'uk-grocery:premium-organic', name: 'Premium & Organic Buyers', size: 70 },
-      { id: 'uk-grocery:online-first', name: 'Online-First Shoppers', size: 55 },
-      { id: 'uk-grocery:bulk-buyers', name: 'Weekly Bulk Buyers', size: 50 },
-      { id: 'uk-grocery:convenience', name: 'Convenience Shoppers', size: 40 },
+      { id: 'disney-uk-subscribers:premium', name: 'Premium (Ad-Free)', size: 2480 },
+      { id: 'disney-uk-subscribers:standard', name: 'Standard (Ad-Supported)', size: 2790 },
+      { id: 'disney-uk-subscribers:basic', name: 'Basic / Mobile-Only', size: 930 },
     ],
   },
   {
-    id: 'us-health', name: 'US Health-Conscious', size: 500, description: 'Health-focused consumers in the US',
+    id: 'disney-us-subscribers', name: 'US Subscribers', size: 12400, description: 'Active Disney+ subscribers in the United States',
     segments: [
-      { id: 'us-health:fitness', name: 'Active Fitness Enthusiasts', size: 140 },
-      { id: 'us-health:clean-label', name: 'Clean-Label Seekers', size: 120 },
-      { id: 'us-health:weight-mgmt', name: 'Weight-Management Focused', size: 100 },
-      { id: 'us-health:plant-based', name: 'Plant-Based & Vegan', size: 80 },
-      { id: 'us-health:supplements', name: 'Supplement Shoppers', size: 60 },
+      { id: 'disney-us-subscribers:premium', name: 'Premium (Ad-Free)', size: 4340 },
+      { id: 'disney-us-subscribers:standard', name: 'Standard (Ad-Supported)', size: 5580 },
+      { id: 'disney-us-subscribers:bundle', name: 'Disney Bundle (Hulu + ESPN)', size: 2480 },
     ],
   },
   {
-    id: 'uk-young-urban', name: 'UK Young Urban', size: 250, description: 'Urban dwellers aged 18-35 in the UK',
+    id: 'disney-family-viewers', name: 'Family Viewers', size: 5800, description: 'Households streaming Disney+ with children under 12',
     segments: [
-      { id: 'uk-young-urban:trendsetters', name: 'Social-Media Trendsetters', size: 75 },
-      { id: 'uk-young-urban:budget-renters', name: 'Budget-Savvy Renters', size: 70 },
-      { id: 'uk-young-urban:career-pros', name: 'Career-Driven Professionals', size: 60 },
-      { id: 'uk-young-urban:eco-conscious', name: 'Eco-Conscious Urbanites', size: 45 },
+      { id: 'disney-family-viewers:young-kids', name: 'Young Kids (Under 6)', size: 1740 },
+      { id: 'disney-family-viewers:primary', name: 'Primary Age (6-11)', size: 2030 },
+      { id: 'disney-family-viewers:tweens', name: 'Tweens (12-15)', size: 1160 },
+      { id: 'disney-family-viewers:multi-gen', name: 'Multi-Generational', size: 870 },
     ],
   },
   {
-    id: 'b2b-decision', name: 'B2B Decision Makers', size: 200, description: 'Senior business decision makers',
+    id: 'disney-adult-drama-fans', name: 'Adult Drama Fans', size: 3400, description: 'Subscribers who primarily watch drama and prestige content',
     segments: [
-      { id: 'b2b-decision:c-suite', name: 'C-Suite & Board Level', size: 50 },
-      { id: 'b2b-decision:vp-director', name: 'VP & Director Level', size: 65 },
-      { id: 'b2b-decision:procurement', name: 'Procurement & Ops Leads', size: 45 },
-      { id: 'b2b-decision:it-digital', name: 'IT & Digital Transformation', size: 40 },
+      { id: 'disney-adult-drama-fans:prestige', name: 'Prestige Drama Viewers', size: 1190 },
+      { id: 'disney-adult-drama-fans:crime', name: 'Crime & Thriller Fans', size: 1020 },
+      { id: 'disney-adult-drama-fans:limited', name: 'Limited Series Watchers', size: 680 },
+      { id: 'disney-adult-drama-fans:international', name: 'International Content Seekers', size: 510 },
     ],
   },
   {
-    id: 'uk-parents', name: 'UK Parents', size: 300, description: 'Parents with children under 16 in the UK',
+    id: 'disney-premium-tier', name: 'Premium Tier', size: 4100, description: 'Ad-free premium subscribers',
     segments: [
-      { id: 'uk-parents:under-5s', name: 'Parents of Under-5s', size: 80 },
-      { id: 'uk-parents:primary', name: 'Primary School Parents (5-11)', size: 85 },
-      { id: 'uk-parents:secondary', name: 'Secondary School Parents (12-16)', size: 70 },
-      { id: 'uk-parents:single', name: 'Single Parents', size: 65 },
+      { id: 'disney-premium-tier:loyal', name: 'Long-Term Loyal (2+ years)', size: 1640 },
+      { id: 'disney-premium-tier:high-view', name: 'High-Viewership (20+ hrs/mo)', size: 1230 },
+      { id: 'disney-premium-tier:recent', name: 'Recent Upgraders', size: 820 },
+      { id: 'disney-premium-tier:low-view', name: 'Low-Viewership Premium', size: 410 },
+    ],
+  },
+  {
+    id: 'disney-ad-supported', name: 'Ad-Supported Tier', size: 7200, description: 'Subscribers on the ad-supported plan',
+    segments: [
+      { id: 'disney-ad-supported:price-sensitive', name: 'Price-Sensitive Viewers', size: 2880 },
+      { id: 'disney-ad-supported:casual', name: 'Casual / Light Viewers', size: 2160 },
+      { id: 'disney-ad-supported:potential-upgrade', name: 'Potential Upgraders', size: 1440 },
+      { id: 'disney-ad-supported:trialists', name: 'Recent Trialists', size: 720 },
+    ],
+  },
+  {
+    id: 'disney-marvel-star-wars', name: 'Marvel / Star Wars Fans', size: 4800, description: 'Subscribers driven by franchise content',
+    segments: [
+      { id: 'disney-marvel-star-wars:marvel', name: 'Marvel-First Viewers', size: 2160 },
+      { id: 'disney-marvel-star-wars:sw', name: 'Star Wars-First Viewers', size: 1440 },
+      { id: 'disney-marvel-star-wars:both', name: 'Cross-Franchise Fans', size: 960 },
+      { id: 'disney-marvel-star-wars:casual', name: 'Casual Franchise Viewers', size: 240 },
+    ],
+  },
+  {
+    id: 'disney-churn-risk', name: 'Churn Risk', size: 2900, description: 'Low-engagement subscribers at risk of cancelling',
+    segments: [
+      { id: 'disney-churn-risk:low-engage', name: 'Low Engagement (<2 hrs/mo)', size: 1160 },
+      { id: 'disney-churn-risk:price', name: 'Price-Driven Churn', size: 870 },
+      { id: 'disney-churn-risk:content', name: 'Content Gap Dissatisfied', size: 580 },
+      { id: 'disney-churn-risk:competitor', name: 'Competitor Lured', size: 290 },
     ],
   },
 ]
@@ -139,9 +172,9 @@ export interface BuilderState {
 // ── Flow computation ──
 
 function computeFlowSteps(type: SurveyType | null): BuilderStepId[] {
-  if (!type) return ['type']
+  if (!type) return ['audience']
   const config = SURVEY_TYPE_CONFIGS.find(c => c.key === type)
-  const steps: BuilderStepId[] = ['type', 'audience']
+  const steps: BuilderStepId[] = ['audience']
   if (config?.needsStimulus) steps.push('stimulus')
   steps.push('questions')
   steps.push('review')
@@ -202,13 +235,14 @@ export type BuilderAction =
   | { type: 'GO_TO_STEP'; payload: number }
   | { type: 'RESET' }
   | { type: 'INIT_FROM_STUDY'; payload: Survey }
+  | { type: 'INIT_FROM_CONFIG'; payload: BuilderInitConfig }
 
 // ── Initial state ──
 
 const initialState: BuilderState = {
   surveyName: '',
   selectedType: null,
-  flowSteps: ['type'],
+  flowSteps: ['audience'],
   currentStepIndex: 0,
   audienceMode: null,
   selectedAudiences: [],
@@ -433,6 +467,22 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
       }
     }
 
+    case 'INIT_FROM_CONFIG': {
+      const config = action.payload
+      const flowSteps = computeFlowSteps(config.surveyType)
+      return {
+        ...initialState,
+        selectedType: config.surveyType,
+        flowSteps,
+        currentStepIndex: 0,
+        questions: config.questions ?? [],
+        selectedTemplate: config.templateKey ?? null,
+        questionSourceTab: config.mode === 'import' ? 'import'
+          : config.mode === 'template' ? 'templates'
+          : 'scratch',
+      }
+    }
+
     default:
       return state
   }
@@ -440,13 +490,15 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
 // ── Hook ──
 
-export function useSurveyBuilder(initialStudy?: Survey) {
+export function useSurveyBuilder(initialStudy?: Survey, initialConfig?: BuilderInitConfig) {
   const [state, dispatch] = useReducer(
     builderReducer,
-    initialStudy,
-    (study) => study
-      ? builderReducer(initialState, { type: 'INIT_FROM_STUDY', payload: study })
-      : initialState,
+    { initialStudy, initialConfig },
+    ({ initialStudy: study, initialConfig: config }) => {
+      if (study) return builderReducer(initialState, { type: 'INIT_FROM_STUDY', payload: study })
+      if (config) return builderReducer(initialState, { type: 'INIT_FROM_CONFIG', payload: config })
+      return initialState
+    },
   )
 
   const currentStep = state.flowSteps[state.currentStepIndex]

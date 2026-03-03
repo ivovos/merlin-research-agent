@@ -28,6 +28,13 @@ import {
   BarChart3,
   Handshake,
   MessageSquareText,
+  Image,
+  Lightbulb,
+  MessageCircle,
+  LayoutGrid,
+  AlignLeft,
+  Search,
+  UsersRound,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import type { SurveyQuestion } from '@/types'
@@ -50,6 +57,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Palette, Wand2,
   FileText, BarChart3, Handshake,
   MessageSquareText,
+  Image, Lightbulb, MessageCircle,
+  LayoutGrid, AlignLeft, Search, UsersRound,
 }
 
 function resolveIcon(name: string): React.ElementType {
