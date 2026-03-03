@@ -33,6 +33,8 @@ interface ChatStreamProps {
   selectedSegments?: SelectedSegment[]
   /** Remove a segment pill */
   onRemoveSegment?: (questionId: string, answerLabel: string) => void
+  /** Called when an @audience mention is clicked in a message */
+  onAudienceClick?: (audienceId: string) => void
   /** Current brand — used to filter audiences in the picker */
   brand?: string
   className?: string
@@ -50,6 +52,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
   onBarClick,
   selectedSegments,
   onRemoveSegment,
+  onAudienceClick,
   brand,
   className,
 }) => {
@@ -91,7 +94,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
 
               switch (msg.type) {
                 case 'user':
-                  node = <UserMessage key={msg.id} message={msg} />
+                  node = <UserMessage key={msg.id} message={msg} onAudienceClick={onAudienceClick} />
                   break
                 case 'ai':
                   node = <AIMessage key={msg.id} message={msg} />

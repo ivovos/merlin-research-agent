@@ -1,12 +1,17 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import type { ChatMessageUser } from '@/types'
 import { FileText, Image as ImageIcon } from 'lucide-react'
+import { parseTextWithMentions } from '@/lib/audienceLookup'
+import { AudienceMention } from './AudienceMention'
 
 interface UserMessageProps {
   message: ChatMessageUser
+  onAudienceClick?: (audienceId: string) => void
 }
 
-export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
+export const UserMessage: React.FC<UserMessageProps> = ({ message, onAudienceClick }) => {
+  const segments = useMemo(() => parseTextWithMentions(message.text), [message.text])
+
   return (
     <div className="flex justify-end animate-in slide-in-from-bottom-2 fade-in duration-300">
       <div className="max-w-[50%] space-y-2">
@@ -36,7 +41,18 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
         )}
         {/* Message bubble */}
         <div className="bg-user-bubble p-6 rounded-[20px] text-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">
-          {message.text}
+          {segments.map((seg, i) =>
+            seg.type === 'mention' && seg.audience ? (
+              <AudienceMention
+                key={i}
+                audience={seg.audience}
+                displayText={seg.value}
+                onNavigate={onAudienceClick}
+              />
+            ) : (
+              <React.Fragment key={i}>{seg.value}</React.Fragment>
+            )
+          )}
         </div>
       </div>
     </div>

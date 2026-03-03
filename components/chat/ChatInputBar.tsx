@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { MethodsPicker, type PickerMethod } from './MethodsPicker'
 import { AudiencePicker, type PickerAudience } from './AudiencePicker'
+import { parseTextWithMentions } from '@/lib/audienceLookup'
 import type { SelectedSegment } from '@/types'
 
 // ── Helper: parse placeholder text into styled segments ──
@@ -97,6 +98,17 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   const [methodsOpen, setMethodsOpen] = useState(false)
   const [audienceOpen, setAudienceOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const mirrorRef = useRef<HTMLDivElement>(null)
+
+  // ── @mention highlighting (mirror overlay) ──
+  const mentionSegments = useMemo(() => parseTextWithMentions(text), [text])
+  const hasMentions = mentionSegments.some(s => s.type === 'mention')
+
+  const handleScrollSync = useCallback(() => {
+    if (mirrorRef.current && textareaRef.current) {
+      mirrorRef.current.scrollTop = textareaRef.current.scrollTop
+    }
+  }, [])
 
   // ── Animated placeholder (typewriter cycle) ──
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState('')
@@ -121,12 +133,34 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       }, ms)
     }
 
+    /** Find the end of an @token starting at position `start` in `str`. */
+    const findTokenEnd = (str: string, start: number): number => {
+      // start should be on '@'; advance past all non-whitespace
+      let end = start + 1
+      while (end < str.length && !/\s/.test(str[end])) end++
+      return end
+    }
+
+    /** Find the start of an @token that ends just before `pos` in `str`. */
+    const findTokenStart = (str: string, pos: number): number => {
+      // Walk back from pos-1 to find the '@'
+      let start = pos - 1
+      while (start > 0 && !/\s/.test(str[start - 1])) start--
+      return str[start] === '@' ? start : pos
+    }
+
     const tick = () => {
       if (cancelledRef.current) return
       const current = phrases[phraseIdx]
 
       if (!isDeleting) {
-        charIdx++
+        // Check if the next char starts an @token — if so, jump the whole token
+        const nextChar = current[charIdx]
+        if (nextChar === '@' || (charIdx > 0 && current[charIdx - 1] === ' ' && nextChar === '@')) {
+          charIdx = findTokenEnd(current, charIdx)
+        } else {
+          charIdx++
+        }
         setDisplayedPlaceholder(current.slice(0, charIdx))
 
         if (charIdx >= current.length) {
@@ -136,7 +170,15 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         }
         schedule(tick, tw.typeSpeed + Math.random() * 20)
       } else {
-        charIdx--
+        // Check if we're at the end of an @token — if so, delete the whole token at once
+        const prevSlice = current.slice(0, charIdx)
+        const lastSpace = prevSlice.lastIndexOf(' ')
+        const lastToken = prevSlice.slice(lastSpace + 1)
+        if (lastToken.startsWith('@') && lastToken.length > 1) {
+          charIdx = lastSpace + 1 // jump to just before the @
+        } else {
+          charIdx--
+        }
         setDisplayedPlaceholder(current.slice(0, charIdx))
 
         if (charIdx <= 0) {
@@ -246,10 +288,20 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
           if (newText.endsWith('@')) {
             newText = newText.slice(0, -1)
           }
-          setText(newText + `@${audience.id} `)
+          const finalText = newText + `@${audience.id} `
+          const cursorPos = finalText.length
+
+          setText(finalText)
           onAddAudience?.(audience)
           setAudienceOpen(false)
-          textareaRef.current?.focus()
+
+          // Defer focus + cursor until after React re-renders with new text
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              textareaRef.current.focus()
+              textareaRef.current.setSelectionRange(cursorPos, cursorPos)
+            }
+          })
         }}
       />
 
@@ -259,16 +311,14 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         {showAnimatedOverlay && !hasSegments && (
           <div
             aria-hidden
-            className={cn(
-              'absolute inset-0 px-3 pt-2.5 pointer-events-none text-sm leading-relaxed whitespace-pre-wrap transition-opacity duration-400',
-              isHome ? 'py-[calc(0.625rem+0.75rem)]' : 'py-[calc(0.625rem+0.5rem)]',
-            )}
+            className="absolute inset-0 px-3 pt-[calc(0.625rem+0.5rem)] pointer-events-none text-sm leading-relaxed whitespace-pre-wrap transition-opacity duration-400"
             style={{ opacity: placeholderOpacity }}
           >
             {placeholderSegments.map((seg, i) => (
               <span
                 key={i}
-                className={seg.highlighted ? 'text-foreground font-semibold' : 'text-muted-foreground'}
+                className={seg.highlighted ? 'font-medium' : 'text-muted-foreground'}
+                style={seg.highlighted ? { color: '#6366f1' } : undefined}
               >
                 {seg.text}
               </span>
@@ -293,29 +343,58 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               </button>
             </span>
           )}
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={e => {
-              const val = e.target.value
-              setText(val)
-              handleInput()
+          {/* Textarea + mirror overlay wrapper */}
+          <div className="relative flex-1 min-w-0">
+            {/* Mirror div for @mention highlighting */}
+            {hasMentions && (
+              <div
+                ref={mirrorRef}
+                aria-hidden
+                className="absolute inset-0 pointer-events-none overflow-hidden"
+              >
+                <div
+                  className="text-sm leading-relaxed whitespace-pre-wrap break-words py-2"
+                  style={{ fontSize: params.textarea.fontSize, minHeight: params.textarea.minHeight }}
+                >
+                  {mentionSegments.map((seg, i) =>
+                    seg.type === 'mention' ? (
+                      <span key={i} style={{ color: '#6366f1' }}>{seg.value}</span>
+                    ) : (
+                      <span key={i} className="text-foreground">{seg.value}</span>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={e => {
+                const val = e.target.value
+                setText(val)
+                handleInput()
 
-              // Trigger audience picker on @ at start or after whitespace
-              if (onAddAudience && /(^|\s)@$/.test(val)) {
-                setAudienceOpen(true)
-                setMethodsOpen(false)
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={hasSegments ? 'Ask about this segment...' : (animatedPlaceholders ? undefined : placeholder)}
-            rows={1}
-            className="w-full resize-none bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2"
-            style={{
-              fontSize:  params.textarea.fontSize,
-              minHeight: params.textarea.minHeight,
-            }}
-          />
+                // Trigger audience picker on @ at start or after whitespace
+                if (onAddAudience && /(^|\s)@$/.test(val)) {
+                  setAudienceOpen(true)
+                  setMethodsOpen(false)
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              onScroll={handleScrollSync}
+              placeholder={hasSegments ? 'Ask about this segment...' : (animatedPlaceholders ? undefined : placeholder)}
+              rows={1}
+              className={cn(
+                "w-full resize-none bg-transparent placeholder:text-muted-foreground focus:outline-none leading-relaxed relative z-10 py-2",
+                hasMentions ? "text-transparent" : "text-foreground"
+              )}
+              style={{
+                fontSize:  params.textarea.fontSize,
+                minHeight: params.textarea.minHeight,
+                caretColor: hasMentions ? 'var(--foreground)' : undefined,
+              }}
+            />
+          </div>
         </div>
       </div>
 

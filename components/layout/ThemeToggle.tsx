@@ -11,6 +11,22 @@ const themes: { value: ThemeName; icon: React.ElementType; label: string }[] = [
 ]
 
 const HOVER_ZONE = 100 // px from bottom-right corner to trigger reveal
+const BRAND_ACCENT_KEY = 'merlin-brand-accent'
+const DEFAULT_BRAND_ACCENT = '#2E00C6'
+
+/** Read persisted brand accent or fall back to CSS default */
+function getStoredAccent(): string {
+  try {
+    const stored = localStorage.getItem(BRAND_ACCENT_KEY)
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return DEFAULT_BRAND_ACCENT
+}
+
+/** Apply brand accent to the :root CSS variable */
+function applyAccent(color: string) {
+  document.documentElement.style.setProperty('--brand-accent', color)
+}
 
 export function ThemeToggle({ onTypeStylesClick }: { onTypeStylesClick?: () => void }) {
   const { theme, setTheme } = useTheme()
@@ -18,6 +34,23 @@ export function ThemeToggle({ onTypeStylesClick }: { onTypeStylesClick?: () => v
   const [panelOpen, setPanelOpen] = useState(false)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const containerRef = useRef<HTMLDivElement>(null)
+  const colorInputRef = useRef<HTMLInputElement>(null)
+
+  // Brand accent color state
+  const [brandAccent, setBrandAccent] = useState(getStoredAccent)
+
+  // Apply stored accent on mount
+  useEffect(() => {
+    applyAccent(brandAccent)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAccentChange = useCallback((color: string) => {
+    setBrandAccent(color)
+    applyAccent(color)
+    try {
+      localStorage.setItem(BRAND_ACCENT_KEY, JSON.stringify(color))
+    } catch {}
+  }, [])
 
   const show = useCallback(() => {
     clearTimeout(hideTimerRef.current)
@@ -90,6 +123,28 @@ export function ThemeToggle({ onTypeStylesClick }: { onTypeStylesClick?: () => v
               <span>{label}</span>
             </button>
           ))}
+
+          {/* Brand accent color */}
+          <div className="border-t border-border my-1.5" />
+          <button
+            onClick={() => colorInputRef.current?.click()}
+            className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+          >
+            <span
+              className="w-3.5 h-3.5 rounded-full shrink-0 border border-border"
+              style={{ backgroundColor: brandAccent }}
+            />
+            <span>Brand Color</span>
+            <input
+              ref={colorInputRef}
+              type="color"
+              value={brandAccent}
+              onChange={e => handleAccentChange(e.target.value)}
+              className="sr-only"
+              tabIndex={-1}
+            />
+          </button>
+
           {onTypeStylesClick && (
             <>
               <div className="border-t border-border my-1.5" />

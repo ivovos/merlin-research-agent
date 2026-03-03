@@ -24,6 +24,7 @@ interface ProjectChatProps {
   onUpdateMessage?: (messageId: string, updates: Partial<ChatMessage>) => void
   onAddStudy: (study: Survey) => void
   onRenameProject?: (name: string) => void
+  onAudienceClick?: (audienceId: string) => void
   pendingQuery?: string
   onPendingQueryConsumed?: () => void
 }
@@ -34,6 +35,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
   onUpdateMessage,
   onAddStudy,
   onRenameProject,
+  onAudienceClick,
   pendingQuery,
   onPendingQueryConsumed,
 }) => {
@@ -589,6 +591,7 @@ export const ProjectChat: React.FC<ProjectChatProps> = ({
           onBarClick={(segment) => selectSegment(segment, 'chat')}
           selectedSegments={selectedSegments.segments}
           onRemoveSegment={removeSegment}
+          onAudienceClick={onAudienceClick}
         />
 
         {/* Builder overlay */}

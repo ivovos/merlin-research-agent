@@ -1,0 +1,96 @@
+import type { SurveyProject } from '@/types'
+
+export const bpBrandPerceptionProject: SurveyProject = {
+  id: 'proj_bp_perception',
+  name: 'BP Brand Perception — EV Adopters vs Traditional Fuel Users',
+  brand: 'BP',
+  surveyType: 'audience_exploration',
+  description: 'Understanding how BP brand perception differs between EV adopters and traditional fuel users — trust, environmental commitment, innovation.',
+  status: 'completed',
+  createdAt: '2025-09-20',
+  updatedAt: '2025-10-08',
+  tags: ['brand-perception', 'EV', 'segmentation', 'sustainability'],
+  audienceIds: ['aud_bp_ev', 'aud_bp_fuel'],
+  stimuli: [],
+  surveys: [
+    {
+      id: 'survey_bp_perception',
+      type: 'audience_exploration',
+      name: 'BP Brand Perception — Segment Comparison',
+      status: 'completed',
+      methodology: 'Parallel sample (matched quotas)',
+      sampleSize: 2000,
+      fieldworkDuration: '12 days',
+      createdAt: '2025-09-20',
+      updatedAt: '2025-10-08',
+      audiences: ['aud_bp_ev', 'aud_bp_fuel'],
+      stimuli: [],
+      questions: [
+        { id: 'q_bp_perc_trust', type: 'likert', text: 'How much do you trust BP as a brand?', required: true, scale: { min: 1, max: 7, minLabel: 'Do not trust at all', maxLabel: 'Trust completely' } },
+        { id: 'q_bp_perc_enviro', type: 'likert', text: 'To what extent do you believe BP is genuinely committed to reducing its environmental impact?', required: true, scale: { min: 1, max: 7, minLabel: 'Not at all committed', maxLabel: 'Fully committed' } },
+        { id: 'q_bp_perc_innovation', type: 'likert', text: 'How innovative do you consider BP compared to other energy companies?', required: true, scale: { min: 1, max: 7, minLabel: 'Not at all innovative', maxLabel: 'Extremely innovative' } },
+        { id: 'q_bp_perc_recommend', type: 'nps', text: 'How likely are you to recommend BP to a friend or colleague?', required: true, scale: { min: 0, max: 10 } },
+        { id: 'q_bp_perc_values', type: 'likert', text: 'To what extent do BP\'s values align with your own personal values?', required: true, scale: { min: 1, max: 7, minLabel: 'Not at all aligned', maxLabel: 'Perfectly aligned' } },
+        { id: 'q_bp_perc_future', type: 'single_select', text: 'How relevant do you think BP will be to your life in 10 years?', options: ['Much more relevant', 'Somewhat more relevant', 'About the same', 'Somewhat less relevant', 'Much less relevant'], required: true },
+        { id: 'q_bp_perc_overall', type: 'likert', text: 'Overall, how favourable is your opinion of BP?', required: true, scale: { min: 1, max: 7, minLabel: 'Very unfavourable', maxLabel: 'Very favourable' } },
+      ],
+      findings: [
+        {
+          questionId: 'q_bp_perc_trust',
+          headline: 'EV adopters trust BP significantly less than fuel users (3.8 vs 5.1)',
+          insight: 'Brand trust diverges sharply between the two segments. Traditional fuel users score BP at 5.1 out of 7 on trust — a solid foundation built on decades of consistent fuel quality and station convenience. EV adopters are far more sceptical at 3.8, likely reflecting perceptions of greenwashing and BP\'s historical association with fossil fuels. The 1.3-point gap is the widest of any metric tested.',
+          chartType: 'grouped_bar',
+          editable: true,
+          chartData: [
+            { name: 'Brand Trust', evAdopters: 3.8, fuelUsers: 5.1 },
+          ],
+        },
+        {
+          questionId: 'q_bp_perc_enviro',
+          headline: 'Neither segment rates environmental commitment highly — but EV adopters are harshest (2.9 vs 3.7)',
+          insight: 'Environmental commitment is BP\'s weakest dimension across both audiences. Even traditional fuel users rate it only 3.7 out of 7 — below the midpoint. EV adopters are far more critical at 2.9, the lowest score on any metric for either segment. Qualitative comments reveal EV adopters view BP\'s green energy investments as insufficient relative to continued fossil fuel extraction. This perception gap represents the single biggest barrier to BP Pulse adoption among environmentally motivated EV drivers.',
+          chartType: 'grouped_bar',
+          editable: true,
+          chartData: [
+            { name: 'Environmental Commitment', evAdopters: 2.9, fuelUsers: 3.7 },
+          ],
+        },
+        {
+          questionId: 'q_bp_perc_innovation',
+          headline: 'Innovation perception is the closest gap between segments (4.2 EV vs 4.5 fuel)',
+          insight: 'Innovation is the one dimension where EV adopters and fuel users nearly converge. EV adopters rate BP at 4.2 and fuel users at 4.5 — a gap of just 0.3 points, compared to 1.3 on trust and 0.8 on environmental commitment. BP Pulse, Castrol EV fluids, and hydrogen investments appear to be registering with EV-conscious consumers. This suggests innovation messaging could serve as a bridge to rebuild broader brand credibility with the EV segment.',
+          chartType: 'grouped_bar',
+          editable: true,
+          chartData: [
+            { name: 'Innovation', evAdopters: 4.2, fuelUsers: 4.5 },
+          ],
+        },
+        {
+          questionId: 'q_bp_perc_recommend',
+          headline: 'NPS is deeply negative among EV adopters (−22) vs mildly positive among fuel users (+14)',
+          insight: 'The NPS story starkly illustrates the brand perception divide. Traditional fuel users return a healthy +14 NPS, with 38% promoters and 24% detractors. EV adopters flip this picture: only 18% are promoters while 40% are detractors, yielding a −22 NPS. The 36-point gap suggests BP faces not just indifference but active negative sentiment among the EV community — a segment it must win to deliver its energy transition strategy.',
+          chartType: 'grouped_bar',
+          editable: true,
+          chartData: [
+            { name: 'EV Adopters', promoters: 18, passives: 42, detractors: 40, nps: -22 },
+            { name: 'Fuel Users', promoters: 38, passives: 38, detractors: 24, nps: 14 },
+          ],
+        },
+        {
+          questionId: 'q_bp_perc_future',
+          headline: '54% of EV adopters expect BP to become less relevant — vs only 18% of fuel users',
+          insight: 'Future relevance perceptions reveal a strategic vulnerability. Over half of EV adopters (54%) believe BP will become "somewhat" or "much" less relevant to their lives in 10 years, viewing the brand as tethered to a declining fossil fuel era. Only 12% expect it to become more relevant. In contrast, fuel users are evenly split: 31% expect more relevance, 18% less. If EV adoption continues its current trajectory, BP risks losing a growing share of energy consumers who simply do not see the brand in their future — making the BP Pulse brand bridge critically important.',
+          chartType: 'grouped_bar',
+          editable: true,
+          chartData: [
+            { name: 'Much more relevant', evAdopters: 3, fuelUsers: 10 },
+            { name: 'Somewhat more relevant', evAdopters: 9, fuelUsers: 21 },
+            { name: 'About the same', evAdopters: 34, fuelUsers: 51 },
+            { name: 'Somewhat less relevant', evAdopters: 33, fuelUsers: 13 },
+            { name: 'Much less relevant', evAdopters: 21, fuelUsers: 5 },
+          ],
+        },
+      ],
+    },
+  ],
+}

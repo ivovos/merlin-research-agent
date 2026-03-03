@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 import type { ChatMessage, ProjectState, Attachment } from '@/types'
 import type { Survey } from '@/types'
 import { getAllDemoProjects } from '@/data/demoConversations'
+import { getBrandNamesForAccount, ET_TEST_ACCOUNT_ID } from '@/data/brandRegistry'
 
 // ── Name generation (simple heuristic — no AI call) ──
 
@@ -36,13 +37,22 @@ function generateStudyName(study: Partial<Survey>): string {
 
 // ── Hook ──
 
-export function useProjectStore() {
-  const [projects, setProjects] = useState<ProjectState[]>(() => getAllDemoProjects())
+export function useProjectStore(accountId?: string) {
+  const [allProjects, setAllProjects] = useState<ProjectState[]>(() => getAllDemoProjects())
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
 
+  // Filtered view: ET-Test or undefined → show all, otherwise filter by brand
+  const projects = useMemo(() => {
+    if (!accountId || accountId === ET_TEST_ACCOUNT_ID) return allProjects
+    const brandNames = getBrandNamesForAccount(accountId)
+    if (brandNames.length === 0) return allProjects
+    return allProjects.filter(p => !p.brand || brandNames.includes(p.brand))
+  }, [allProjects, accountId])
+
+  // Active project resolves from ALL projects (not filtered) to prevent crashes on account switch
   const activeProject = useMemo(
-    () => projects.find(p => p.id === activeProjectId) ?? null,
-    [projects, activeProjectId],
+    () => allProjects.find(p => p.id === activeProjectId) ?? null,
+    [allProjects, activeProjectId],
   )
 
   const createProject = useCallback((firstMessage?: string, brand?: string): ProjectState => {
@@ -62,13 +72,13 @@ export function useProjectStore() {
       createdAt: today,
       updatedAt: today,
     }
-    setProjects(prev => [newProject, ...prev])
+    setAllProjects(prev => [newProject, ...prev])
     setActiveProjectId(id)
     return newProject
   }, [])
 
   const addMessage = useCallback((projectId: string, msg: ChatMessage) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? {
@@ -82,7 +92,7 @@ export function useProjectStore() {
   }, [])
 
   const updateMessage = useCallback((projectId: string, messageId: string, updates: Partial<ChatMessage>) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? {
@@ -97,7 +107,7 @@ export function useProjectStore() {
   }, [])
 
   const addStudy = useCallback((projectId: string, study: Survey) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? {
@@ -111,7 +121,7 @@ export function useProjectStore() {
   }, [])
 
   const addAttachment = useCallback((projectId: string, attachment: Attachment) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? {
@@ -125,7 +135,7 @@ export function useProjectStore() {
   }, [])
 
   const renameProject = useCallback((projectId: string, name: string) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? { ...p, name, updatedAt: new Date().toISOString().slice(0, 10) }
@@ -135,7 +145,7 @@ export function useProjectStore() {
   }, [])
 
   const renameStudy = useCallback((projectId: string, studyId: string, name: string) => {
-    setProjects(prev =>
+    setAllProjects(prev =>
       prev.map(p =>
         p.id === projectId
           ? {
@@ -149,7 +159,7 @@ export function useProjectStore() {
   }, [])
 
   const deleteProject = useCallback((projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId))
+    setAllProjects(prev => prev.filter(p => p.id !== projectId))
     // If we're deleting the active project, clear selection
     setActiveProjectId(prev => (prev === projectId ? null : prev))
   }, [])

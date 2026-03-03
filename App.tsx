@@ -9,9 +9,10 @@ import type { Account, AppView } from '@/types'
 import type { BuilderState } from '@/hooks/useSurveyBuilder'
 import { SURVEY_TYPE_CONFIGS } from '@/types'
 import { generateMockFindings } from '@/lib/generateMockFindings'
+import { getAudienceById, pickerToAudienceDetails } from '@/lib/audienceLookup'
 import {
   mockAccounts,
-  mubiAccount,
+  etTestAccount,
 } from '@/data/mockData'
 
 // Feature screens
@@ -28,11 +29,11 @@ import type { AudienceDetails, Survey } from '@/types'
 
 const App: React.FC = () => {
   // ── Core state ──
-  const [currentAccount, setCurrentAccount] = useState<Account>(mubiAccount)
+  const [currentAccount, setCurrentAccount] = useState<Account>(etTestAccount)
   const [view, setView] = useState<AppView>({ screen: 'home' })
   const [pendingQuery, setPendingQuery] = useState<string | undefined>()
 
-  const store = useProjectStore()
+  const store = useProjectStore(currentAccount.id)
 
   // Audience overlay (slides over current screen)
   const [audienceOverlay, setAudienceOverlay] = useState<
@@ -74,7 +75,10 @@ const App: React.FC = () => {
 
   const handleAccountChange = useCallback((account: Account) => {
     setCurrentAccount(account)
-  }, [])
+    setView({ screen: 'home' })
+    store.setActiveProjectId(null)
+    setAudienceOverlay(null)
+  }, [store])
 
   const handleDeleteProject = useCallback((id: string) => {
     store.deleteProject(id)
@@ -98,6 +102,13 @@ const App: React.FC = () => {
 
   const handleCloseAudienceOverlay = useCallback(() => {
     setAudienceOverlay(null)
+  }, [])
+
+  const handleAudienceFromChat = useCallback((audienceId: string) => {
+    const pickerAudience = getAudienceById(audienceId)
+    if (pickerAudience) {
+      setAudienceOverlay({ mode: 'detail', audience: pickerToAudienceDetails(pickerAudience) })
+    }
   }, [])
 
   // ── Builder handlers ──
@@ -244,6 +255,7 @@ const App: React.FC = () => {
             onUpdateMessage={(id, updates) => store.updateMessage(store.activeProject!.id, id, updates)}
             onAddStudy={(study) => store.addStudy(store.activeProject!.id, study)}
             onRenameProject={(name) => store.renameProject(store.activeProject!.id, name)}
+            onAudienceClick={handleAudienceFromChat}
             pendingQuery={pendingQuery}
             onPendingQueryConsumed={() => setPendingQuery(undefined)}
           />

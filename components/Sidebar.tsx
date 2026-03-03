@@ -283,10 +283,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuItem className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  <span>Account settings</span>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

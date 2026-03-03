@@ -120,6 +120,7 @@ module.exports = {
           secondary: 'var(--brand-secondary)',
           tertiary: 'var(--brand-tertiary)',
           quaternary: 'var(--brand-quaternary)',
+          accent: 'var(--brand-accent)',
         },
         'user-bubble': 'var(--user-bubble)'
       },

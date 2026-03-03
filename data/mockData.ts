@@ -1026,6 +1026,7 @@ export const vodafoneAccount: Account = {
   name: 'Vodafone',
   type: 'brand',
   icon: 'VF',
+  logo: '/assets/logo-vodaphone.jpg',
   brandColors: {
     primary: '#E60000',   // Vodafone Red
     secondary: '#FFFFFF',
@@ -1039,6 +1040,7 @@ export const disneyAccount: Account = {
   name: 'Disney+',
   type: 'brand',
   icon: 'D+',
+  logo: '/assets/logo-disney.jpg',
   brandColors: {
     primary: '#113CCF',   // Disney+ Blue
     secondary: '#1CE783',
@@ -1052,6 +1054,7 @@ export const bpAccount: Account = {
   name: 'BP',
   type: 'brand',
   icon: 'BP',
+  logo: '/assets/logo-bp.png',
   brandColors: {
     primary: '#009B3A',   // BP Green
     secondary: '#FFD700',
@@ -1086,15 +1089,20 @@ export const kingAccount: Account = {
   },
 }
 
+export const etTestAccount: Account = {
+  id: 'et-test',
+  name: 'Electric Twin',
+  type: 'brand',
+  icon: 'ET',
+  logo: '/assets/logo-white-onblack.png',
+}
+
 export const mockAccounts: Account[] = [
+  etTestAccount,
   mubiAccount,
   vodafoneAccount,
   disneyAccount,
   bpAccount,
-  philipsAccount,
-  kingAccount,
-  canvaAccount,
-  wonderhoodAccount,
 ];
 
 // Helper function to get all audiences from an account

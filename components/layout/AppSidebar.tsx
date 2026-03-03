@@ -227,10 +227,6 @@ export function AppSidebar({
                       <span className="text-sm font-medium">{account.name}</span>
                     </DropdownMenuItem>
                   ))}
-                  <DropdownMenuItem className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span>Account settings</span>
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
