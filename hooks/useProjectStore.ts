@@ -1,8 +1,42 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { ChatMessage, ProjectState, Attachment } from '@/types'
 import type { Survey } from '@/types'
 import { getAllDemoProjects } from '@/data/demoConversations'
 import { getBrandNamesForAccount, ET_TEST_ACCOUNT_ID } from '@/data/brandRegistry'
+
+// ── localStorage persistence ──
+
+const STORAGE_KEY = 'merlin-projects'
+
+/** Serialize projects → JSON, converting Date objects to ISO strings with a marker */
+function saveToStorage(projects: ProjectState[]): void {
+  try {
+    const json = JSON.stringify(projects, (_key, value) => {
+      if (value instanceof Date) return { __date__: value.toISOString() }
+      return value
+    })
+    localStorage.setItem(STORAGE_KEY, json)
+  } catch (e) {
+    console.warn('[Merlin] Failed to save projects to localStorage:', e)
+  }
+}
+
+/** Deserialize JSON → projects, reviving Date markers back to Date objects */
+function loadFromStorage(): ProjectState[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw, (_key, value) => {
+      if (value && typeof value === 'object' && '__date__' in value) {
+        return new Date(value.__date__)
+      }
+      return value
+    })
+  } catch (e) {
+    console.warn('[Merlin] Failed to load projects from localStorage:', e)
+    return null
+  }
+}
 
 // ── Name generation (simple heuristic — no AI call) ──
 
@@ -38,8 +72,25 @@ function generateStudyName(study: Partial<Survey>): string {
 // ── Hook ──
 
 export function useProjectStore(accountId?: string) {
-  const [allProjects, setAllProjects] = useState<ProjectState[]>(() => getAllDemoProjects())
+  const [allProjects, setAllProjects] = useState<ProjectState[]>(() => {
+    const saved = loadFromStorage()
+    if (saved && saved.length > 0) return saved
+    // First visit — seed with demo projects and persist them
+    const demos = getAllDemoProjects()
+    saveToStorage(demos)
+    return demos
+  })
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+
+  // Persist to localStorage whenever projects change (skip initial mount)
+  const isInitialMount = useRef(true)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    saveToStorage(allProjects)
+  }, [allProjects])
 
   // Filtered view: ET-Test or undefined → show all, otherwise filter by brand
   const projects = useMemo(() => {
