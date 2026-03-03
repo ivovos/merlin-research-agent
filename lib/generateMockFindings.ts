@@ -7,10 +7,17 @@ import type { SurveyQuestion, Finding, QuestionType } from '@/types'
 export function generateMockFindings(
   questions: SurveyQuestion[],
   hasMultipleSegments: boolean = false,
+  stimuliIds?: string[],
 ): Finding[] {
   return questions
     .filter(q => canGenerateFinding(q.type))
-    .map((q, i) => generateFinding(q, i, hasMultipleSegments))
+    .map((q, i) => {
+      const finding = generateFinding(q, i, hasMultipleSegments)
+      if (stimuliIds && stimuliIds.length > 0) {
+        finding.stimuliIds = stimuliIds
+      }
+      return finding
+    })
 }
 
 /** Question types that produce visual findings (excludes open_text, video_response, etc.) */

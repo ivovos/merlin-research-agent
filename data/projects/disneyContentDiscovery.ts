@@ -2,7 +2,7 @@ import type { SurveyProject } from '@/types'
 
 export const disneyContentDiscoveryProject: SurveyProject = {
   id: 'proj_disney_discovery',
-  name: 'Disney+ Content Discovery & Engagement Barriers',
+  name: 'Content Discovery & Engagement Barriers',
   brand: 'Disney+',
   surveyType: 'audience_exploration',
   description: 'Understanding how Disney+ subscribers discover new content, what barriers prevent deeper engagement, and what features would increase viewing time',

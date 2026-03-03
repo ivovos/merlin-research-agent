@@ -6,6 +6,9 @@ export const bpTemplates: TemplateConfig[] = [
     key: 'bp-fuelling',
     label: 'Fuelling Experience Tracker',
     icon: 'Fuel',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by BP',
     questions: [
       { text: 'How often do you refuel your vehicle?', type: 'single_select' as QuestionType, options: ['Multiple times a week', 'Weekly', 'Fortnightly', 'Monthly', 'Less often'] },
       { text: 'What is the most important factor when choosing a fuel station?', type: 'ranking' as QuestionType, options: ['Price', 'Location & convenience', 'Fuel quality', 'Loyalty rewards', 'Facilities (shop & food)', 'EV charging availability'] },
@@ -18,6 +21,9 @@ export const bpTemplates: TemplateConfig[] = [
     key: 'bp-ev-transition',
     label: 'EV & Energy Transition Pulse',
     icon: 'Zap',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by BP',
     questions: [
       { text: 'Which best describes your current vehicle situation?', type: 'single_select' as QuestionType, options: ['Petrol or diesel only', 'Hybrid', 'Fully electric', 'Planning to go electric within 2 years', 'No plans to change'] },
       { text: 'What is your biggest concern about switching to an electric vehicle?', type: 'single_select' as QuestionType, options: ['Range anxiety', 'Charging infrastructure', 'Upfront cost', 'Charging time', 'Battery lifespan', 'Resale value'] },
@@ -30,6 +36,9 @@ export const bpTemplates: TemplateConfig[] = [
     key: 'bp-brand-perception',
     label: 'Brand Perception & Trust',
     icon: 'Shield',
+    surveyType: 'simple',
+    category: 'brand',
+    creatorLabel: 'Created by BP',
     questions: [
       { text: 'Which words best describe your perception of BP?', type: 'multi_select' as QuestionType, options: ['Innovative', 'Traditional', 'Trustworthy', 'Greenwashing', 'Reliable', 'Expensive', 'Forward-thinking', 'Outdated', 'Convenient', 'Environmentally responsible'] },
       { text: 'How has your opinion of BP changed in the last 2 years?', type: 'single_select' as QuestionType, options: ['Much more positive', 'Slightly more positive', 'No change', 'Slightly more negative', 'Much more negative'] },

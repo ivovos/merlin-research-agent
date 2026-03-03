@@ -1035,18 +1035,564 @@ export const vodafoneAccount: Account = {
   },
 }
 
+// Disney UK Research Projects
+export const disneyResearchProjects: ResearchProject[] = [
+  {
+    id: 'proj_disney_summer_slate',
+    name: 'Summer 2026 Theatrical Slate',
+    description: 'Concept and creative testing for summer theatrical releases across Disney, Pixar and Marvel brands. Focus on UK trailer response and campaign messaging.',
+    icon: 'SS',
+    color: '#113CCF',
+    createdAt: '2026-02-01T09:00:00Z',
+    updatedAt: '2026-03-01T14:00:00Z',
+    audienceIds: ['disney-uk-cinema-goers', 'disney-uk-families', 'disney-uk-marvel-fans'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_summer_slate',
+        name: 'Summer 2026 Creative Brief.pdf',
+        type: 'pdf',
+        uploadedAt: '2026-02-01T09:30:00Z',
+        summary: 'Campaign briefs for 3 tentpole theatrical releases summer 2026.'
+      }
+    ],
+    status: 'active',
+    tags: ['theatrical', 'summer-2026', 'creative-testing']
+  },
+  {
+    id: 'proj_disney_streaming_retention',
+    name: 'Disney+ UK Retention Study',
+    description: 'Understanding churn drivers among UK Disney+ subscribers. Testing bundle messaging, content discovery improvements and tier migration strategies.',
+    icon: 'RT',
+    color: '#1CE783',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-02-28T16:00:00Z',
+    audienceIds: ['disney-uk-premium-subs', 'disney-uk-standard-ads', 'disney-uk-churn-risk'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_retention',
+        name: 'UK Retention Analysis Q4.pdf',
+        type: 'pdf',
+        uploadedAt: '2026-01-15T10:15:00Z',
+        summary: 'Q4 2025 churn data and subscriber behaviour analysis for UK market.'
+      }
+    ],
+    status: 'active',
+    tags: ['retention', 'streaming', 'disney-plus', 'uk']
+  },
+  {
+    id: 'proj_disney_brand_health',
+    name: 'Disney Brand Health UK 2026',
+    description: 'Quarterly brand tracker covering Disney, Pixar, Marvel, Star Wars and National Geographic. Measuring awareness, consideration and sentiment among UK audiences.',
+    icon: 'BH',
+    color: '#7B61FF',
+    createdAt: '2025-12-01T09:00:00Z',
+    updatedAt: '2026-02-15T11:00:00Z',
+    audienceIds: ['disney-uk-nat-rep', 'disney-uk-families', 'disney-uk-young-adults'],
+    conversationIds: [],
+    canvasIds: [],
+    briefs: [
+      {
+        id: 'brief_brand_health',
+        name: 'Brand Health Tracker Framework.pdf',
+        type: 'pdf',
+        uploadedAt: '2025-12-01T09:30:00Z',
+        summary: 'Tracking methodology and KPIs for Disney portfolio brand health in UK.'
+      }
+    ],
+    status: 'active',
+    tags: ['brand-health', 'tracker', 'quarterly', 'uk']
+  },
+  {
+    id: 'proj_disney_kids_content',
+    name: 'Kids Content Strategy UK',
+    description: 'Research into UK children\'s viewing habits, parental attitudes and competitive positioning vs Netflix Kids, YouTube Kids and CBeebies.',
+    icon: 'KC',
+    color: '#FF6B8A',
+    createdAt: '2026-02-10T09:00:00Z',
+    updatedAt: '2026-02-28T15:00:00Z',
+    audienceIds: ['disney-uk-parents-under5', 'disney-uk-parents-5to11', 'disney-uk-tweens'],
+    conversationIds: [],
+    canvasIds: [],
+    status: 'active',
+    tags: ['kids', 'content', 'competitive', 'uk']
+  }
+];
+
 export const disneyAccount: Account = {
   id: 'disney',
-  name: 'Disney+',
+  name: 'Disney',
   type: 'brand',
   icon: 'D+',
   logo: '/assets/logo-disney.jpg',
   brandColors: {
-    primary: '#113CCF',   // Disney+ Blue
-    secondary: '#1CE783',
-    tertiary: '#7B61FF',
-    quaternary: '#0A1E3D',
+    primary: '#113CCF',   // Disney Blue
+    secondary: '#1CE783', // Disney+ Green accent
+    tertiary: '#7B61FF',  // Purple accent
+    quaternary: '#0A1E3D', // Dark navy
   },
+  researchProjects: disneyResearchProjects,
+  audiences: [
+    // ═══════════════════════════════════════════
+    // UK NATIONALLY REPRESENTATIVE
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-nat-rep',
+      name: 'UK Nationally Representative',
+      icon: 'NR',
+      agents: 10000,
+      segments: [
+        { id: 'nr-male', name: 'Male', count: 4900, percentage: 49 },
+        { id: 'nr-female', name: 'Female', count: 5100, percentage: 51 },
+        { id: 'nr-18-24', name: '18–24', count: 1200, percentage: 12 },
+        { id: 'nr-25-34', name: '25–34', count: 1800, percentage: 18 },
+        { id: 'nr-35-44', name: '35–44', count: 1700, percentage: 17 },
+        { id: 'nr-45-54', name: '45–54', count: 1800, percentage: 18 },
+        { id: 'nr-55-plus', name: '55+', count: 3500, percentage: 35 },
+      ],
+      updatedAt: '2026-02-20',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'Nationally representative sample of UK adults 18+ weighted by age, gender, region and socioeconomic group.',
+    },
+
+    // ═══════════════════════════════════════════
+    // DISNEY+ UK SUBSCRIBERS
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-all-subs',
+      name: 'Disney+ UK Subscribers (All)',
+      icon: 'AS',
+      agents: 8500,
+      segments: [
+        { id: 'sub-premium', name: 'Premium (No Ads)', count: 3400, percentage: 40 },
+        { id: 'sub-standard', name: 'Standard with Ads', count: 3400, percentage: 40 },
+        { id: 'sub-basic', name: 'Basic / Mobile', count: 1700, percentage: 20 },
+      ],
+      updatedAt: '2026-02-25',
+      source: 'disney_1p',
+      sourceLabel: 'Disney+ UK Subscriber Data',
+      description: 'All active Disney+ subscribers in the UK across all tiers.',
+    },
+    {
+      id: 'disney-uk-premium-subs',
+      name: 'Disney+ UK Premium Subscribers',
+      icon: 'PS',
+      agents: 3400,
+      segments: [
+        { id: 'prem-families', name: 'Family Households', count: 1530, percentage: 45 },
+        { id: 'prem-couples', name: 'Couples / DINKs', count: 850, percentage: 25 },
+        { id: 'prem-singles', name: 'Single Viewers', count: 680, percentage: 20 },
+        { id: 'prem-sharers', name: 'Account Sharers', count: 340, percentage: 10 },
+      ],
+      updatedAt: '2026-02-25',
+      source: 'disney_1p',
+      sourceLabel: 'Disney+ UK Subscriber Data',
+      description: 'Premium tier (ad-free) Disney+ subscribers in the UK. Higher ARPU, lower churn.',
+    },
+    {
+      id: 'disney-uk-standard-ads',
+      name: 'Disney+ UK Standard with Ads',
+      icon: 'SA',
+      agents: 3400,
+      segments: [
+        { id: 'ads-price-driven', name: 'Price-Driven Choosers', count: 1360, percentage: 40 },
+        { id: 'ads-trial-converts', name: 'Trial Converts', count: 680, percentage: 20 },
+        { id: 'ads-bundle-users', name: 'Bundle Subscribers', count: 680, percentage: 20 },
+        { id: 'ads-downgraders', name: 'Downgraded from Premium', count: 680, percentage: 20 },
+      ],
+      updatedAt: '2026-02-25',
+      source: 'disney_1p',
+      sourceLabel: 'Disney+ UK Subscriber Data',
+      description: 'Standard with Ads tier subscribers in the UK. Key audience for ad sales and upgrade campaigns.',
+    },
+    {
+      id: 'disney-uk-churn-risk',
+      name: 'Disney+ UK Churn Risk',
+      icon: 'CR',
+      agents: 2200,
+      segments: [
+        { id: 'churn-low-engage', name: 'Low Engagement (<2hrs/wk)', count: 880, percentage: 40 },
+        { id: 'churn-single-profile', name: 'Single Profile Only', count: 550, percentage: 25 },
+        { id: 'churn-seasonal', name: 'Seasonal Subscribers', count: 440, percentage: 20 },
+        { id: 'churn-competitor', name: 'Heavy Competitor Users', count: 330, percentage: 15 },
+      ],
+      updatedAt: '2026-02-20',
+      source: 'disney_1p',
+      sourceLabel: 'Disney+ UK Subscriber Data',
+      description: 'UK subscribers showing churn indicators: declining engagement, single-profile accounts, or seasonal patterns.',
+    },
+
+    // ═══════════════════════════════════════════
+    // UK CINEMA AUDIENCES
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-cinema-goers',
+      name: 'UK Cinema-Goers',
+      icon: 'CG',
+      agents: 6500,
+      segments: [
+        { id: 'cin-regular', name: 'Regular (Monthly+)', count: 1950, percentage: 30 },
+        { id: 'cin-occasional', name: 'Occasional (Quarterly)', count: 2275, percentage: 35 },
+        { id: 'cin-event', name: 'Event / Blockbuster Only', count: 1625, percentage: 25 },
+        { id: 'cin-lapsed', name: 'Lapsed (12+ months)', count: 650, percentage: 10 },
+      ],
+      updatedAt: '2026-02-18',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK adults who attend cinema. Segmented by frequency. Key audience for theatrical release campaigns.',
+    },
+    {
+      id: 'disney-uk-imax-premium',
+      name: 'UK Premium Format Cinema',
+      icon: 'PF',
+      agents: 2800,
+      segments: [
+        { id: 'pf-imax', name: 'IMAX Regulars', count: 1120, percentage: 40 },
+        { id: 'pf-4dx', name: '4DX / ScreenX', count: 560, percentage: 20 },
+        { id: 'pf-dolby', name: 'Dolby Cinema / Atmos', count: 560, percentage: 20 },
+        { id: 'pf-any-premium', name: 'Any Premium Format', count: 560, percentage: 20 },
+      ],
+      updatedAt: '2026-02-18',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK cinema-goers who regularly choose premium formats. Higher ticket spend, early adopters of tentpole releases.',
+    },
+
+    // ═══════════════════════════════════════════
+    // FAMILY & LIFE STAGE AUDIENCES
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-families',
+      name: 'UK Families with Children',
+      icon: 'FC',
+      agents: 5500,
+      segments: [
+        { id: 'fam-under5', name: 'Pre-schoolers (0–4)', count: 1375, percentage: 25 },
+        { id: 'fam-5to11', name: 'Primary Age (5–11)', count: 1925, percentage: 35 },
+        { id: 'fam-tweens', name: 'Tweens (12–15)', count: 1100, percentage: 20 },
+        { id: 'fam-mixed', name: 'Mixed Age Children', count: 1100, percentage: 20 },
+      ],
+      updatedAt: '2026-02-22',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Family Panel',
+      description: 'UK households with children under 16. Core Disney audience for family content, merchandise and theme park marketing.',
+    },
+    {
+      id: 'disney-uk-parents-under5',
+      name: 'UK Parents of Under-5s',
+      icon: 'P5',
+      agents: 2800,
+      segments: [
+        { id: 'p5-first-time', name: 'First-Time Parents', count: 980, percentage: 35 },
+        { id: 'p5-multi', name: 'Multiple Children', count: 840, percentage: 30 },
+        { id: 'p5-working', name: 'Working Parents', count: 560, percentage: 20 },
+        { id: 'p5-stay-home', name: 'Stay-at-Home Parents', count: 420, percentage: 15 },
+      ],
+      updatedAt: '2026-02-22',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Family Panel',
+      description: 'Parents of pre-school children. Key for Disney Junior, early-years content and character franchise development.',
+    },
+    {
+      id: 'disney-uk-parents-5to11',
+      name: 'UK Parents of 5–11 Year Olds',
+      icon: 'PK',
+      agents: 3200,
+      segments: [
+        { id: 'pk-disney-fans', name: 'Active Disney Fans', count: 1280, percentage: 40 },
+        { id: 'pk-screen-limiters', name: 'Screen-Time Limiters', count: 640, percentage: 20 },
+        { id: 'pk-co-viewers', name: 'Co-Viewing Parents', count: 640, percentage: 20 },
+        { id: 'pk-gaming-households', name: 'Gaming Households', count: 640, percentage: 20 },
+      ],
+      updatedAt: '2026-02-22',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Family Panel',
+      description: 'Parents of primary-school-age children. Peak Disney engagement age for Pixar, Disney Animation and Marvel.',
+    },
+    {
+      id: 'disney-uk-tweens',
+      name: 'UK Tweens & Young Teens (12–15)',
+      icon: 'TW',
+      agents: 2400,
+      segments: [
+        { id: 'tw-marvel-fans', name: 'Marvel / Star Wars Fans', count: 840, percentage: 35 },
+        { id: 'tw-social-first', name: 'Social-Media-First', count: 720, percentage: 30 },
+        { id: 'tw-anime-fans', name: 'Anime & Manga Fans', count: 480, percentage: 20 },
+        { id: 'tw-sports-fans', name: 'Sports Fans', count: 360, percentage: 15 },
+      ],
+      updatedAt: '2026-02-22',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Family Panel',
+      description: 'UK tweens and young teens — transitioning out of core Disney into franchise content, competitive with YouTube and TikTok.',
+    },
+
+    // ═══════════════════════════════════════════
+    // DEMOGRAPHIC / AGE COHORTS
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-young-adults',
+      name: 'UK Young Adults (18–30)',
+      icon: 'YA',
+      agents: 4200,
+      segments: [
+        { id: 'ya-students', name: 'Students', count: 1260, percentage: 30 },
+        { id: 'ya-young-professionals', name: 'Young Professionals', count: 1470, percentage: 35 },
+        { id: 'ya-nostalgia-fans', name: 'Disney Nostalgia Fans', count: 840, percentage: 20 },
+        { id: 'ya-franchise-fans', name: 'Franchise-Driven', count: 630, percentage: 15 },
+      ],
+      updatedAt: '2026-02-20',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK 18–30 year olds. Mix of nostalgic Disney fans, franchise devotees and streaming-native viewers.',
+    },
+    {
+      id: 'disney-uk-adults-31-50',
+      name: 'UK Adults 31–50',
+      icon: 'AD',
+      agents: 4800,
+      segments: [
+        { id: 'ad-parents', name: 'Parents', count: 2160, percentage: 45 },
+        { id: 'ad-no-kids', name: 'Non-Parents', count: 1440, percentage: 30 },
+        { id: 'ad-marvel-fans', name: 'Marvel / Star Wars Fans', count: 720, percentage: 15 },
+        { id: 'ad-drama-viewers', name: 'Adult Drama Viewers', count: 480, percentage: 10 },
+      ],
+      updatedAt: '2026-02-20',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK adults 31–50. Core subscriber demographic, many viewing with children. Key for family and franchise content.',
+    },
+    {
+      id: 'disney-uk-adults-50plus',
+      name: 'UK Adults 50+',
+      icon: '50',
+      agents: 3600,
+      segments: [
+        { id: '50-grandparents', name: 'Grandparents', count: 1260, percentage: 35 },
+        { id: '50-nat-geo', name: 'Nat Geo / Documentary Fans', count: 900, percentage: 25 },
+        { id: '50-nostalgia', name: 'Classic Disney Fans', count: 720, percentage: 20 },
+        { id: '50-non-streamers', name: 'Streaming Sceptics', count: 720, percentage: 20 },
+      ],
+      updatedAt: '2026-02-20',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK adults 50+. Includes grandparents co-viewing, Nat Geo fans and classic Disney nostalgia viewers.',
+    },
+
+    // ═══════════════════════════════════════════
+    // FRANCHISE / FANDOM AUDIENCES
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-marvel-fans',
+      name: 'UK Marvel Fans',
+      icon: 'MV',
+      agents: 4800,
+      segments: [
+        { id: 'mv-hardcore', name: 'Hardcore MCU (All films)', count: 1440, percentage: 30 },
+        { id: 'mv-casual', name: 'Casual (Tentpoles only)', count: 1680, percentage: 35 },
+        { id: 'mv-series', name: 'Disney+ Series Watchers', count: 960, percentage: 20 },
+        { id: 'mv-lapsed', name: 'Lapsed (Superhero fatigued)', count: 720, percentage: 15 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK Marvel fans across cinema and streaming. Tracks engagement with MCU films, Disney+ series and franchise fatigue.',
+    },
+    {
+      id: 'disney-uk-star-wars-fans',
+      name: 'UK Star Wars Fans',
+      icon: 'SW',
+      agents: 3600,
+      segments: [
+        { id: 'sw-og-fans', name: 'Original Trilogy Fans', count: 1080, percentage: 30 },
+        { id: 'sw-prequel-gen', name: 'Prequel Generation', count: 720, percentage: 20 },
+        { id: 'sw-mandalorian', name: 'Mandalorian-Era Fans', count: 1080, percentage: 30 },
+        { id: 'sw-casual', name: 'Casual / Film-Only', count: 720, percentage: 20 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK Star Wars fans across generations. Segmented by era of entry and depth of engagement.',
+    },
+    {
+      id: 'disney-uk-pixar-fans',
+      name: 'UK Pixar Fans',
+      icon: 'PX',
+      agents: 3800,
+      segments: [
+        { id: 'px-family-co-view', name: 'Family Co-Viewers', count: 1520, percentage: 40 },
+        { id: 'px-adult-fans', name: 'Adult Pixar Fans', count: 760, percentage: 20 },
+        { id: 'px-kids-led', name: 'Child-Led Viewing', count: 1140, percentage: 30 },
+        { id: 'px-occasional', name: 'Occasional (Big titles)', count: 380, percentage: 10 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK Pixar fans. Family-skewing audience, key for theatrical and streaming premieres.',
+    },
+    {
+      id: 'disney-uk-disney-animation',
+      name: 'UK Disney Animation Fans',
+      icon: 'DA',
+      agents: 4200,
+      segments: [
+        { id: 'da-princess-era', name: 'Classic / Princess Fans', count: 1260, percentage: 30 },
+        { id: 'da-modern', name: 'Modern Era (Frozen+)', count: 1470, percentage: 35 },
+        { id: 'da-musical-lovers', name: 'Musical Fans', count: 840, percentage: 20 },
+        { id: 'da-nostalgia', name: 'Nostalgia Viewers', count: 630, percentage: 15 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK Disney Animation fans. Covers classic through modern eras, musical fans and nostalgia-driven viewers.',
+    },
+    {
+      id: 'disney-uk-nat-geo-fans',
+      name: 'UK National Geographic Fans',
+      icon: 'NG',
+      agents: 2600,
+      segments: [
+        { id: 'ng-nature-docs', name: 'Nature & Wildlife', count: 1040, percentage: 40 },
+        { id: 'ng-science', name: 'Science & Innovation', count: 520, percentage: 20 },
+        { id: 'ng-adventure', name: 'Adventure & Exploration', count: 520, percentage: 20 },
+        { id: 'ng-history', name: 'History & Culture', count: 520, percentage: 20 },
+      ],
+      updatedAt: '2026-02-10',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK National Geographic content fans on Disney+. Older-skewing, high-education demographic.',
+    },
+
+    // ═══════════════════════════════════════════
+    // BEHAVIOURAL / MEDIA CONSUMPTION
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-multi-sub',
+      name: 'UK Multi-Subscription Households',
+      icon: 'MS',
+      agents: 5200,
+      segments: [
+        { id: 'ms-2subs', name: '2 Streaming Services', count: 1560, percentage: 30 },
+        { id: 'ms-3subs', name: '3 Streaming Services', count: 1820, percentage: 35 },
+        { id: 'ms-4plus', name: '4+ Streaming Services', count: 1300, percentage: 25 },
+        { id: 'ms-bundle', name: 'Bundle Subscribers', count: 520, percentage: 10 },
+      ],
+      updatedAt: '2026-02-18',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK households with multiple streaming subscriptions. Key for understanding competitive positioning and share of wallet.',
+    },
+    {
+      id: 'disney-uk-social-media-engaged',
+      name: 'UK Social Media Engaged',
+      icon: 'SM',
+      agents: 4500,
+      segments: [
+        { id: 'sm-tiktok', name: 'TikTok-First', count: 1350, percentage: 30 },
+        { id: 'sm-instagram', name: 'Instagram-First', count: 1125, percentage: 25 },
+        { id: 'sm-youtube', name: 'YouTube-First', count: 1125, percentage: 25 },
+        { id: 'sm-twitter', name: 'X / Twitter Active', count: 450, percentage: 10 },
+        { id: 'sm-facebook', name: 'Facebook Active', count: 450, percentage: 10 },
+      ],
+      updatedAt: '2026-02-18',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK adults with high social media engagement. Key for understanding content virality and campaign amplification.',
+    },
+    {
+      id: 'disney-uk-theme-park-visitors',
+      name: 'UK Theme Park Visitors',
+      icon: 'TP',
+      agents: 3200,
+      segments: [
+        { id: 'tp-dlp-visitors', name: 'Disneyland Paris Visitors', count: 1280, percentage: 40 },
+        { id: 'tp-wdw-visitors', name: 'Walt Disney World Visitors', count: 640, percentage: 20 },
+        { id: 'tp-intenders', name: 'Planning to Visit', count: 960, percentage: 30 },
+        { id: 'tp-never', name: 'Never Visited Disney Park', count: 320, percentage: 10 },
+      ],
+      updatedAt: '2026-02-10',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Research Panel',
+      description: 'UK adults segmented by Disney theme park visitation. Covers Disneyland Paris, WDW and intent to visit.',
+    },
+    {
+      id: 'disney-uk-merchandise-buyers',
+      name: 'UK Disney Merchandise Buyers',
+      icon: 'MB',
+      agents: 3000,
+      segments: [
+        { id: 'merch-toys', name: 'Toys & Plush', count: 1050, percentage: 35 },
+        { id: 'merch-apparel', name: 'Apparel & Accessories', count: 750, percentage: 25 },
+        { id: 'merch-homeware', name: 'Homeware & Gifts', count: 450, percentage: 15 },
+        { id: 'merch-collectibles', name: 'Collectibles & Limited', count: 450, percentage: 15 },
+        { id: 'merch-non-buyer', name: 'Non-Buyers (Content Only)', count: 300, percentage: 10 },
+      ],
+      updatedAt: '2026-02-10',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Consumer Data',
+      description: 'UK Disney merchandise purchasing behaviour. Tracks cross-sell from content to consumer products.',
+    },
+
+    // ═══════════════════════════════════════════
+    // COMPETITIVE / SWITCHER AUDIENCES
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-netflix-overlap',
+      name: 'UK Disney+ & Netflix Overlap',
+      icon: 'NF',
+      agents: 4200,
+      segments: [
+        { id: 'nf-disney-primary', name: 'Disney+ Primary', count: 1260, percentage: 30 },
+        { id: 'nf-netflix-primary', name: 'Netflix Primary', count: 1680, percentage: 40 },
+        { id: 'nf-equal', name: 'Equal Usage', count: 840, percentage: 20 },
+        { id: 'nf-switching', name: 'Rotating / Switching', count: 420, percentage: 10 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK households subscribing to both Disney+ and Netflix. Tracks primary platform loyalty and switching behaviour.',
+    },
+    {
+      id: 'disney-uk-non-subscribers',
+      name: 'UK Disney+ Non-Subscribers',
+      icon: 'NS',
+      agents: 3800,
+      segments: [
+        { id: 'ns-aware-not-interested', name: 'Aware, Not Interested', count: 1140, percentage: 30 },
+        { id: 'ns-price-barrier', name: 'Price Barrier', count: 950, percentage: 25 },
+        { id: 'ns-lapsed', name: 'Lapsed Subscribers', count: 950, percentage: 25 },
+        { id: 'ns-unaware', name: 'Low Awareness', count: 380, percentage: 10 },
+        { id: 'ns-competitor-loyal', name: 'Competitor Loyal', count: 380, percentage: 10 },
+      ],
+      updatedAt: '2026-02-15',
+      source: 'disney_1p',
+      sourceLabel: 'Disney UK Panel',
+      description: 'UK adults who do not currently subscribe to Disney+. Segmented by barrier type for acquisition campaigns.',
+    },
+
+    // ═══════════════════════════════════════════
+    // ADULT CONTENT / STAR BRAND
+    // ═══════════════════════════════════════════
+    {
+      id: 'disney-uk-adult-drama',
+      name: 'UK Adult Drama Fans',
+      icon: 'DR',
+      agents: 3400,
+      segments: [
+        { id: 'dr-prestige', name: 'Prestige Drama Viewers', count: 1190, percentage: 35 },
+        { id: 'dr-crime', name: 'Crime & Thriller Fans', count: 1020, percentage: 30 },
+        { id: 'dr-limited', name: 'Limited Series Watchers', count: 680, percentage: 20 },
+        { id: 'dr-international', name: 'International Content Seekers', count: 510, percentage: 15 },
+      ],
+      updatedAt: '2026-02-24',
+      source: 'disney_1p',
+      sourceLabel: 'Disney+ UK Subscriber Data',
+      description: 'Disney+ subscribers who primarily watch adult drama and prestige content (Star brand in UK).',
+    },
+  ],
 }
 
 export const bpAccount: Account = {

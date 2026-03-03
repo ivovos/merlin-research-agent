@@ -1,27 +1,13 @@
 import React from 'react'
 import {
-  ClipboardList,
-  Lightbulb,
-  MessageCircle,
-  Image,
   Users,
   Pencil,
   ImageIcon,
   FileText,
 } from 'lucide-react'
-import type { ElementType } from 'react'
 import { Card } from '@/components/ui/card'
 import type { SurveyType, SurveyQuestion, Stimulus } from '@/types'
-import { SURVEY_TYPE_CONFIGS } from '@/types'
 import { MOCK_AUDIENCES, getSelectedAudienceIds, getSelectedRespondentCount } from '@/hooks/useSurveyBuilder'
-
-const ICON_MAP: Record<string, ElementType> = {
-  ClipboardList,
-  Lightbulb,
-  MessageCircle,
-  Image,
-  Users,
-}
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
   single_select: 'Single Select',
@@ -57,16 +43,13 @@ interface ReviewStepProps {
 }
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({
-  surveyType,
+  surveyType: _surveyType,
   selectedAudiences,
   stimuli,
   questions,
   flowSteps,
   onGoToStep,
 }) => {
-  const typeConfig = SURVEY_TYPE_CONFIGS.find(c => c.key === surveyType)
-  const TypeIcon = typeConfig ? (ICON_MAP[typeConfig.icon] || ClipboardList) : ClipboardList
-
   // Resolve audiences from both single-mode IDs ("uk-grocery") and multi-mode segment IDs ("uk-grocery:budget-families")
   const parentAudienceIds = getSelectedAudienceIds(selectedAudiences)
   const audiences = MOCK_AUDIENCES.filter(a => parentAudienceIds.includes(a.id))
@@ -75,7 +58,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   // Determine if we're in multi-segment mode (segment IDs contain colons)
   const isMultiSegment = selectedAudiences.some(id => id.includes(':'))
 
-  const typeStepIndex = flowSteps.indexOf('type')
   const audienceStepIndex = flowSteps.indexOf('audience')
   const stimulusStepIndex = flowSteps.indexOf('stimulus')
   const questionsStepIndex = flowSteps.indexOf('questions')
@@ -88,19 +70,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           Everything look good? Click any section to make changes, or launch when you're ready.
         </p>
       </div>
-
-      {/* Survey Type */}
-      <SectionCard label="Survey type" onClick={() => onGoToStep(typeStepIndex)}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <TypeIcon className="w-4.5 h-4.5 text-muted-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{typeConfig?.label}</p>
-            <p className="text-xs text-muted-foreground">{typeConfig?.description}</p>
-          </div>
-        </div>
-      </SectionCard>
 
       {/* Audience */}
       <SectionCard label="Audience" onClick={() => onGoToStep(audienceStepIndex)}>

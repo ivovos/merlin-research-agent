@@ -6,6 +6,9 @@ export const philipsTemplates: TemplateConfig[] = [
     key: 'philips-health-wellness',
     label: 'Personal Health & Wellness Tracker',
     icon: 'HeartPulse',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by Philips',
     questions: [
       { text: 'Which health and wellness products do you currently use?', type: 'multi_select' as QuestionType, options: ['Electric toothbrush', 'Air purifier', 'Sleep tracker or device', 'Grooming products', 'Mother & child care', 'Kitchen appliances', 'None'] },
       { text: 'How satisfied are you with your current health technology products?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' } },
@@ -18,6 +21,9 @@ export const philipsTemplates: TemplateConfig[] = [
     key: 'philips-oral-care',
     label: 'Oral Care Concept Test',
     icon: 'Smile',
+    surveyType: 'concept',
+    category: 'product',
+    creatorLabel: 'Created by Philips',
     questions: [
       { text: 'How would you rate the effectiveness of your current toothbrush?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor', maxLabel: 'Excellent' } },
       { text: 'Which features matter most in an electric toothbrush?', type: 'ranking' as QuestionType, options: ['Cleaning performance', 'Pressure sensor', 'Timer', 'Replacement head cost', 'Battery life', 'App connectivity', 'Design & colour'] },
@@ -29,6 +35,9 @@ export const philipsTemplates: TemplateConfig[] = [
     key: 'philips-air-quality',
     label: 'Smart Home & Air Quality',
     icon: 'Wind',
+    surveyType: 'concept',
+    category: 'product',
+    creatorLabel: 'Created by Philips',
     questions: [
       { text: 'How concerned are you about indoor air quality in your home?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not concerned', maxLabel: 'Very concerned' } },
       { text: 'Do you currently own an air purifier?', type: 'single_select' as QuestionType, options: ['Yes', 'No but considering one', 'No and not interested'] },

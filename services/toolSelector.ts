@@ -448,7 +448,7 @@ export async function generateConversationTitle(query: string): Promise<string> 
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-sonnet-4-6',
       max_tokens: 30,
       system: `You are a title generator. Given a research query, output ONLY a 3-5 word title.
 Rules:

@@ -6,6 +6,9 @@ export const vodafoneTemplates: TemplateConfig[] = [
     key: 'vodafone-broadband',
     label: 'Broadband Experience Tracker',
     icon: 'Wifi',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by Vodafone',
     questions: [
       { text: 'How would you rate your current home broadband speed and reliability?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor', maxLabel: 'Excellent' } },
       { text: 'Which broadband issues have you experienced in the last month?', type: 'multi_select' as QuestionType, options: ['Slow speeds', 'Dropouts & disconnections', 'Poor Wi-Fi coverage', 'Router problems', 'Billing issues', 'None'] },
@@ -18,6 +21,9 @@ export const vodafoneTemplates: TemplateConfig[] = [
     key: 'vodafone-network',
     label: 'Network & Coverage Pulse',
     icon: 'Signal',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by Vodafone',
     questions: [
       { text: 'How would you rate your mobile network coverage in areas you use most?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor', maxLabel: 'Excellent' } },
       { text: 'Which connectivity situations frustrate you most?', type: 'ranking' as QuestionType, options: ['Indoor coverage at home', 'Coverage during commute', 'Coverage in rural areas', 'Coverage in busy public venues', 'International roaming'] },
@@ -29,6 +35,9 @@ export const vodafoneTemplates: TemplateConfig[] = [
     key: 'vodafone-service',
     label: 'Customer Service Evaluation',
     icon: 'Headphones',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by Vodafone',
     questions: [
       { text: 'When did you last contact customer service?', type: 'single_select' as QuestionType, options: ['This week', 'This month', 'In the last 3 months', 'More than 3 months ago', 'Never'] },
       { text: 'Which channel did you use?', type: 'single_select' as QuestionType, options: ['Phone', 'Live chat', 'App', 'In-store', 'Social media', 'Community forum'] },
@@ -41,6 +50,9 @@ export const vodafoneTemplates: TemplateConfig[] = [
     key: 'vodafone-bundle',
     label: 'Bundle & Value Assessment',
     icon: 'Package',
+    surveyType: 'concept',
+    category: 'product',
+    creatorLabel: 'Created by Vodafone',
     questions: [
       { text: 'Which Vodafone services do you currently use?', type: 'multi_select' as QuestionType, options: ['Mobile', 'Home broadband', 'TV', 'Home phone', 'Business', 'None'] },
       { text: 'How would you rate the overall value for money of your current plan?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor value', maxLabel: 'Excellent value' } },

@@ -6,6 +6,9 @@ export const wonderhoodTemplates: TemplateConfig[] = [
     key: 'wonderhood-brief',
     label: 'Creative Brief Evaluation',
     icon: 'FileText',
+    surveyType: 'message',
+    category: 'marketing',
+    creatorLabel: 'Created by Wonderhood Studios',
     questions: [
       { text: 'How clear was the creative brief for this project?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very unclear', maxLabel: 'Very clear' } },
       { text: 'Which elements of the brief were most useful?', type: 'multi_select' as QuestionType, options: ['Target audience definition', 'Brand guidelines', 'Competitive context', 'Key message hierarchy', 'Tone of voice', 'Success metrics', 'Budget & timeline'] },
@@ -18,6 +21,9 @@ export const wonderhoodTemplates: TemplateConfig[] = [
     key: 'wonderhood-campaign',
     label: 'Campaign Effectiveness Tracker',
     icon: 'BarChart3',
+    surveyType: 'creative',
+    category: 'marketing',
+    creatorLabel: 'Created by Wonderhood Studios',
     questions: [
       { text: 'How memorable was this campaign compared to competitor advertising?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not at all', maxLabel: 'Highly memorable' } },
       { text: 'How clearly did the campaign communicate the intended message?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very unclear', maxLabel: 'Very clear' } },
@@ -30,6 +36,9 @@ export const wonderhoodTemplates: TemplateConfig[] = [
     key: 'wonderhood-client-sat',
     label: 'Client Satisfaction Survey',
     icon: 'Handshake',
+    surveyType: 'simple',
+    category: 'brand',
+    creatorLabel: 'Created by Wonderhood Studios',
     questions: [
       { text: 'How satisfied are you with the creative output delivered?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very dissatisfied', maxLabel: 'Very satisfied' } },
       { text: 'How well did the agency understand your brand and objectives?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poorly', maxLabel: 'Very well' } },

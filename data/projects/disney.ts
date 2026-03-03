@@ -2,7 +2,7 @@ import type { SurveyProject } from '@/types'
 
 export const disneyProject: SurveyProject = {
   id: 'proj_disney_keyart',
-  name: 'Disney+ Alice & Steve — Key Art Testing',
+  name: 'Alice & Steve — Key Art Testing',
   brand: 'Disney+',
   surveyType: 'creative',
   description: 'Evaluate 3 key art options for the Disney+ original "Alice & Steve" (from the creators of Baby Reindeer) to determine which artwork best communicates the show\'s tone, drives viewing intent, and supports subscription consideration. V2 and V3 both sit ahead of UK scripted average, with V1 consistently behind. Post-synopsis preference is highest for V3, selected by 54% of total respondents.',

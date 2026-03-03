@@ -6,6 +6,9 @@ export const kingTemplates: TemplateConfig[] = [
     key: 'king-engagement',
     label: 'Player Engagement & Motivation',
     icon: 'Gamepad2',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by King',
     questions: [
       { text: 'How often do you play mobile games?', type: 'single_select' as QuestionType, options: ['Multiple times daily', 'Daily', 'A few times a week', 'Weekly', 'Less than weekly'] },
       { text: 'What motivates you most to keep playing?', type: 'ranking' as QuestionType, options: ['Beating levels', 'Competing with friends', 'Daily rewards', 'New content & events', 'Relaxation & stress relief', 'Completing collections'] },
@@ -18,6 +21,9 @@ export const kingTemplates: TemplateConfig[] = [
     key: 'king-monetisation',
     label: 'Monetisation & Value Perception',
     icon: 'Gem',
+    surveyType: 'concept',
+    category: 'product',
+    creatorLabel: 'Created by King',
     questions: [
       { text: 'Have you made an in-app purchase in the last 30 days?', type: 'single_select' as QuestionType, options: ['Yes — multiple times', 'Yes — once', 'No', 'I never make in-app purchases'] },
       { text: 'How do you feel about the value of in-app purchases?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Very poor value', maxLabel: 'Excellent value' } },
@@ -29,6 +35,9 @@ export const kingTemplates: TemplateConfig[] = [
     key: 'king-social',
     label: 'Social & Competitive Features',
     icon: 'Trophy',
+    surveyType: 'audience_exploration',
+    category: 'audience',
+    creatorLabel: 'Created by King',
     questions: [
       { text: 'Do you play with or compete against friends in mobile games?', type: 'single_select' as QuestionType, options: ['Yes — regularly', 'Yes — occasionally', 'No — but I would like to', 'No — not interested'] },
       { text: 'How important are team events and collaborative challenges?', type: 'scale' as QuestionType, scale: { min: 1, max: 5, minLabel: 'Not important', maxLabel: 'Very important' } },

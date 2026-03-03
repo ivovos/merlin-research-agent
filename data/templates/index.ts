@@ -1,11 +1,16 @@
-import type { SurveyQuestion } from '@/types'
+import type { SurveyQuestion, SurveyType } from '@/types'
 
 // ── Template config type ──
+
+export type TemplateCategory = 'marketing' | 'product' | 'brand' | 'audience'
 
 export interface TemplateConfig {
   key: string
   label: string
   icon: string // lucide icon name — resolved to component in TemplatesPanel
+  surveyType: SurveyType
+  category: TemplateCategory
+  creatorLabel?: string // e.g. "Created by Disney UK" — shown in creation modal
   questions: Omit<SurveyQuestion, 'id' | 'required'>[]
 }
 

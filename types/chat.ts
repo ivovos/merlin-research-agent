@@ -35,6 +35,7 @@ export interface ChatMessageAI {
   type: 'ai'
   text: string
   thinking?: string
+  thinkingSteps?: string[]
   timestamp: number
 }
 

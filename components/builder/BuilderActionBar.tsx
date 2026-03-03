@@ -18,9 +18,8 @@ interface BuilderActionBarProps {
   onShowQuestionErrors?: () => void
 }
 
-function getCtaLabel(step: BuilderStepId, isLast: boolean): string {
+function getCtaLabel(_step: BuilderStepId, isLast: boolean): string {
   if (isLast) return 'Launch Survey'
-  if (step === 'type') return 'Continue'
   return 'Next'
 }
 
